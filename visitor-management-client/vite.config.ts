@@ -9,7 +9,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://trolley.proxy.rlwy.net:33436",
+        target: "http://trolley.proxy.rlwy.net:3001",
         changeOrigin: true,
       },
     },

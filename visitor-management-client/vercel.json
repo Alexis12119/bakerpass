@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://trolley.proxy.rlwy.net:33436/api/:path*"
+      "destination": "http://trolley.proxy.rlwy.net:3001/api/:path*"
     }
   ]
 }
