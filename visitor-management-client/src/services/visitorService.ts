@@ -1,8 +1,9 @@
 import axios from "axios";
 import { Visitor } from "../types/Visitor";
 
-const API_URL = "/api";
+// const API_URL = "/api";
 
+const API_URL = "https://bakerpass-server-production.up.railway.app/api";
 // Configure axios with better defaults
 const apiClient = axios.create({
   baseURL: API_URL,
