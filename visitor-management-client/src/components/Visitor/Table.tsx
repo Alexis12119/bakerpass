@@ -1,5 +1,5 @@
 import React from "react";
-import { Visitor } from "../types/Visitor";
+import { Visitor } from "../../types/Visitor";
 
 interface VisitorTableProps {
   visitors: Visitor[];

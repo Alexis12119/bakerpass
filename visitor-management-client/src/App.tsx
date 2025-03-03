@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import VisitorTable from "./components/VisitorTable";
-import AddVisitorModal from "./components/AddVisitorModal";
-import Header from "./components/Header";
+import VisitorTable from "./components/Visitor/Table";
+import AddVisitorModal from "./components/Visitor/Modal/AddVisitor";
+import Header from "./components/Visitor/Header";
 import { Visitor } from "./types/Visitor";
 import {
   fetchVisitors,
