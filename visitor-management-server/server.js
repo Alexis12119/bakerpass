@@ -46,9 +46,9 @@ async function initializeDatabase() {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS visitors (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        purpose VARCHAR(100) NOT NULL,
-        contact VARCHAR(50) NOT NULL,
+        name TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        contact TEXT NOT NULL,
         timeIn DATETIME DEFAULT CURRENT_TIMESTAMP,
         timeOut DATETIME NULL
       )
