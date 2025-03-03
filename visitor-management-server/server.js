@@ -13,10 +13,15 @@ app.use(bodyParser.json());
 
 // Database connection configuration
 const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "visitor_app",
-  password: process.env.DB_PASSWORD || "123",
-  database: process.env.DB_NAME || "visitor_management",
+  host: process.env.DB_HOST || "trolley.proxy.rlwy.net",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASS || "YkDNEEbALidGFrDTlQthEFMQcKNWgyya",
+  database: process.env.DB_NAME || "railway",
+  port: process.env.DB_PORT || 33436,
+  queueLimit: 0,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 };
 
 // Create connection pool

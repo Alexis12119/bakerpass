@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Visitor } from "../types/Visitor";
 
-const API_URL = "http://trolley.proxy.rlwy.net:3001";
+const API_URL = "https://trolley.proxy.rlwy.net:3001";
 
 export const fetchVisitors = async (): Promise<Visitor[]> => {
   const response = await axios.get(`${API_URL}/visitors`);
