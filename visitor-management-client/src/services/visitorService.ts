@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Visitor } from "../types/Visitor";
 
-const API_URL = "http://trolley.proxy.rlwy.net:3001";
+const API_URL = "https://mysql-production-0170.up.railway.app";
 
 // Configure axios with better defaults
 const apiClient = axios.create({

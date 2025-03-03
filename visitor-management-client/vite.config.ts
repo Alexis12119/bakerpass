@@ -9,7 +9,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://trolley.proxy.rlwy.net:3001",
+        target: "https://mysql-production-0170.up.railway.app:3001",
         changeOrigin: true,
       },
     },
