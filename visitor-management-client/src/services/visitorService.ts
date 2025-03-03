@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Visitor } from "../types/Visitor";
 
-const API_URL = "https://mysql-production-0170.up.railway.app";
+const API_URL = "https://trolley.proxy.rlwy.net:3001";
 
 // Configure axios with better defaults
 const apiClient = axios.create({
@@ -54,16 +54,5 @@ export const timeOutVisitor = async (id: number): Promise<Visitor> => {
   } catch (error) {
     console.error("Failed to time out visitor:", error);
     throw error;
-  }
-};
-
-// Health check to verify API is accessible
-export const checkApiHealth = async (): Promise<boolean> => {
-  try {
-    const response = await apiClient.get("/health");
-    return response.status === 200;
-  } catch (error) {
-    console.error("API health check failed:", error);
-    return false;
   }
 };
