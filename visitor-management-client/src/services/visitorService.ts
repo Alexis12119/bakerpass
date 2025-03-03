@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Visitor } from "../types/Visitor";
 
-const API_URL = "https://trolley.proxy.rlwy.net:3001";
+const API_URL = "https://trolley.proxy.rlwy.net:3001/api";
 
 // Configure axios with better defaults
 const apiClient = axios.create({
