@@ -5,63 +5,80 @@ const bodyParser = require("body-parser");
 const moment = require("moment");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 // Middleware
-app.use(cors());
+// app.use(
+//   cors({
+//     origin: [
+//       "https://bakerpass.vercel.app",
+//       "http://localhost:3000",
+//       // "http://localhost:5173",
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   }),
+// );
+//
+app.use((req, res, next) => {
+  res.header(
+    "Access-Control-Allow-Origin",
+    "https://bakerpass.vercel.app",
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
 app.use(bodyParser.json());
 
-// Database connection configuration
-const dbConfig = {
+const pool = mysql.createPool({
   host: process.env.DB_HOST || "trolley.proxy.rlwy.net",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASS || "YkDNEEbALidGFrDTlQthEFMQcKNWgyya",
   database: process.env.DB_NAME || "railway",
-  port: process.env.DB_PORT || 33436,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 33436,
+  waitForConnections: true,
+  connectionLimit: 10,
   queueLimit: 0,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-};
-
-// Create connection pool
-const pool = mysql.createPool(dbConfig);
+});
 
 // Initialize database and tables
-async function initializeDatabase() {
-  try {
-    const connection = await mysql.createConnection({
-      host: dbConfig.host,
-      user: dbConfig.user,
-      password: dbConfig.password,
-    });
-
-    // Create database if not exists
-    await connection.query(
-      `CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`,
-    );
-    await connection.query(`USE ${dbConfig.database}`);
-
-    // Create visitors table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS visitors (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name TEXT NOT NULL,
-        purpose TEXT NOT NULL,
-        contact TEXT NOT NULL,
-        timeIn DATETIME DEFAULT CURRENT_TIMESTAMP,
-        timeOut DATETIME NULL
-      )
-    `);
-
-    console.log("Database and tables initialized");
-    await connection.end();
-  } catch (error) {
-    console.error("Database initialization failed:", error);
-    process.exit(1);
-  }
-}
-
+// async function initializeDatabase() {
+//   try {
+//     const connection = await mysql.createConnection({
+//       host: dbConfig.host,
+//       user: dbConfig.user,
+//       password: dbConfig.password,
+//     });
+//
+//     // Create database if not exists
+//     await connection.query(
+//       `CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`,
+//     );
+//     await connection.query(`USE ${dbConfig.database}`);
+//
+//     // Create visitors table
+//     await connection.query(`
+//       CREATE TABLE IF NOT EXISTS visitors (
+//         id INT AUTO_INCREMENT PRIMARY KEY,
+//         name VARCHAR(255) NOT NULL,
+//         purpose VARCHAR(100) NOT NULL,
+//         contact VARCHAR(50) NOT NULL,
+//         timeIn DATETIME DEFAULT CURRENT_TIMESTAMP,
+//         timeOut DATETIME NULL
+//       )
+//     `);
+//
+//     console.log("Database and tables initialized");
+//     await connection.end();
+//   } catch (error) {
+//     console.error("Database initialization failed:", error);
+//     process.exit(1);
+//   }
+// }
+//
 // API Routes
 // Get all visitors
 app.get("/api/visitors", async (req, res) => {
@@ -166,7 +183,7 @@ app.put("/api/visitors/:id/timeout", async (req, res) => {
 
 // Start server
 async function startServer() {
-  await initializeDatabase();
+  // await initializeDatabase();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
@@ -242,4 +259,4 @@ async function seedDatabase() {
 }
 
 // Call the seed function after a delay to ensure database is initialized
-setTimeout(seedDatabase, 2000);
+// setTimeout(seedDatabase, 2000);
