@@ -1,0 +1,149 @@
+import React from "react";
+import Image from "next/image";
+
+interface Visitor {
+  id: string;
+  name: string;
+  purpose: string;
+  host: string;
+  department: string;
+  expectedTime: string;
+  timeIn: string | null;
+  timeOut: string | null;
+  status: "Checked In" | "Ongoing" | "Checked Out";
+  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+}
+
+interface VisitorWithDropdown extends Visitor {
+  isDropdownOpen: boolean;
+}
+
+interface DashboardTableProps {
+  visitors: VisitorWithDropdown[];
+  toggleVisitorStatus: (visitorId: string) => void;
+}
+
+const DashboardTable: React.FC<DashboardTableProps> = ({
+  visitors,
+  toggleVisitorStatus,
+}) => {
+  const formatTimeForDisplay = (time: string | null) => {
+    if (!time || time === "00:00:00") return "Pending";
+    const [hoursStr, minutes] = time.split(":");
+    let hours = parseInt(hoursStr, 10);
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
+  return (
+    <div className="bg-white shadow-md border border-gray-300 mt-3 text-center">
+      <div className="hidden md:grid grid-cols-8 bg-gray-200 py-3 px-6 font-semibold text-sm text-black border-b border-gray-300">
+        <div>Status</div>
+        <div>Visitor's Name</div>
+        <div>Purpose</div>
+        <div>Host Name</div>
+        <div>Department</div>
+        <div>Expected Time</div>
+        <div>Time In</div>
+        <div>Time Out</div>
+      </div>
+
+      {visitors.length > 0 ? (
+        <div className="max-h-[400px] overflow-y-auto">
+          {visitors.map((visitor) => (
+            <div
+              key={visitor.id}
+              className="grid grid-cols-1 md:grid-cols-8 py-3 px-6 border-b border-gray-300 !text-black gap-4"
+            >
+              {/* STATUS BOX - Like SecurityTable */}
+              <div
+                className={`relative inline-block text-center border rounded-lg px-3 py-1 cursor-pointer
+                  ${
+                    visitor.approvalStatus === "Approved"
+                      ? "bg-[#1C274C]"
+                      : visitor.approvalStatus === "Waiting For Approval"
+                      ? "bg-yellow-400"
+                      : visitor.approvalStatus === "Blocked"
+                      ? "bg-red-600"
+                      : visitor.approvalStatus === "Cancelled"
+                      ? "bg-gray-400"
+                      : "bg-white"
+                  }
+                `}
+                onClick={() => {
+                  // if (visitor.approvalStatus === "Approved") {
+                  //   toggleVisitorStatus(visitor.id);
+                  // }
+                }}
+              >
+                <span
+                  className={`text-xs font-bold text-center block
+                    ${
+                      visitor.approvalStatus === "Approved"
+                        ? "text-white"
+                        : visitor.approvalStatus === "Waiting For Approval"
+                        ? "text-black"
+                        : "text-white"
+                    }
+                  `}
+                >
+                  {visitor.approvalStatus === "Approved"
+                    ? visitor.status
+                    : visitor.approvalStatus}
+                </span>
+              </div>
+
+              {/* Visitor Info */}
+              <div className="flex items-center">
+                <Image
+                  src="/images/jiro.jpg"
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="rounded-full mr-3"
+                />
+                <span className="text-sm font-medium">{visitor.name}</span>
+              </div>
+
+              <div className="text-sm pt-2">
+                {visitor.purpose || "Not specified"}
+              </div>
+              <div className="text-sm pt-2">{visitor.host}</div>
+              <div className="text-sm pt-2">{visitor.department}</div>
+              <div className="text-sm pt-2">{visitor.expectedTime}</div>
+
+              {/* TIME IN */}
+              <div
+                className={`pt-2 text-sm font-bold ${
+                  visitor.timeIn
+                    ? "bg-[#1EA83C] text-white"
+                    : "bg-gray-200 text-gray-500"
+                } px-3 py-1 rounded-lg`}
+              >
+                {formatTimeForDisplay(visitor.timeIn)}
+              </div>
+
+              {/* TIME OUT */}
+              <div
+                className={`pt-2 text-sm font-bold ${
+                  visitor.timeOut
+                    ? "bg-[#C82020] text-white"
+                    : "bg-gray-200 text-gray-500"
+                } px-3 py-1 rounded-lg`}
+              >
+                {formatTimeForDisplay(visitor.timeOut)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-10 text-center text-gray-500">
+          No visitors found matching your search criteria.
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DashboardTable;

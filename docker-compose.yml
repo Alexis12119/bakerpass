@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: appointment_system
+      MYSQL_USER: franklin
+      MYSQL_PASSWORD: 123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: express_backend
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: franklin
+      DB_PASSWORD: 123
+      DB_NAME: appointment_system
+    ports:
+      - "5001:5001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" 
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: ["npm", "run", "dev"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nextjs_frontend
+    restart: always
+    environment:
+      NEXT_PUBLIC_BACKEND_HOST: http://localhost:5001
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    command: ["npm", "run", "dev"]
+
+volumes:
+  mysql_data:
