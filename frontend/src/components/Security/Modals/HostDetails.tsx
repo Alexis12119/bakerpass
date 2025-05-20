@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
+import { Laptop, Smartphone, Tablet, Package } from "lucide-react";
 
 interface HostDetailsModalProps {
   isOpen: boolean;
@@ -15,6 +16,13 @@ interface HostDetailsModalProps {
   };
   fetchVisitors: () => Promise<void>;
 }
+
+const iconMap: { [key: string]: React.ReactNode } = {
+  Laptop: <Laptop className="w-8 h-8 text-gray-700 mb-2" />,
+  Phone: <Smartphone className="w-8 h-8 text-gray-700 mb-2" />,
+  Tablet: <Tablet className="w-8 h-8 text-gray-700 mb-2" />,
+  Others: <Package className="w-8 h-8 text-gray-700 mb-2" />,
+};
 
 const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   isOpen,
@@ -53,11 +61,19 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
     cough: boolean;
     openWound: boolean;
     nausea: boolean;
+    skinBoils: boolean;
+    skinAllergies: boolean;
+    diarrhea: boolean;
+    openSores: boolean;
   }>({
     fever: false,
     cough: false,
     openWound: false,
     nausea: false,
+    skinBoils: false,
+    skinAllergies: false,
+    diarrhea: false,
+    openSores: false,
   });
   const [otherAllergies, setOtherAllergies] = useState("");
 
@@ -71,12 +87,22 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
     medicines: boolean;
     notebook: boolean;
     earrings: boolean;
+    necklace: boolean;
+    ring: boolean;
+    id_card: boolean;
+    ballpen: boolean;
+    wristwatch: boolean;
   }>({
     mobilePhone: false,
     camera: false,
     medicines: false,
     notebook: false,
     earrings: false,
+    necklace: false,
+    ring: false,
+    id_card: false,
+    ballpen: false,
+    wristwatch: false,
   });
   const [otherProhibited, setOtherProhibited] = useState("");
 
@@ -134,6 +160,10 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         cough: false,
         openWound: false,
         nausea: false,
+        skinBoils: false,
+        skinAllergies: false,
+        diarrhea: false,
+        openSores: false,
       });
       setOtherAllergies("");
       setRecentPlaces("");
@@ -143,6 +173,11 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         medicines: false,
         notebook: false,
         earrings: false,
+        necklace: false,
+        ring: false,
+        id_card: false,
+        ballpen: false,
+        wristwatch: false,
       });
       setOtherProhibited("");
       setErrorMessage("");
@@ -204,6 +239,10 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       payload.nausea = symptoms?.nausea || false;
       payload.otherAllergies = otherAllergies || null;
       payload.recentPlaces = recentPlaces || null;
+      payload.skinBoils = symptoms?.skinBoils || false;
+      payload.skinAllergies = symptoms?.skinAllergies || false;
+      payload.diarrhea = symptoms?.diarrhea || false;
+      payload.openSores = symptoms?.openSores || false;
 
       payload.mobilePhone = prohibitedItems?.mobilePhone || false;
       payload.camera = prohibitedItems?.camera || false;
@@ -211,6 +250,11 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       payload.notebook = prohibitedItems?.notebook || false;
       payload.earrings = prohibitedItems?.earrings || false;
       payload.otherProhibited = otherProhibited || null;
+      payload.necklace = prohibitedItems?.necklace || false;
+      payload.ring = prohibitedItems?.ring || false;
+      payload.id_card = prohibitedItems?.id_card || false;
+      payload.ballpen = prohibitedItems?.ballpen || false;
+      payload.wristwatch = prohibitedItems?.wristwatch || false;
     }
 
     try {
@@ -343,16 +387,21 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
 
         {/* Step 2: Devices */}
         {step === 2 && (
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-4">
             <h4 className="text-black text-sm font-medium mb-3">
               Devices to be brought (Select all that apply)
             </h4>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
               {["Laptop", "Phone", "Tablet", "Others"].map((device) => (
-                <label key={device} className="text-black flex items-center space-x-2">
+                <label
+                  key={device}
+                  className="flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:shadow-md transition"
+                >
+                  {iconMap[device]}
                   <input
                     type="checkbox"
+                    className="mb-1"
                     checked={deviceTypes.includes(device)}
                     onChange={(e) => {
                       const isChecked = e.target.checked;
@@ -363,7 +412,9 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                       );
                     }}
                   />
-                  <span>{device}</span>
+                  <span className="text-sm text-black">
+                    {device.toUpperCase()}
+                  </span>
                 </label>
               ))}
             </div>
@@ -372,7 +423,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
               <input
                 type="text"
                 className="text-black w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Specify other device"
+                placeholder="Specify other devices"
                 value={otherDevice}
                 onChange={(e) => setOtherDevice(e.target.value)}
               />
@@ -381,13 +432,12 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
             <input
               type="text"
               className="text-black w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Brand Name"
+              placeholder="Brand’s / use (,) to separate if multiple"
               value={deviceBrand}
               onChange={(e) => setDeviceBrand(e.target.value)}
             />
           </div>
         )}
-
         {/* Step 3: Ask if user wants to enter high care area */}
         {step === 3 && (
           <div className="p-6 text-center">
@@ -421,24 +471,37 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
 
         {/* Step 4: Symptoms & physical conditions modal */}
         {step === 4 && (
-          <div className="p-4 space-y-4 max-h-[70vh] overflow-auto">
-            <h4 className="text-black text-lg font-semibold mb-3">
-              Do you have any of the following symptoms or physical conditions?
+          <div className="p-4 space-y-6 max-h-[70vh] overflow-auto">
+            <h4 className="text-black text-md font-semibold mb-1 uppercase text-center">
+              Health and Prohibited Personal Items Declaration
             </h4>
+            <p className="text-center text-sm text-gray-700">
+              Do you have any of the following symptoms or physical conditions?
+            </p>
 
-            <div className="space-y-1">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Fever", key: "fever" },
                 { label: "Cough", key: "cough" },
-                { label: "Open Wound", key: "openWound" },
+                { label: "Open wounds", key: "openWound" },
+                { label: "Skin Boils", key: "skinBoils" },
+                { label: "Skin Allergies", key: "skinAllergies" },
+                { label: "Diarrhea", key: "diarrhea" },
                 { label: "Nausea", key: "nausea" },
+                { label: "Open Sores", key: "openSores" },
               ].map(({ label, key }) => (
                 <label
                   key={key}
-                  className="text-black inline-flex items-center space-x-2 mr-3"
+                  className={`flex items-center justify-between px-4 py-2 rounded-full border cursor-pointer ${
+                    symptoms[key as keyof typeof symptoms]
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-black border-gray-300"
+                  }`}
                 >
+                  <span>{label}</span>
                   <input
                     type="checkbox"
+                    className="hidden"
                     checked={symptoms[key as keyof typeof symptoms]}
                     onChange={() =>
                       setSymptoms((prev) => ({
@@ -447,46 +510,35 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                       }))
                     }
                   />
-                  <span>{label}</span>
                 </label>
               ))}
             </div>
 
-            <div>
-              <label className="text-black block font-medium mb-1">
-                Other allergies:
-              </label>
-              <input
-                type="text"
-                className="text-black w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Enter other allergies"
-                value={otherAllergies}
-                onChange={(e) => setOtherAllergies(e.target.value)}
-              />
-            </div>
+            <input
+              type="text"
+              className="w-full p-2 border border-gray-300 rounded-md text-black"
+              placeholder="Allergies / use (,) to separate if multiple"
+              value={otherAllergies}
+              onChange={(e) => setOtherAllergies(e.target.value)}
+            />
 
-            <div>
-              <label className="text-black block font-medium mb-1">
-                Place recently visited for the past 7 days:
-              </label>
-              <input
-                type="text"
-                className="text-black w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Enter recent places"
-                value={recentPlaces}
-                onChange={(e) => setRecentPlaces(e.target.value)}
-              />
-            </div>
+            <input
+              type="text"
+              className="w-full p-2 border border-gray-300 rounded-md text-black"
+              placeholder="Place/s visited for the past 7 days"
+              value={recentPlaces}
+              onChange={(e) => setRecentPlaces(e.target.value)}
+            />
 
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-between mt-4">
               <button
-                onClick={() => setStep(3)} // go back to ask modal
+                onClick={() => setStep(3)}
                 className="bg-gray-300 text-black py-2 px-6 rounded-md"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(5)} // go next to prohibited items modal
+                onClick={() => setStep(5)}
                 className="bg-blue-600 text-white py-2 px-6 rounded-md"
               >
                 Next
@@ -497,24 +549,39 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
 
         {/* Step 5: Prohibited items modal */}
         {step === 5 && (
-          <div className="p-4 space-y-4 max-h-[70vh] overflow-auto">
-            <h4 className="text-black text-lg font-semibold mb-3">
-              Prohibited items
+          <div className="p-4 space-y-6 max-h-[70vh] overflow-auto">
+            <h4 className="text-black text-md font-semibold mb-1 uppercase text-center">
+              Health and Prohibited Personal Items Declaration
             </h4>
-            <div className="space-y-1">
+            <p className="text-center text-sm text-gray-700">
+              Do you possess any of the following prohibited items?
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Mobile Phone", key: "mobilePhone" },
+                { label: "Necklace", key: "necklace" },
                 { label: "Camera", key: "camera" },
+                { label: "Ring", key: "ring" },
                 { label: "Medicines", key: "medicines" },
+                { label: "ID", key: "id_card" },
                 { label: "Notebook", key: "notebook" },
+                { label: "Ballpen", key: "ballpen" },
                 { label: "Earrings", key: "earrings" },
+                { label: "Wristwatch", key: "wristwatch" },
               ].map(({ label, key }) => (
                 <label
                   key={key}
-                  className="text-black inline-flex items-center space-x-2 mr-3"
+                  className={`flex items-center justify-between px-4 py-2 rounded-full border cursor-pointer ${
+                    prohibitedItems[key as keyof typeof prohibitedItems]
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-black border-gray-300"
+                  }`}
                 >
+                  <span>{label}</span>
                   <input
                     type="checkbox"
+                    className="hidden"
                     checked={
                       prohibitedItems[key as keyof typeof prohibitedItems]
                     }
@@ -525,27 +592,21 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                       }))
                     }
                   />
-                  <span>{label}</span>
                 </label>
               ))}
             </div>
 
-            <div>
-              <label className="text-black block font-medium mb-1">
-                Other items:
-              </label>
-              <input
-                type="text"
-                className="text-black w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Enter other prohibited items"
-                value={otherProhibited}
-                onChange={(e) => setOtherProhibited(e.target.value)}
-              />
-            </div>
+            <input
+              type="text"
+              className="w-full p-2 border border-gray-300 rounded-md text-black"
+              placeholder="Item/s (use , to separate if multiple)"
+              value={otherProhibited}
+              onChange={(e) => setOtherProhibited(e.target.value)}
+            />
 
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-between mt-4">
               <button
-                onClick={() => setStep(4)} // go back to symptoms modal
+                onClick={() => setStep(4)}
                 className="bg-gray-300 text-black py-2 px-6 rounded-md"
               >
                 Back
@@ -554,7 +615,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                 onClick={() => {
                   setIsHighCare("Yes");
                   handleSubmit();
-                }} // submit data after prohibited items
+                }}
                 className="bg-blue-600 text-white py-2 px-6 rounded-md"
               >
                 Submit
