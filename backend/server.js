@@ -508,8 +508,20 @@ fastify.post("/visits", async (request, reply) => {
       notebook,
       earrings,
       otherProhibited,
+
+      // New symptoms
+      skinBoils,
+      skinAllergies,
+      diarrhea,
+      openSores,
+
+      // New prohibited items
+      ring,
+      id_card,
+      ballpen,
+      wristwatch,
+      necklace,
     } = request.body;
-    console.log("Incoming visitor:", request.body);
     if (
       !firstName ||
       !lastName ||
@@ -520,6 +532,7 @@ fastify.post("/visits", async (request, reply) => {
     ) {
       return reply.status(400).send({ message: "Missing required fields" });
     }
+    console.log("Incoming visitor:", request.body);
 
     const visitDate = new Date().toISOString().split("T")[0];
 
@@ -606,14 +619,18 @@ fastify.post("/visits", async (request, reply) => {
       // Insert into high_care_symptoms
       await pool.execute(
         `INSERT INTO high_care_symptoms (
-          high_care_request_id,
-          fever,
-          cough,
-          open_wound,
-          nausea,
-          other_allergies,
-          recent_places
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    high_care_request_id,
+    fever,
+    cough,
+    open_wound,
+    nausea,
+    other_allergies,
+    recent_places,
+    skin_boils,
+    skin_allergies,
+    diarrhea,
+    open_sores
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           highCareRequestId,
           fever ? 1 : 0,
@@ -622,20 +639,29 @@ fastify.post("/visits", async (request, reply) => {
           nausea ? 1 : 0,
           otherAllergies || null,
           recentPlaces || null,
+          skinBoils ? 1 : 0,
+          skinAllergies ? 1 : 0,
+          diarrhea ? 1 : 0,
+          openSores ? 1 : 0,
         ],
       );
 
       // Insert into high_care_prohibited_items
       await pool.execute(
         `INSERT INTO high_care_prohibited_items (
-          high_care_request_id,
-          mobile_phone,
-          camera,
-          medicines,
-          notebook,
-          earrings,
-          other_prohibited_items
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    high_care_request_id,
+    mobile_phone,
+    camera,
+    medicines,
+    notebook,
+    earrings,
+    other_prohibited_items,
+    ring,
+    id_card,
+    ballpen,
+    wristwatch,
+    necklace
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           highCareRequestId,
           mobilePhone ? 1 : 0,
@@ -644,6 +670,11 @@ fastify.post("/visits", async (request, reply) => {
           notebook ? 1 : 0,
           earrings ? 1 : 0,
           otherProhibited || null,
+          ring ? 1 : 0,
+          id_card ? 1 : 0,
+          ballpen ? 1 : 0,
+          wristwatch ? 1 : 0,
+          necklace ? 1 : 0,
         ],
       );
     }
@@ -721,7 +752,6 @@ fastify.get("/visitors", async (request, reply) => {
     query += " ORDER BY v.visit_date DESC, v.id ASC;";
 
     const [rows] = await pool.execute(query, params);
-    console.log(rows);
     return reply.send(rows);
   } catch (error) {
     fastify.log.error(error);
@@ -741,7 +771,7 @@ fastify.put("/visitors/:id/status", async (request, reply) => {
     // 1. Get the status_id from status name
     const [statusRows] = await pool.execute(
       `SELECT id FROM visit_statuses WHERE LOWER(name) = LOWER(?) LIMIT 1`,
-      [status]
+      [status],
     );
 
     if (statusRows.length === 0) {
@@ -758,7 +788,10 @@ fastify.put("/visitors/:id/status", async (request, reply) => {
     // Checked In, Checked Out, Ongoing
     // Adjust status_id numbers or do a check by name if preferred
 
-    if (status.toLowerCase() === "checked in" || status.toLowerCase() === "ongoing") {
+    if (
+      status.toLowerCase() === "checked in" ||
+      status.toLowerCase() === "ongoing"
+    ) {
       query = `
         UPDATE visits
         SET status_id = ?, time_in = ?, valid_id_type_id = ?
