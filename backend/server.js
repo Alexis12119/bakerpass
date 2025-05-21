@@ -764,7 +764,6 @@ fastify.get("/visitors", async (request, reply) => {
         FROM high_care_requests hcr
         WHERE hcr.visit_id = v.id AND hcr.is_approved = FALSE
       )
-      ORDER BY v.visit_date DESC, v.id DESC;
     `;
 
     const params = [];
@@ -773,6 +772,8 @@ fastify.get("/visitors", async (request, reply) => {
       query += " AND v.visited_employee_id = ?";
       params.push(employeeId);
     }
+
+    query += "ORDER BY v.visit_date DESC, v.id DESC;";
 
     const [rows] = await pool.execute(query, params);
     return reply.send(rows);
