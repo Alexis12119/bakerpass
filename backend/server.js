@@ -7,8 +7,8 @@ const nodemailer = require("nodemailer");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs-timezone-iana-plugin");
-
 const fastify = Fastify({ logger: true });
+const websocket = require("@fastify/websocket");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -18,6 +18,25 @@ fastify.register(cors, {
   methods: ["GET", "POST", "PUT", "DELETE"],
 });
 fastify.register(require("@fastify/formbody"));
+fastify.register(require("@fastify/websocket"), {
+  options: { maxPayload: 1048576 },
+});
+
+const clients = new Set();
+
+fastify.register(async function (fastify) {
+  fastify.get("/ws/updates", { websocket: true }, (socket, req) => {
+    clients.add(socket);
+
+    socket.on("close", () => {
+      clients.delete(socket);
+    });
+
+    socket.send(
+      JSON.stringify({ type: "connected", message: "WebSocket connected" }),
+    );
+  });
+});
 
 // Create a pool of database connections
 const pool = mysql.createPool({
@@ -532,7 +551,6 @@ fastify.post("/visits", async (request, reply) => {
     ) {
       return reply.status(400).send({ message: "Missing required fields" });
     }
-    console.log("Incoming visitor:", request.body);
 
     const visitDate = new Date().toISOString().split("T")[0];
 
@@ -679,6 +697,12 @@ fastify.post("/visits", async (request, reply) => {
       );
     }
 
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        // 1 means OPEN
+        socket.send("update");
+      }
+    });
     return reply.status(201).send({
       message: "Visit created successfully",
       visitId,
@@ -740,6 +764,7 @@ fastify.get("/visitors", async (request, reply) => {
         FROM high_care_requests hcr
         WHERE hcr.visit_id = v.id AND hcr.is_approved = FALSE
       )
+      ORDER BY v.visit_date DESC, v.id DESC;
     `;
 
     const params = [];
@@ -748,8 +773,6 @@ fastify.get("/visitors", async (request, reply) => {
       query += " AND v.visited_employee_id = ?";
       params.push(employeeId);
     }
-
-    query += " ORDER BY v.visit_date DESC, v.id ASC;";
 
     const [rows] = await pool.execute(query, params);
     return reply.send(rows);
@@ -1268,6 +1291,10 @@ fastify.get("/history", async (request, reply) => {
     fastify.log.error(err);
     reply.code(500).send({ error: "Failed to retrieve visit history" });
   }
+});
+
+fastify.ready().then(() => {
+  console.log(fastify.printRoutes());
 });
 
 // Start Server

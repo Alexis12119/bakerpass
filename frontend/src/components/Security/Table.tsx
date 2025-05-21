@@ -107,7 +107,6 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                       visitor.status.toLowerCase() === "Ongoing".toLowerCase() ||
                       (visitor.status.toLowerCase() === "Checked In".toLowerCase() && visitor.timeOut)
                     ) {
-                      // ✅ Toggle directly from Ongoing → Checked Out
                       onToggleStatus(visitor.id, 0); // or pass previously saved ID type if available
                     }
                   } else if (
@@ -115,7 +114,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                   ) {
                     setSelectedVisitor(visitor);
                     setApprovalAction("Approved");
-                    setStatusActionModalOpen(true); // ✅ Show status modal
+                    setStatusActionModalOpen(true);
                   }
                 }}
               >

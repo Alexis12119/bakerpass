@@ -203,6 +203,31 @@ const SecurityGuardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const socket = new WebSocket("ws://localhost:5001/ws/updates");
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
+    };
+
+    socket.onmessage = () => {
+      console.log("📡 Update received: refreshing visitors...");
+      fetchVisitors();
+    };
+
+    socket.onerror = (e) => {
+      console.error("❗WebSocket error", e);
+    };
+
+    socket.onclose = () => {
+      console.log("❌ WebSocket connection closed");
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  useEffect(() => {
     fetchVisitors();
     fetchPurposes();
     fetchDepartments();
