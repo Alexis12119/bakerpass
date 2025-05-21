@@ -773,7 +773,7 @@ fastify.get("/visitors", async (request, reply) => {
       params.push(employeeId);
     }
 
-    query += "ORDER BY v.visit_date DESC, v.id DESC;";
+    query += " ORDER BY v.visit_date DESC, v.id DESC;";
 
     const [rows] = await pool.execute(query, params);
     return reply.send(rows);
