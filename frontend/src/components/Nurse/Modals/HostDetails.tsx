@@ -152,7 +152,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           <h3 className="text-white font-semibold text-lg text-center">
             {host.name}
           </h3>
-          <p className="text-blue-100 text-sm text-center">{host.department}</p>
+          <p className="text-[#1C274C] text-sm text-center">{host.department}</p>
         </div>
 
         {/* Visitor form */}
@@ -163,13 +163,13 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           <div className="space-y-3">
             <input
               type="text"
-              className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C274C]"
               placeholder="Full name"
               value={visitorName}
               onChange={(e) => setVisitorName(e.target.value)}
             />
             <select
-              className="text-black w-full p-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+              className="text-black w-full p-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C274C] appearance-none"
               value={visitPurposeId ?? ""}
               onChange={(e) => setVisitPurposeId(Number(e.target.value))}
             >
@@ -205,7 +205,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   key={slot.id}
                   className={`flex items-center p-3 rounded-md border ${
                     selectedTimeSlot === slot.id
-                      ? "bg-blue-900 text-white border-blue-800"
+                      ? "bg-[#1C274C] text-white border-[#1C274C]"
                       : "bg-gray-100 text-gray-800 border-gray-200"
                   }`}
                   onClick={() => handleTimeSlotSelect(slot.id)}

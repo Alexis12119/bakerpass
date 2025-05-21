@@ -263,8 +263,8 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         payload,
       );
 
-      await fetchVisitors();
       setSuccessMessage("Visit created successfully");
+      await fetchVisitors();
     } catch (error) {
       console.error("Submit error:", error);
       setErrorMessage("Error creating visit");
@@ -309,7 +309,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           <h3 className="text-white font-semibold text-lg text-center">
             {host.name}
           </h3>
-          <p className="text-blue-100 text-sm text-center">{host.department}</p>
+          <p className="text-[#1C274C]text-sm text-center">{host.department}</p>
         </div>
 
         {/* Step 1: Visitor info */}
@@ -323,21 +323,21 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                 <div className="flex flex-row space-x-3">
                   <input
                     type="text"
-                    className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C274C]"
                     placeholder="First name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                   />
                   <input
                     type="text"
-                    className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-black w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C274C]"
                     placeholder="Last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                   />
                 </div>
                 <select
-                  className="text-black w-full p-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                  className="text-black w-full p-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C274C]"
                   value={visitPurposeId ?? ""}
                   onChange={(e) => setVisitPurposeId(Number(e.target.value))}
                 >
@@ -363,7 +363,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                     key={slot.id}
                     className={`flex items-center p-3 rounded-md border ${
                       selectedTimeSlot === slot.id
-                        ? "bg-blue-900 text-white border-blue-800"
+                        ? "bg-[#1C274C] text-white border-[#1C274C]"
                         : "bg-gray-100 text-gray-800 border-gray-200"
                     }`}
                     onClick={() => handleTimeSlotSelect(slot.id)}
@@ -451,7 +451,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   setIsHighCare("Yes");
                   setStep(4);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md"
+                className="bg-[#1C274C] hover:bg-[#1C274C] text-white py-2 px-6 rounded-md"
               >
                 Yes
               </button>
@@ -494,7 +494,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   key={key}
                   className={`flex items-center justify-between px-4 py-2 rounded-full border cursor-pointer ${
                     symptoms[key as keyof typeof symptoms]
-                      ? "bg-blue-600 text-white border-blue-600"
+                      ? "bg-[#1C274C] text-white border-[#1C274C]"
                       : "bg-white text-black border-gray-300"
                   }`}
                 >
@@ -539,7 +539,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
               </button>
               <button
                 onClick={() => setStep(5)}
-                className="bg-blue-600 text-white py-2 px-6 rounded-md"
+                className="bg-[#1C274C] text-white py-2 px-6 rounded-md"
               >
                 Next
               </button>
@@ -574,7 +574,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   key={key}
                   className={`flex items-center justify-between px-4 py-2 rounded-full border cursor-pointer ${
                     prohibitedItems[key as keyof typeof prohibitedItems]
-                      ? "bg-blue-600 text-white border-blue-600"
+                      ? "bg-[#1C274C] text-white border-[#1C274C]"
                       : "bg-white text-black border-gray-300"
                   }`}
                 >
@@ -616,7 +616,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   setIsHighCare("Yes");
                   handleSubmit();
                 }}
-                className="bg-blue-600 text-white py-2 px-6 rounded-md"
+                className="bg-[#1C274C] text-white py-2 px-6 rounded-md"
               >
                 Submit
               </button>
@@ -651,7 +651,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   }
                   setStep(2);
                 }}
-                className="bg-blue-600 text-white py-2 px-6 rounded-md ml-auto"
+                className="bg-[#1C274C] text-white py-2 px-6 rounded-md ml-auto"
               >
                 Next
               </button>
@@ -668,7 +668,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   }
                   setStep(3);
                 }}
-                className="bg-blue-600 text-white py-2 px-6 rounded-md ml-auto"
+                className="bg-[#1C274C] text-white py-2 px-6 rounded-md ml-auto"
               >
                 Next
               </button>
