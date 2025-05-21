@@ -39,6 +39,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   bool laptop = false;
   bool phone = false;
   bool tablet = false;
+  bool other = false;
   String otherDeviceBrand = '';
   String deviceBrand = '';
 
@@ -51,9 +52,14 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     'Cough': false,
     'Open Wound': false,
     'Nausea': false,
+    'Skin Boils': false,
+    'Skin Allergies': false,
+    'Diarrhea': false,
+    'Open Sores': false,
   };
   String otherAllergies = '';
-  String recentPlacesVisited = '';
+  // String recentPlacesVisited = '';
+  TextEditingController recentPlacesVisitedController = TextEditingController();
 
   // Step 5 - Prohibited Items
   Map<String, bool> prohibitedItems = {
@@ -62,8 +68,13 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     'Medicines': false,
     'Notebook': false,
     'Earrings': false,
+    'Ring': false,
+    'ID': false,
+    'Ballpen': false,
+    'Wristwatch': false,
+    'Necklace': false,
   };
-  String otherProhibitedItem = '';
+  TextEditingController otherProhibitedItemController = TextEditingController();
 
   @override
   void didUpdateWidget(covariant HostDetailsModal oldWidget) {
@@ -82,7 +93,6 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       _initializeModal();
     }
   }
-
   Future<void> _initializeModal() async {
     setState(() {
       visitPurposeId = null;
@@ -169,6 +179,8 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     final email = prefs.getString('email');
     final contactNumber = prefs.getString('contactNumber');
     final address = prefs.getString('address');
+    final recentPlacesVisited = recentPlacesVisitedController.text;
+    final otherProhibitedItem = otherProhibitedItemController.text;
 
     final visitorData = {
       'firstName': firstName,
@@ -180,18 +192,27 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       'visitPurposeId': visitPurposeId,
       'selectedTimeSlot': selectedTimeSlotId,
       'isHighCare': wantsHighCareAccess ? "Yes" : "No",
-      'fever': symptoms['fever'] ?? false,
-      'cough': symptoms['cough'] ?? false,
-      'openWound': symptoms['openWound'] ?? false,
-      'nausea': symptoms['nausea'] ?? false,
+      'fever': symptoms['Fever'] ?? false,
+      'cough': symptoms['Cough'] ?? false,
+      'openWound': symptoms['Open Wound'] ?? false,
+      'nausea': symptoms['Nausea'] ?? false,
       'otherAllergies': otherAllergies,
       'recentPlaces': recentPlacesVisited,
-      'mobilePhone': prohibitedItems['mobilePhone'] ?? false,
-      'camera': prohibitedItems['camera'] ?? false,
-      'medicines': prohibitedItems['medicines'] ?? false,
-      'notebook': prohibitedItems['notebook'] ?? false,
-      'earrings': prohibitedItems['earrings'] ?? false,
+      'mobilePhone': prohibitedItems['Mobile Phone'] ?? false,
+      'camera': prohibitedItems['Camera'] ?? false,
+      'medicines': prohibitedItems['Medicines'] ?? false,
+      'notebook': prohibitedItems['Notebook'] ?? false,
+      'earrings': prohibitedItems['Earrings'] ?? false,
       'otherProhibited': otherProhibitedItem,
+      'skinBoils': symptoms['Skin Boils'] ?? false,
+      'skinAllergies': symptoms['Skin Allergies'] ?? false,
+      'openSores': symptoms['Open Sores'] ?? false,
+      'diarrhea': symptoms['Diarrhea'] ?? false,
+      'ring': prohibitedItems['Ring'] ?? false,
+      'id_card': prohibitedItems['ID'] ?? false,
+      'ballpen': prohibitedItems['Ballpen'] ?? false,
+      'wristwatch': prohibitedItems['Wristwatch'] ?? false,
+      'necklace': prohibitedItems['Necklace'] ?? false,
     };
 
     print(visitorData);
@@ -418,7 +439,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
         TextField(
           decoration:
               InputDecoration(labelText: "Places Visited (past 7 days)"),
-          onChanged: (val) => setState(() => recentPlacesVisited = val),
+          controller: recentPlacesVisitedController,
         ),
         SizedBox(height: 20),
         Row(
@@ -451,7 +472,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
         }),
         TextField(
           decoration: InputDecoration(labelText: "Other Prohibited Items"),
-          onChanged: (val) => setState(() => otherProhibitedItem = val),
+          controller: otherProhibitedItemController,
         ),
         SizedBox(height: 20),
         Row(
