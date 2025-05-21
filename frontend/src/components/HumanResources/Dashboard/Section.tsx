@@ -27,7 +27,9 @@ const VisitorsSection: React.FC = () => {
     year: "numeric",
   });
 
-  const [approvalStatuses, setApprovalStatuses] = useState<{ id: string; name: string }[]>([]);
+  const [approvalStatuses, setApprovalStatuses] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [hosts, setHosts] = useState<{ id: string; name: string }[]>([]);
   const [purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
   const [departments, setDepartments] = useState<
@@ -44,13 +46,17 @@ const VisitorsSection: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const fetchData = async () => {
     try {
-      const [hostsResponse, purposesResponse, departmentsResponse, approvalStatusesResponse] =
-        await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
-        ]);
+      const [
+        hostsResponse,
+        purposesResponse,
+        departmentsResponse,
+        approvalStatusesResponse,
+      ] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
+      ]);
 
       setHosts(hostsResponse.data);
       setPurposes(purposesResponse.data);
@@ -128,7 +134,6 @@ const VisitorsSection: React.FC = () => {
     }
   };
 
-
   // Helper function to format time range from separate time_in and time_out
   const formatTimeRange = (timeIn: string | null, timeOut: string | null) => {
     if (!timeIn || !timeOut) return "Not scheduled";
@@ -142,6 +147,32 @@ const VisitorsSection: React.FC = () => {
 
     return `${formatTime(timeIn)} - ${formatTime(timeOut)}`;
   };
+
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:5001/ws/updates");
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
+    };
+
+    socket.onmessage = () => {
+      console.log("📡 Update received: refreshing visitors...");
+      fetchVisitors();
+    };
+
+    socket.onerror = (e) => {
+      console.error("❗WebSocket error", e);
+    };
+
+    socket.onclose = () => {
+      console.log("❌ WebSocket connection closed");
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
   useEffect(() => {
     fetchData();
     fetchVisitors();
@@ -156,7 +187,8 @@ const VisitorsSection: React.FC = () => {
 
       const approvalStatusMatches =
         selectedApprovalStatus === "All" ||
-        visitor.approvalStatus.toLowerCase() === selectedApprovalStatus.toLowerCase();
+        visitor.approvalStatus.toLowerCase() ===
+          selectedApprovalStatus.toLowerCase();
 
       return (
         (selectedHost === "All" || visitor.host === selectedHost) &&
@@ -227,7 +259,10 @@ const VisitorsSection: React.FC = () => {
         </div>
       </div>
 
-      <DashboardTable visitors={filteredVisitors} toggleVisitorStatus={toggleVisitorStatus} />
+      <DashboardTable
+        visitors={filteredVisitors}
+        toggleVisitorStatus={toggleVisitorStatus}
+      />
     </div>
   );
 };

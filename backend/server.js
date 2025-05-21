@@ -8,7 +8,6 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs-timezone-iana-plugin");
 const fastify = Fastify({ logger: true });
-const websocket = require("@fastify/websocket");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -909,7 +908,12 @@ fastify.put("/visits/:id/approval", async (request, reply) => {
       "UPDATE visits SET approval_status_id = ? WHERE id = ?",
       [statusId, visitId],
     );
-
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        // 1 means OPEN
+        socket.send("update");
+      }
+    });
     return reply.send({ message: "Approval status updated successfully" });
   } catch (error) {
     fastify.log.error(error);

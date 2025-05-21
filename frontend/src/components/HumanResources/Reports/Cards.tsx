@@ -123,7 +123,7 @@ const EmployeeReportCards: React.FC<ReportCardsProps> = ({
   }, [employees, searchQuery, selectedDepartment]);
 
   return (
-    <div className="relative z-20 bg-white p-4 overflow-y-auto">
+    <div className="relative bg-white p-4 overflow-y-auto">
       {isModalOpen && (
         <>
           <div

@@ -22,11 +22,30 @@ interface VisitorWithDropdown extends Visitor {
 
 interface VisitorCardProps {
   visitor: VisitorWithDropdown;
+  fetchVisitors: () => void;
 }
 
-const VisitorCard: React.FC<VisitorCardProps> = ({ visitor }) => {
+const VisitorCard: React.FC<VisitorCardProps> = ({
+  visitor,
+  fetchVisitors,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] = useState(false);
+  const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] =
+    useState(false);
+  const [status, setStatus] = useState(visitor.approval_status);
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visits/${visitor.id}/approval`,
+        { statusName: newStatus },
+      );
+      setStatus(newStatus);
+      fetchVisitors();
+    } catch (error) {
+      console.error("Failed to update status", error);
+      alert("Failed to update status");
+    }
+  };
   return (
     <>
       <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-5 w-full max-w-xs sm:max-w-sm">

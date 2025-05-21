@@ -41,48 +41,55 @@ const EmployeeVisitorsPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const fetchPurposes = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`,
-        );
-        const data = await res.json();
-        const names = data.map((p: { name: string }) => p.name);
-        setPurposes(names);
-      } catch (error) {
-        // console.error("Failed to fetch purposes:", error);
-        setErrorMessage("Failed to fetch purposes");
-      }
+    const socket = new WebSocket("ws://localhost:5001/ws/updates");
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
     };
 
-    const fetchApprovalStatuses = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`,
-        );
-        const data = await res.json();
-        const names = data.map((p: { name: string }) => p.name);
-        setApprovalStatuses(names);
-      } catch (error) {
-        console.error("Failed to fetch approval statuses:", error);
-      }
+    socket.onmessage = () => {
+      console.log("📡 Update received: refreshing visitors...");
+      fetchVisitors();
     };
 
-    fetchPurposes();
-    fetchApprovalStatuses();
+    socket.onerror = (e) => {
+      console.error("❗WebSocket error", e);
+    };
+
+    socket.onclose = () => {
+      console.log("❌ WebSocket connection closed");
+    };
+
+    return () => {
+      socket.close();
+    };
   }, []);
 
-  const handleFilterChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    filterType: string,
-  ) => {
-    const value = event.target.value;
-    if (filterType === "purpose") setSelectedPurpose(value);
-    if (filterType === "approvalStatus") setSelectedApprovalStatus(value);
+  const fetchPurposes = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`,
+      );
+      const data = await res.json();
+      const names = data.map((p: { name: string }) => p.name);
+      setPurposes(names);
+    } catch (error) {
+      // console.error("Failed to fetch purposes:", error);
+      setErrorMessage("Failed to fetch purposes");
+    }
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+  const fetchApprovalStatuses = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`,
+      );
+      const data = await res.json();
+      const names = data.map((p: { name: string }) => p.name);
+      setApprovalStatuses(names);
+    } catch (error) {
+      console.error("Failed to fetch approval statuses:", error);
+    }
   };
   const fetchVisitors = async () => {
     try {
@@ -126,8 +133,25 @@ const EmployeeVisitorsPage: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchPurposes();
+    fetchApprovalStatuses();
     fetchVisitors();
   }, []);
+
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+    filterType: string,
+  ) => {
+    const value = event.target.value;
+    if (filterType === "purpose") setSelectedPurpose(value);
+    if (filterType === "approvalStatus") setSelectedApprovalStatus(value);
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+
 
   useEffect(() => {
     let filtered = allVisitors;

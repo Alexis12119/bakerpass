@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
 import HumanResourcesProfile from "@/components/HumanResources/Modals/HumanResourcesProfile";
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -32,6 +33,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     firstName: string;
     lastName: string;
   } | null>(null);
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -46,9 +48,14 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+    setIsConfirmLogoutOpen(false);
+  };
 
   return (
-    <div className="sticky top-0 bg-white z-2) p-4 shadow-sm flex justify-between items-center mb-8">
+    <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">
       <button onClick={toggleSidebar} className="text-[#1C274C] bg-transparent">
         {isSidebarOpen ? (
           <XMarkIcon className="h-6 w-6" />
@@ -59,7 +66,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       <div className="flex items-center space-x-4">
         <div className="relative">
           {isProfileModalOpen && (
-            <div className="fixed inset-0 backdrop-blur-md z-20"></div>
+            <div className="fixed inset-0 backdrop-blur-md z-10"></div>
           )}
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -135,8 +142,8 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
                     </div>
                   </li>
                   <li>
-                    <Link
-                      href="/login"
+                    <li
+                      onClick={() => setIsConfirmLogoutOpen(true)}
                       className="block px-4 py-2 hover:bg-gray-100 text-[#1C274C] text-sm text-center font-semibold"
                     >
                       <div className="flex items-center flex-row space-x-2 ml-13">
@@ -157,10 +164,17 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
                         </svg>
                         Logout
                       </div>
-                    </Link>
+                    </li>
                   </li>
                 </ul>
               </div>
+            )}
+            {isConfirmLogoutOpen && (
+              <ConfirmationModal
+                message="Are you sure you want to log out?"
+                onConfirm={handleLogout}
+                onCancel={() => setIsConfirmLogoutOpen(false)}
+              />
             )}
             {/* Profile Modal */}
             <HumanResourcesProfile
