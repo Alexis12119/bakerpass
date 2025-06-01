@@ -13,7 +13,7 @@ dayjs.extend(timezone);
 
 // Register CORS
 fastify.register(cors, {
-  origin: "http://localhost:3000", // Or '*' to allow all origins (not recommended for production)
+  origin: "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
 });
 fastify.register(require("@fastify/formbody"));
