@@ -16,6 +16,23 @@ const LoginPage = () => {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
 
+  const roleToBasePath = (role: string): string => {
+    switch (role) {
+      case "Human Resources":
+        return "hr";
+      case "Security":
+        return "security";
+      case "Employee":
+        return "employee";
+      case "Visitor":
+        return "visitor";
+      case "Nurse":
+        return "nurse";
+      default:
+        return "login";
+    }
+  };
+
   const handleSignIn = async (email: string, password: string) => {
     if (!email || !password) {
       setErrorMessage("All fields are required!");
@@ -29,28 +46,15 @@ const LoginPage = () => {
       );
 
       const { token } = response.data;
-
-      // Save token and user info in localStorage
-      localStorage.setItem("token", token);
       const decoded: { role: string } = jwtDecode(token);
+      const basePath = roleToBasePath(decoded.role);
 
-      // Redirect by role
-      switch (decoded.role) {
-        case "Human Resources":
-          router.push("/hr");
-          break;
-        case "Security":
-          router.push("/security");
-          break;
-        case "Employee":
-          router.push("/employee");
-          break;
-        case "Visitor":
-          router.push("/visitor");
-          break;
-        default:
-          router.push("/nurse");
-      }
+      // Save only in sessionStorage (per tab)
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("role", basePath);
+      sessionStorage.setItem("lastValidRoute", `/${basePath}`);
+
+      router.push(`/${basePath}`);
     } catch (error: any) {
       setErrorMessage(error?.response?.data?.message || "Login failed");
     }

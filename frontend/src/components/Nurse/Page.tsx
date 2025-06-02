@@ -103,7 +103,7 @@ const NursePage: React.FC = () => {
     if (!selectedVisitor) return;
 
     try {
-      const nurse = JSON.parse(localStorage.getItem("user") || "{}");
+      const nurse = JSON.parse(sessionStorage.getItem("user") || "{}");
       const nurseId = nurse?.id;
 
       if (!nurseId) {

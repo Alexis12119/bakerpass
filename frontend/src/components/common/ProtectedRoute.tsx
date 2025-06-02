@@ -23,9 +23,13 @@ export default function ProtectedRoute({
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/login");
+    const token = sessionStorage.getItem("token");
+    const role = sessionStorage.getItem("role");
+    const baseRoute = window.location.pathname.split("/")[1];
+
+    if (!token || !role || role !== baseRoute) {
+      const fallback = sessionStorage.getItem("lastValidRoute") || "/login";
+      router.replace(fallback);
       return;
     }
 
@@ -42,7 +46,7 @@ export default function ProtectedRoute({
 
         if (user.role !== allowedRole) {
           const fallback =
-            localStorage.getItem("lastValidRoute") ||
+            sessionStorage.getItem("lastValidRoute") ||
             roleToRouteMap[user.role] ||
             "/login";
           router.replace(fallback);
@@ -51,8 +55,7 @@ export default function ProtectedRoute({
         }
       } catch (err) {
         console.error("Token verification failed", err);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        sessionStorage.clear();
         router.replace("/login");
       }
     };

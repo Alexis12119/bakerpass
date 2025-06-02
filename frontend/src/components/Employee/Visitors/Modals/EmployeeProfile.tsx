@@ -110,7 +110,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   useEffect(() => {
     // Ensure this only runs in the client-side
     if (typeof window !== "undefined") {
-      const user = localStorage.getItem("user");
+      const user = sessionStorage.getItem("user");
       if (user) {
         const parsedUser = JSON.parse(user);
         setEmployeeId(parsedUser.id.toString());

@@ -93,7 +93,7 @@ const EmployeeVisitorsPage: React.FC = () => {
   };
   const fetchVisitors = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const user = JSON.parse(sessionStorage.getItem("user") || "{}");
       const employeeId = user?.id;
 
       const response = await axios.get(

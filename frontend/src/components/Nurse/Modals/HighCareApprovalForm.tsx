@@ -228,9 +228,9 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
             Approved by:{" "}
             <span className="font-semibold">
               {typeof window !== "undefined"
-                ? JSON.parse(localStorage.getItem("user") || "{}")?.firstName +
+                ? JSON.parse(sessionStorage.getItem("user") || "{}")?.firstName +
                   " " +
-                  JSON.parse(localStorage.getItem("user") || "{}")?.lastName
+                  JSON.parse(sessionStorage.getItem("user") || "{}")?.lastName
                 : ""}
             </span>
           </div>

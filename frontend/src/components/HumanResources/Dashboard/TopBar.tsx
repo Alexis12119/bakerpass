@@ -38,7 +38,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (token) {
         try {
           const decoded = jwtDecode(token) as {
@@ -46,7 +46,6 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             firstName: string;
             lastName: string;
             role: string;
-            // add any other fields you have in your token payload
           };
           setUser({
             id: decoded.id,
@@ -57,7 +56,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         } catch (error) {
           console.error("Invalid token:", error);
           setUser(null);
-          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
         }
       } else {
         setUser(null);
@@ -71,7 +70,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
