@@ -149,7 +149,7 @@ const VisitorsSection: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:5001/ws/updates");
+    const socket = new WebSocket(`${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`);
 
     socket.onopen = () => {
       console.log("✅ WebSocket connected");
