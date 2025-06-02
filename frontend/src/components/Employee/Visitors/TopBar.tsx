@@ -4,6 +4,7 @@ import Image from "next/image";
 import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import EmployeeProfileModal from "@/components/Employee/Visitors/Modals/EmployeeProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { jwtDecode } from "jwt-decode";
 
 interface Employee {
   id: string;
@@ -28,15 +29,35 @@ const TopBar = () => {
     department: string;
   } | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
-
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded = jwtDecode(token) as {
+            id: number;
+            firstName: string;
+            lastName: string;
+            role: string;
+            // add any other fields you have in your token payload
+          };
+          setUser({
+            id: decoded.id,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            role: decoded.role,
+          });
+        } catch (error) {
+          console.error("Invalid token:", error);
+          setUser(null);
+          localStorage.removeItem("token");
+        }
+      } else {
+        setUser(null);
       }
     }
   }, []);
+
   const visitor: EmployeeWithDropdown = {
     id: user?.id || "",
     name: user?.firstName + " " + user?.lastName || "Guest",
@@ -45,10 +66,12 @@ const TopBar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
   };
+
   return (
     <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">
       <Image

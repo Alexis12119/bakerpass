@@ -7,6 +7,7 @@ import Image from "next/image";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const LoginPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -24,20 +25,17 @@ const LoginPage = () => {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/login`,
-        {
-          email,
-          password,
-        },
+        { email, password },
       );
 
-      const user = response.data;
+      const { token } = response.data;
 
-      // Save user to localStorage
-      localStorage.setItem("user", JSON.stringify(user));
-      console.log(user);
+      // Save token and user info in localStorage
+      localStorage.setItem("token", token);
+      const decoded: { role: string } = jwtDecode(token);
 
-      // Redirect based on role returned by backend
-      switch (user.role) {
+      // Redirect by role
+      switch (decoded.role) {
         case "Human Resources":
           router.push("/hr");
           break;
@@ -51,20 +49,10 @@ const LoginPage = () => {
           router.push("/visitor");
           break;
         default:
-          router.push("/nurse"); // fallback
-          break;
+          router.push("/nurse");
       }
     } catch (error: any) {
-      if (error.response) {
-        console.error("Login failed:", error.response.data.message);
-        setErrorMessage(error.response.data.message || "Invalid credentials.");
-      } else if (error.request) {
-        console.error("No response from server.");
-        setErrorMessage("No response from server. Please try again later.");
-      } else {
-        console.error("Login error:", error.message);
-        setErrorMessage("An unexpected error occurred. Please try again.");
-      }
+      setErrorMessage(error?.response?.data?.message || "Login failed");
     }
   };
 

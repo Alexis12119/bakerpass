@@ -1,5 +1,10 @@
 import NursePage from "@/components/Nurse/Page";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 export default function Home() {
-  return <NursePage />;
+  return (
+    <ProtectedRoute allowedRole="Nurse">
+      <NursePage />;
+    </ProtectedRoute>
+  );
 }

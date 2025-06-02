@@ -5,6 +5,7 @@ import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import NewVisitModal from "@/components/Security/Modals/NewVisit";
 import SecurityProfileModal from "@/components/Security/Modals/SecurityProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { jwtDecode } from "jwt-decode";
 
 interface Security {
   id: string;
@@ -32,19 +33,42 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded = jwtDecode(token) as {
+            id: number;
+            firstName: string;
+            lastName: string;
+            role: string;
+            // add any other fields you have in your token payload
+          };
+          setUser({
+            id: decoded.id,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            role: decoded.role,
+          });
+        } catch (error) {
+          console.error("Invalid token:", error);
+          setUser(null);
+          localStorage.removeItem("token");
+        }
+      } else {
+        setUser(null);
       }
     }
   }, []);
+
   const security: SecurityWithDropdown = {
     id: user?.id || "",
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
+
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
   };

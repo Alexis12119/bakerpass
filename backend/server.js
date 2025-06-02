@@ -13,7 +13,7 @@ dayjs.extend(timezone);
 
 // Register CORS
 fastify.register(cors, {
-  origin: "http://localhost:3000",
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
 });
 fastify.register(require("@fastify/formbody"));
@@ -21,11 +21,35 @@ fastify.register(require("@fastify/websocket"), {
   options: { maxPayload: 1048576 },
 });
 
+fastify.register(require("@fastify/jwt"), {
+  secret: "supersecret",
+});
+
 const clients = new Set();
 
+fastify.decorate("authenticate", async (request, reply) => {
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.status(401).send({ message: "Unauthorized" });
+  }
+});
+
+fastify.get(
+  "/auth/verify",
+  { preHandler: [fastify.authenticate] },
+  async (request, reply) => {
+    return { user: request.user };
+  },
+);
 fastify.register(async function (fastify) {
   fastify.get("/ws/updates", { websocket: true }, (socket, req) => {
     clients.add(socket);
+
+    if (!req.headers.origin || req.headers.origin !== "http://localhost:3000") {
+      socket.close();
+      return;
+    }
 
     socket.on("close", () => {
       clients.delete(socket);
@@ -147,50 +171,25 @@ fastify.post("/login", async (request, reply) => {
           return reply.status(401).send({ message: "Invalid password" });
         }
 
-        // Customize response based on the role
-        if (role === "Visitor") {
-          return reply.status(200).send({
-            message: "Login successful",
+        // Fastify login route (server)
+        const token = fastify.jwt.sign(
+          {
             id: user.id,
-            email: user.email,
+            role: role,
             firstName: user.firstName,
             lastName: user.lastName,
-            contactNumber: user.contactNumber,
-            address: user.address,
-            role,
-          });
-        } else if (role === "Employee") {
-          return reply.status(200).send({
-            message: "Login successful",
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            department: user.department,
-            role,
-          });
-        } else if (role === "Nurse") {
-          return reply.status(200).send({
-            message: "Login successful",
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role,
-          });
-        } else {
-          return reply.status(200).send({
-            message: "Login successful",
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role,
-          });
-        }
+          },
+          { expiresIn: "1h" },
+        );
+        console.log("token", token);
+
+        return reply.status(200).send({
+          message: "Login successful",
+          token,
+        });
       }
     }
 
-    // No matching user found in any table
     return reply.status(401).send({ message: "Invalid email or password" });
   } catch (error) {
     fastify.log.error(error);
@@ -354,7 +353,11 @@ fastify.post("/forgot", async (request, reply) => {
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
-    otpStore[email] = otp;
+
+    otpStore[email] = {
+      code: otp,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+    };
 
     const mailOptions = {
       from: `"Franklin Baker Appointment System" <${process.env.EMAIL_USER}>`,
@@ -395,19 +398,30 @@ Franklin Baker Appointment System Team`,
     return reply.status(500).send({ message: "Error sending OTP." });
   }
 });
+
 // Verify OTP
 fastify.post("/verify-otp", async (request, reply) => {
   const { email, otp } = request.body;
 
-  if (!otpStore[email]) {
+  const record = otpStore[email];
+
+  if (!record) {
     return reply.status(400).send({ message: "OTP expired or not requested." });
   }
 
-  if (otpStore[email] !== otp) {
+  if (Date.now() > record.expiresAt) {
+    delete otpStore[email]; // Clean up expired entry
+    return reply
+      .status(400)
+      .send({ message: "OTP has expired. Please request a new one." });
+  }
+
+  if (record.code !== otp) {
     return reply.status(400).send({ message: "Invalid OTP." });
   }
 
-  delete otpStore[email];
+  delete otpStore[email]; // Clean up after successful verification
+
   return reply.send({ message: "OTP verified. Proceed to reset password." });
 });
 

@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import HumanResourcesProfile from "@/components/HumanResources/Modals/HumanResourcesProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { jwtDecode } from "jwt-decode";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -37,19 +38,41 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded = jwtDecode(token) as {
+            id: number;
+            firstName: string;
+            lastName: string;
+            role: string;
+            // add any other fields you have in your token payload
+          };
+          setUser({
+            id: decoded.id,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            role: decoded.role,
+          });
+        } catch (error) {
+          console.error("Invalid token:", error);
+          setUser(null);
+          localStorage.removeItem("token");
+        }
+      } else {
+        setUser(null);
       }
     }
   }, []);
+
   const HumanResources: HumanResourcesWithDropdown = {
     id: user?.id || "",
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
   };
