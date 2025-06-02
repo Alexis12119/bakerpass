@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
-import NewVisitModal from "@/components/Nurse/Modals/NewVisit";
 import SecurityProfileModal from "@/components/Nurse/Modals/SecurityProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
@@ -23,9 +21,10 @@ const TopBar = () => {
   const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [user, setUser] = useState<{
-    id: string;
+    id: number;
     firstName: string;
     lastName: string;
+    role: string;
   } | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
 
@@ -66,6 +65,8 @@ const TopBar = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
+    sessionStorage.removeItem("lastValidRoute");
+    sessionStorage.removeItem("role");
     setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);

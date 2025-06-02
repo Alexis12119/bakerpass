@@ -71,6 +71,8 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   };
   const handleLogout = () => {
     sessionStorage.removeItem("token");
+    sessionStorage.removeItem("lastValidRoute");
+    sessionStorage.removeItem("role");
     setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);

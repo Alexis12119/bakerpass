@@ -14,21 +14,48 @@ const DashboardCards: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
 
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/visit-stats`,
+      );
+      setStats(response.data);
+    } catch (error) {
+      console.error("Failed to fetch visit stats", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/visit-stats`,
-        );
-        setStats(response.data);
-      } catch (error) {
-        console.error("Failed to fetch visit stats", error);
-      } finally {
-        setLoading(false);
-      }
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const socket = new WebSocket(
+      `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
+    );
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
     };
 
-    fetchStats();
+    socket.onmessage = (event) => {
+      console.log("📡 Update received: refreshing dashboard stats...");
+      fetchStats(); // trigger a refresh of the dashboard cards
+    };
+
+    socket.onerror = (e) => {
+      console.error("❗WebSocket error", e);
+    };
+
+    socket.onclose = () => {
+      console.log("❌ WebSocket connection closed");
+    };
+
+    return () => {
+      socket.close();
+    };
   }, []);
 
   const cardConfig = [

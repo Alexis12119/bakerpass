@@ -633,6 +633,12 @@ fastify.post("/visits", async (request, reply) => {
         selectedTimeSlot,
       ],
     );
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        // 1 means OPEN
+        socket.send("update");
+      }
+    });
 
     const visitId = visitResult.insertId;
 
@@ -846,6 +852,12 @@ fastify.put("/visitors/:id/status", async (request, reply) => {
     }
 
     await pool.execute(query, values);
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        // 1 means OPEN
+        socket.send("update");
+      }
+    });
 
     return reply.send({
       success: true,
@@ -1129,6 +1141,11 @@ fastify.put("/visitors/:id/approval", async (request, reply) => {
     if (updateResult.affectedRows === 0) {
       return reply.code(404).send({ error: "No visit found for this visitor" });
     }
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        socket.send("update");
+      }
+    });
 
     reply.send({ message: `Visitor ${status.toLowerCase()} successfully.` });
   } catch (err) {

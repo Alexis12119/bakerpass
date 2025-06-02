@@ -3,7 +3,7 @@ import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface Visitor {
-  id: number;
+  id: string;
   name: string;
   email: string;
   contactNumber?: string | null;
@@ -44,20 +44,26 @@ const VisitorProfileModal: React.FC<VisitorProfileModalProps> = ({
 
         {/* Content */}
         <div className="p-5 text-center text-black">
-          <h2 className="text-xl font-bold">
-            {visitor.name}
-          </h2>
+          <h2 className="text-xl font-bold">{visitor.name}</h2>
 
           <div className="mt-3 space-y-2 text-sm text-left">
-            <p><strong>Email:</strong> {visitor.email}</p>
+            <p>
+              <strong>Email:</strong> {visitor.email}
+            </p>
             {visitor.contactNumber && (
-              <p><strong>Contact Number:</strong> {visitor.contactNumber}</p>
+              <p>
+                <strong>Contact Number:</strong> {visitor.contactNumber}
+              </p>
             )}
             {visitor.address && (
-              <p><strong>Address:</strong> {visitor.address}</p>
+              <p>
+                <strong>Address:</strong> {visitor.address}
+              </p>
             )}
             {visitor.otp && (
-              <p><strong>OTP:</strong> {visitor.otp}</p>
+              <p>
+                <strong>OTP:</strong> {visitor.otp}
+              </p>
             )}
           </div>
         </div>

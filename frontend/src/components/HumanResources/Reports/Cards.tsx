@@ -8,7 +8,6 @@ interface Employee {
   id: string;
   name: string;
   department: string;
-  rating: number;
   total_visitors: number;
   avg_visitors: number;
 }
@@ -50,8 +49,6 @@ const EmployeeCard: React.FC<
               {employee.avg_visitors} visitor
               {employee.avg_visitors !== 1 ? "s" : ""}/day
             </div>
-            <Star size={18} className="text-yellow-500 mr-1" />
-            <div className="text-white">{employee.rating}</div>
           </div>
         </div>
         <button

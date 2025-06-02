@@ -7,6 +7,7 @@ import axios from "axios";
 
 interface Visitor {
   id: string;
+  email: string;
   name: string;
   purpose: string;
   host: string;
