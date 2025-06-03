@@ -96,8 +96,8 @@ const HumanResourcesReportSection: React.FC = () => {
       };
 
       socket.onmessage = (event) => {
-        console.log("📡 Update received: refreshing dashboard stats...");
-        fetchStats();
+        console.log("📡 Update received: refreshing employee stats...");
+        fetchEmployees();
       };
 
       socket.onerror = (e) => {

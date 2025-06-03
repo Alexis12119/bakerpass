@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import SearchFilters from "@/components/HumanResources/Dashboard/SearchFilters";
 import DashboardTable from "@/components/HumanResources/Dashboard/Table";
 import axios from "axios";
+import { format, addDays, subDays } from "date-fns";
 interface Visitor {
   id: string;
   name: string;
@@ -21,10 +22,9 @@ interface VisitorWithDropdown extends Visitor {
 }
 
 const VisitorsSection: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    return format(today, "yyyy-MM-dd");
   });
 
   const [approvalStatuses, setApprovalStatuses] = useState<
@@ -39,10 +39,11 @@ const VisitorsSection: React.FC = () => {
   const [selectedHost, setSelectedHost] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
-  const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
-  const [filteredVisitors, setFilteredVisitors] = useState<
-    VisitorWithDropdown[]
-  >([]);
+  // const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
+  // const [filteredVisitors, setFilteredVisitors] = useState<
+  //   VisitorWithDropdown[]
+  // >([]);
+  const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const fetchData = async () => {
     try {
@@ -67,10 +68,58 @@ const VisitorsSection: React.FC = () => {
     }
   };
 
+  const mapVisitorsData = (visitors: any[]) => {
+    return visitors.map((visitor) => ({
+      id: visitor.visit_id,
+      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      purpose: visitor.purpose,
+      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      department: visitor.employeeDepartment,
+      expectedTime:
+        visitor.expected_time ||
+        formatTimeRange(visitor.time_in, visitor.time_out),
+      timeIn: visitor.time_in || null,
+      timeOut: visitor.time_out || null,
+      status: visitor.status,
+      approvalStatus: visitor.approval_status,
+      isDropdownOpen: false,
+      isHighCare: visitor.is_high_care ?? undefined,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchVisitorsByDate = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
+        );
+        const data = await res.json();
+
+        const mappedVisitors = mapVisitorsData(data);
+        setVisitors(mappedVisitors); // <-- set visitors here
+      } catch (error) {
+        console.error("Error fetching visitors by date:", error);
+        setVisitors([]); // clear fallback
+      }
+    };
+
+    fetchVisitorsByDate();
+  }, [currentDate]);
+  const handlePreviousDate = () => {
+    setCurrentDate((prev: string) =>
+      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
+  const handleNextDate = () => {
+    setCurrentDate((prev: string) =>
+      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
   const toggleVisitorStatus = async (visitorId: string) => {
     try {
       // First, find the current visitor and status
-      const currentVisitor = allVisitors.find((v) => v.id === visitorId);
+      const currentVisitor = visitors.find((v) => v.id === visitorId);
       if (!currentVisitor) return;
 
       // Determine the current status and decide on the next status
@@ -106,29 +155,13 @@ const VisitorsSection: React.FC = () => {
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors`;
+        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`; // <-- Fix here
 
       const response = await axios.get(endpoint);
 
-      const visitorsData = response.data.map((visitor: any) => ({
-        id: visitor.visit_id,
-        name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-        purpose: visitor.purpose,
-        host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-        department: visitor.employeeDepartment,
-        expectedTime:
-          visitor.expected_time ||
-          formatTimeRange(visitor.time_in, visitor.time_out),
-        timeIn: visitor.time_in || null,
-        timeOut: visitor.time_out || null,
-        status: visitor.status,
-        approvalStatus: visitor.approval_status,
-        isDropdownOpen: false,
-        isHighCare: visitor.is_high_care ?? undefined,
-      }));
+      const visitorsData = mapVisitorsData(response.data);
 
-      setAllVisitors(visitorsData);
-      setFilteredVisitors(visitorsData);
+      setVisitors(visitorsData);
     } catch (error) {
       console.error("Error fetching visitors:", error);
     }
@@ -195,12 +228,11 @@ const VisitorsSection: React.FC = () => {
     fetchVisitors();
   }, []);
 
-  useEffect(() => {
-    let filtered = allVisitors.filter((visitor) => {
-      // Purpose matching logic now comparing strings directly
+  const filteredVisitors = useMemo(() => {
+    let filtered = visitors.filter((visitor) => {
       const purposeMatches =
         selectedPurpose === "All" ||
-        visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase(); // Compare purpose name directly
+        visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase();
 
       const approvalStatusMatches =
         selectedApprovalStatus === "All" ||
@@ -221,7 +253,7 @@ const VisitorsSection: React.FC = () => {
       filtered = filtered.filter((visitor) =>
         [
           visitor.name,
-          visitor.purpose, // Directly using the purpose name here
+          visitor.purpose,
           visitor.host,
           visitor.department,
           visitor.status,
@@ -230,14 +262,13 @@ const VisitorsSection: React.FC = () => {
       );
     }
 
-    setFilteredVisitors(filtered);
+    return filtered;
   }, [
+    visitors,
     searchQuery,
     selectedHost,
     selectedPurpose,
     selectedDepartment,
-    allVisitors,
-    departments,
     selectedApprovalStatus,
   ]);
 
@@ -248,13 +279,16 @@ const VisitorsSection: React.FC = () => {
           <h1 className="!text-xl !md:text-2xl font-bold text-black">
             VISITORS ({filteredVisitors.length})
           </h1>
-
           <div className="flex items-center space-x-2">
-            <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
-            <span className="text-gray-500" suppressHydrationWarning>
-              {currentDate}
+            <button onClick={handlePreviousDate}>
+              <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
+            </button>
+            <span className="text-gray-500">
+              {format(new Date(currentDate), "MMMM dd, yyyy")}
             </span>
-            <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
+            <button onClick={handleNextDate}>
+              <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
+            </button>
           </div>
 
           <SearchFilters

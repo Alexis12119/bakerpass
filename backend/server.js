@@ -1390,8 +1390,63 @@ fastify.get("/hr/visit-stats", async (req, reply) => {
   };
 });
 
-fastify.ready().then(() => {
-  console.log(fastify.printRoutes());
+fastify.get("/visitors-date", async (request, reply) => {
+  let { date, employeeId } = request.query;
+
+  // Default to today if date is not provided
+  if (!date) {
+    date = new Date().toISOString().slice(0, 10); // yyyy-MM-dd format
+  }
+
+  try {
+    let query = `
+      SELECT 
+        v.id AS visit_id, 
+        v.visit_date, 
+        v.visitor_id, 
+        v.visited_employee_id,
+        p.name AS purpose, 
+        v.time_in,
+        v.time_out,
+        v.expected_time,
+        vs.name AS status,
+        vi.firstName AS visitorFirstName, 
+        vi.lastName AS visitorLastName, 
+        vi.email, 
+        e.firstName AS employeeFirstName, 
+        e.lastName AS employeeLastName,
+        d.name AS employeeDepartment,
+        a.name AS approval_status
+      FROM visits v
+      JOIN visitors vi ON v.visitor_id = vi.id
+      JOIN employees e ON v.visited_employee_id = e.id
+      JOIN purposes p ON v.purposeId = p.id
+      JOIN departments d ON e.departmentId = d.id
+      JOIN approval_status a ON v.approval_status_id = a.id
+      JOIN visit_statuses vs ON v.status_id = vs.id
+      WHERE v.visit_date = ? 
+        AND NOT EXISTS (
+          SELECT 1
+          FROM high_care_requests hcr
+          WHERE hcr.visit_id = v.id AND hcr.is_approved = FALSE
+        )
+    `;
+
+    const params = [date];
+
+    if (employeeId) {
+      query += " AND v.visited_employee_id = ?";
+      params.push(employeeId);
+    }
+
+    query += " ORDER BY v.visit_date DESC, v.id DESC;";
+
+    const [rows] = await pool.execute(query, params);
+    return reply.send(rows);
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ message: "Internal Server Error" });
+  }
 });
 
 // Start Server

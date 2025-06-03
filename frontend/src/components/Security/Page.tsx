@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import TopBar from "@/components/Security/TopBar";
 import Filters from "@/components/Security/Filters";
@@ -8,6 +8,7 @@ import SecurityTable from "@/components/Security/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
+import { format, addDays, subDays } from "date-fns";
 
 interface Visitor {
   id: string;
@@ -27,10 +28,9 @@ interface VisitorWithDropdown extends Visitor {
 }
 
 const SecurityGuardPage: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    return format(today, "yyyy-MM-dd");
   });
 
   const [approvalStatuses, setApprovalStatuses] = useState<
@@ -44,10 +44,7 @@ const SecurityGuardPage: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
-  const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
-  const [filteredVisitors, setFilteredVisitors] = useState<
-    VisitorWithDropdown[]
-  >([]);
+  const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -60,12 +57,61 @@ const SecurityGuardPage: React.FC = () => {
     "Approved" | "Blocked" | "Cancelled" | null
   >(null);
 
+  const mapVisitorsData = (visitors: any[]) => {
+    return visitors.map((visitor) => ({
+      id: visitor.visit_id,
+      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      purpose: visitor.purpose,
+      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      department: visitor.employeeDepartment,
+      expectedTime:
+        visitor.expected_time ||
+        formatTimeRange(visitor.time_in, visitor.time_out),
+      timeIn: visitor.time_in || null,
+      timeOut: visitor.time_out || null,
+      status: visitor.status,
+      approvalStatus: visitor.approval_status,
+      isDropdownOpen: false,
+      isHighCare: visitor.is_high_care ?? undefined,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchVisitorsByDate = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
+        );
+        const data = await res.json();
+
+        const mappedVisitors = mapVisitorsData(data);
+        setVisitors(mappedVisitors); // <-- set visitors here
+      } catch (error) {
+        console.error("Error fetching visitors by date:", error);
+        setVisitors([]); // clear fallback
+      }
+    };
+
+    fetchVisitorsByDate();
+  }, [currentDate]);
+  const handlePreviousDate = () => {
+    setCurrentDate((prev: string) =>
+      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
+  const handleNextDate = () => {
+    setCurrentDate((prev: string) =>
+      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
   const toggleVisitorStatus = async (
     visitorId: string,
     validIdTypeId: number,
   ) => {
     try {
-      const currentVisitor = allVisitors.find((v) => v.id === visitorId);
+      const currentVisitor = visitors.find((v) => v.id === visitorId);
       if (!currentVisitor) return;
 
       if (currentVisitor.status === "Checked Out") {
@@ -141,30 +187,13 @@ const SecurityGuardPage: React.FC = () => {
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors`;
-      console.log(endpoint);
+        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`; // <-- Fix here
 
       const response = await axios.get(endpoint);
 
-      const visitorsData = response.data.map((visitor: any) => ({
-        id: visitor.visit_id,
-        name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-        purpose: visitor.purpose,
-        host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-        department: visitor.employeeDepartment,
-        expectedTime:
-          visitor.expected_time ||
-          formatTimeRange(visitor.time_in, visitor.time_out),
-        timeIn: visitor.time_in || null,
-        timeOut: visitor.time_out || null,
-        status: visitor.status,
-        approvalStatus: visitor.approval_status,
-        isDropdownOpen: false,
-        isHighCare: visitor.is_high_care ?? undefined,
-      }));
+      const visitorsData = mapVisitorsData(response.data);
 
-      setAllVisitors(visitorsData);
-      setFilteredVisitors(visitorsData);
+      setVisitors(visitorsData);
     } catch (error) {
       console.error("Error fetching visitors:", error);
     }
@@ -251,8 +280,8 @@ const SecurityGuardPage: React.FC = () => {
     fetchApprovalStatuses();
   }, []);
 
-  useEffect(() => {
-    let filtered = allVisitors.filter((visitor) => {
+  const filteredVisitors = useMemo(() => {
+    let filtered = visitors.filter((visitor) => {
       const purposeMatches =
         selectedPurpose === "All" ||
         visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase();
@@ -285,14 +314,13 @@ const SecurityGuardPage: React.FC = () => {
       );
     }
 
-    setFilteredVisitors(filtered);
+    return filtered;
   }, [
+    visitors,
     searchQuery,
     selectedHost,
     selectedPurpose,
     selectedDepartment,
-    allVisitors,
-    departments,
     selectedApprovalStatus,
   ]);
 
@@ -306,11 +334,15 @@ const SecurityGuardPage: React.FC = () => {
               VISITORS ({filteredVisitors.length})
             </h1>
             <div className="flex items-center space-x-2">
-              <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-500" suppressHydrationWarning>
-                {currentDate}
+              <button onClick={handlePreviousDate}>
+                <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
+              </button>
+              <span className="text-gray-500">
+                {format(new Date(currentDate), "MMMM dd, yyyy")}
               </span>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              <button onClick={handleNextDate}>
+                <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
+              </button>
             </div>
             <Filters
               searchQuery={searchQuery}

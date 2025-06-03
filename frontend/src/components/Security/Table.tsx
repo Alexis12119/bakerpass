@@ -16,7 +16,9 @@ interface Visitor {
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
 }
 
-function toTitleCase(str: string) {
+function toTitleCase(str?: string) {
+  if (!str) return ""; // Return empty string if str is undefined/null/empty
+
   return str.replace(
     /\w\S*/g,
     (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
@@ -100,12 +102,19 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                 `}
                 onClick={() => {
                   if (visitor.approvalStatus === "Approved") {
-                    if (visitor.status.toLowerCase() === "Checked In".toLowerCase() && !visitor.timeIn) {
+                    if (
+                      visitor.status.toLowerCase() ===
+                        "Checked In".toLowerCase() &&
+                      !visitor.timeIn
+                    ) {
                       setSelectedVisitor(visitor);
-                      setValidIdModalOpen(true); 
+                      setValidIdModalOpen(true);
                     } else if (
-                      visitor.status.toLowerCase() === "Ongoing".toLowerCase() ||
-                      (visitor.status.toLowerCase() === "Checked In".toLowerCase() && visitor.timeOut)
+                      visitor.status.toLowerCase() ===
+                        "Ongoing".toLowerCase() ||
+                      (visitor.status.toLowerCase() ===
+                        "Checked In".toLowerCase() &&
+                        visitor.timeOut)
                     ) {
                       onToggleStatus(visitor.id, 0); // or pass previously saved ID type if available
                     }
