@@ -89,4 +89,76 @@ class AuthProvider extends ChangeNotifier {
       return 'An error occurred: $e';
     }
   }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    notifyListeners();
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/forgot'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      notifyListeners();
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'role': data['role'],
+        };
+      } else {
+        final error = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': error['message'],
+        };
+      }
+    } catch (e) {
+      notifyListeners();
+      return {
+        'success': false,
+        'message': 'Something went wrong.',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String otp,
+    required String role,
+  }) async {
+    notifyListeners();
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'role': role,
+        }),
+      );
+
+      notifyListeners();
+
+      if (response.statusCode == 200) {
+        return {'success': true};
+      } else {
+        final error = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': error['message'],
+        };
+      }
+    } catch (e) {
+      notifyListeners();
+      return {
+        'success': false,
+        'message': 'Something went wrong.',
+      };
+    }
+  }
 }
