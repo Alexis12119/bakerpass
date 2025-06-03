@@ -147,6 +147,7 @@ fastify.post("/register", async (request, reply) => {
 // Login Endpoint
 fastify.post("/login", async (request, reply) => {
   const { email, password } = request.body;
+  console.log(email, password);
 
   const userTables = [
     { table: "visitors", role: "Visitor" },
@@ -181,10 +182,25 @@ fastify.post("/login", async (request, reply) => {
           { expiresIn: "1h" },
         );
 
-        return reply.status(200).send({
-          message: "Login successful",
-          token,
-        });
+        if (role === "Visitor") {
+          return reply.status(200).send({
+            message: "Login successful",
+            token,
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            contactNumber: user.contactNumber,
+            address: user.address,
+            role: role,
+          });
+        } else {
+          // For other roles, just send message and token
+          return reply.status(200).send({
+            message: "Login successful",
+            token,
+          });
+        }
       }
     }
 
@@ -1267,7 +1283,8 @@ fastify.get("/visitor-schedule", async (req, reply) => {
 
   const [rows] = await pool.execute(
     `
-    SELECT v.firstName AS host_name,
+    SELECT vs.id AS visit_id,
+           v.firstName AS host_name,
            d.name AS department,
            p.name AS purpose,
            ts.start_time,
@@ -1286,6 +1303,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     `,
     [email],
   );
+  console.log(rows);
 
   if (rows.length === 0) {
     return reply.code(404).send({ message: "No visit found" });
@@ -1298,7 +1316,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     time_in: rows[0].start_time,
     time_out: rows[0].end_time,
     approval_status: rows[0].approval_status,
-    qr_code_data: email,
+    qr_code_data: rows[0].visit_id, // Use visit id here instead of email
   };
 });
 

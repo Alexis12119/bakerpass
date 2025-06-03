@@ -10,7 +10,6 @@ class ApiService {
     final response =
         await http.get(Uri.parse('$baseUrl/employees?search=$search'));
 
-    print(response.body);
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       return data.map((e) => Employee.fromJson(e)).toList();

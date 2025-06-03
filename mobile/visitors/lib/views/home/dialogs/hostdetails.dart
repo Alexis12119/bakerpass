@@ -93,6 +93,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       _initializeModal();
     }
   }
+
   Future<void> _initializeModal() async {
     setState(() {
       visitPurposeId = null;

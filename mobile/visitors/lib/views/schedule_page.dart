@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'evaluate_page.dart';
@@ -20,18 +21,19 @@ class SchedulePage extends StatefulWidget {
 class _SchedulePageState extends State<SchedulePage> {
   Visit? visit;
   bool isLoading = true;
+  String? userEmail;
 
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   @override
   void initState() {
     super.initState();
-    fetchVisit();
+    loadUserEmailAndFetchVisit();
   }
 
-  Future<void> fetchVisit() async {
+  Future<void> fetchVisit(String email) async {
     try {
-      final response = await http.get(
-          Uri.parse('$baseUrl/visitor-schedule?email=alexis2@example.com'));
+      final response =
+          await http.get(Uri.parse('$baseUrl/visitor-schedule?email=$email'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -40,13 +42,11 @@ class _SchedulePageState extends State<SchedulePage> {
           isLoading = false;
         });
       } else if (response.statusCode == 404) {
-        // No visit found
         setState(() {
           visit = null;
           isLoading = false;
         });
       } else {
-        // Handle other errors
         print('Unexpected error: ${response.statusCode}');
         setState(() {
           visit = null;
@@ -58,6 +58,21 @@ class _SchedulePageState extends State<SchedulePage> {
       setState(() {
         visit = null;
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> loadUserEmailAndFetchVisit() async {
+    final prefs = await SharedPreferences.getInstance();
+    userEmail = prefs.getString('email');
+
+    if (userEmail != null && userEmail!.isNotEmpty) {
+      await fetchVisit(userEmail!);
+    } else {
+      // Handle the case when email is not found
+      setState(() {
+        isLoading = false;
+        visit = null;
       });
     }
   }
@@ -132,7 +147,7 @@ class _SchedulePageState extends State<SchedulePage> {
               child: Column(
                 children: [
                   QrImageView(
-                    data: visit!.qrCodeData,
+                    data: visit!.qrCodeData.toString(),
                     version: QrVersions.auto,
                     size: 120.0,
                     backgroundColor: Colors.white,

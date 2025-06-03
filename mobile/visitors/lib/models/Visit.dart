@@ -4,7 +4,7 @@ class Visit {
   final String purpose;
   final String timeIn;
   final String timeOut;
-  final String qrCodeData;
+  final int qrCodeData;
   final String approvalStatus;
 
   Visit({
@@ -24,7 +24,7 @@ class Visit {
       purpose: json['purpose'],
       timeIn: json['time_in'],
       timeOut: json['time_out'],
-      qrCodeData: json['qr_code_data'],
+      qrCodeData: json['qr_code_data'] as int,
       approvalStatus: json['approval_status'],
     );
   }

@@ -22,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
       _emailController.text,
       _passwordController.text,
     );
-    print(success);
 
     if (success) {
       Navigator.pushReplacement(

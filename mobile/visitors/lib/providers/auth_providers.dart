@@ -1,10 +1,11 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class AuthProvider extends ChangeNotifier {
-  final String baseUrl = 'http://127.0.0.1:5001';
+  final String baseUrl = dotenv.env['BASE_URL'] ?? '';
   bool _loading = false;
 
   bool get isLoading => _loading;
@@ -27,12 +28,8 @@ class AuthProvider extends ChangeNotifier {
       _loading = false;
       notifyListeners();
 
-      print(response.statusCode);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
-        print(data['id']);
-
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('userId', data['id']);

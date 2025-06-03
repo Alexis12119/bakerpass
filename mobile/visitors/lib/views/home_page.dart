@@ -29,7 +29,6 @@ class _HomePageState extends State<HomePage> {
     setState(() => _isLoading = true);
     try {
       final employees = await ApiService.fetchEmployees(search: _searchQuery);
-      print(employees);
       setState(() {
         _employees = employees;
         _isLoading = false;
@@ -218,7 +217,6 @@ class _HomePageState extends State<HomePage> {
                         itemCount: _employees.length,
                         itemBuilder: (context, index) {
                           final employee = _employees[index];
-                          print("Employee: ${employee.name}");
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: EmployeeCard(

@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import 'providers/auth_providers.dart';
 import 'views/login/login_page.dart';
 
-void main() {
-  dotenv.load(fileName: ".env");
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env"); // await this!
   runApp(const MyApp());
 }
 
