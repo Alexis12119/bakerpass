@@ -52,7 +52,7 @@ const ResetPasswordPage = () => {
       setSuccessMessage(response.data.message);
       router.push("/login");
     } catch (error) {
-      setErrorMessage("Something went wrong.");
+      setErrorMessage(error.response.data.message);
     }
   };
 

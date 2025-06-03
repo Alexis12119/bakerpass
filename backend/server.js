@@ -9,7 +9,7 @@ const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs-timezone-iana-plugin");
 const fastify = Fastify({ logger: true });
 const bcrypt = require("bcrypt");
-const SALT_ROUNDS = process.env.SALT_ROUNDS;
+const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
