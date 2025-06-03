@@ -17,6 +17,7 @@
     "@fastify/jwt": "^9.1.0",
     "@fastify/websocket": "^11.0.2",
     "@headlessui/react": "^2.2.3",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
     "dayjs-timezone-iana-plugin": "^0.1.0",

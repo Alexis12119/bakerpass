@@ -8,6 +8,8 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs-timezone-iana-plugin");
 const fastify = Fastify({ logger: true });
+const bcrypt = require("bcrypt");
+const SALT_ROUNDS = process.env.SALT_ROUNDS;
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -22,7 +24,7 @@ fastify.register(require("@fastify/websocket"), {
 });
 
 fastify.register(require("@fastify/jwt"), {
-  secret: "supersecret",
+  secret: process.env.JWT_KEY,
 });
 
 const clients = new Set();
@@ -94,14 +96,14 @@ fastify.post("/register", async (request, reply) => {
       return reply.status(400).send({ message: "Email already registered" });
     }
 
-    // Validate password
+    // Validate password length
     if (password.length < 8) {
       return reply.status(400).send({
         message: "Password must be at least 8 characters long.",
       });
     }
 
-    // If role is Employee, ensure departmentId is provided
+    // If role is Employee, validate departmentId
     if (role === "Employee") {
       if (!departmentId) {
         return reply
@@ -109,7 +111,6 @@ fastify.post("/register", async (request, reply) => {
           .send({ message: "Department ID is required for employees" });
       }
 
-      // Ensure departmentId is valid
       const [deptRows] = await pool.query(
         "SELECT name FROM departments WHERE id = ?",
         [departmentId],
@@ -120,16 +121,19 @@ fastify.post("/register", async (request, reply) => {
       }
     }
 
-    // Insert new user (departmentId only for Employee role)
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Insert user
     if (role === "Employee") {
       await pool.query(
         `INSERT INTO ${tableName} (email, password, firstName, lastName, departmentId) VALUES (?, ?, ?, ?, ?)`,
-        [email, password, firstName, lastName, departmentId],
+        [email, hashedPassword, firstName, lastName, departmentId],
       );
     } else {
       await pool.query(
-        `INSERT INTO ${tableName} (email, password, firstName, lastName) VALUES (?, ?, ?, ?, ?)`,
-        [email, password, firstName, lastName],
+        `INSERT INTO ${tableName} (email, password, firstName, lastName) VALUES (?, ?, ?, ?)`,
+        [email, hashedPassword, firstName, lastName],
       );
     }
 
@@ -162,11 +166,11 @@ fastify.post("/login", async (request, reply) => {
       if (rows.length > 0) {
         const user = rows[0];
 
-        if (user.password !== password) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
           return reply.status(401).send({ message: "Invalid password" });
         }
 
-        // Fastify login route (server)
         const token = fastify.jwt.sign(
           {
             id: user.id,
@@ -427,27 +431,41 @@ fastify.post("/reset", async (request, reply) => {
     return reply.status(400).send({ message: "Invalid role." });
   }
 
+  if (newPassword.length < 8) {
+    return reply
+      .status(400)
+      .send({ message: "Password must be at least 8 characters long." });
+  }
+
   try {
     const tableName = roleToTable[role];
-    // Check if the password isn't duplicated
+
+    // Fetch the existing user
     const [rows] = await pool.query(
-      `SELECT * FROM ${tableName} WHERE password = ?`,
-      [newPassword],
+      `SELECT * FROM ${tableName} WHERE email = ?`,
+      [email],
     );
 
-    // Check if the password isn't too short
-    if (newPassword.length < 8) {
+    if (rows.length === 0) {
+      return reply.status(404).send({ message: "User not found." });
+    }
+
+    const user = rows[0];
+
+    // Check if the new password is the same as the old one
+    const isSame = await bcrypt.compare(newPassword, user.password);
+    if (isSame) {
       return reply
         .status(400)
-        .send({ message: "Password must be at least 8 characters long." });
+        .send({ message: "New password must be different from the old one." });
     }
 
-    if (rows.length > 0) {
-      return reply.status(400).send({ message: "Password already exists." });
-    }
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
+    // Update the password
     await pool.query(`UPDATE ${tableName} SET password = ? WHERE email = ?`, [
-      newPassword,
+      hashedPassword,
       email,
     ]);
 

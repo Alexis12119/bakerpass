@@ -21,6 +21,8 @@ services:
     restart: always
     depends_on:
       - mysql
+    env_file:
+      - ./backend/.env.local
     environment:
       DB_HOST: mysql
       DB_USER: franklin
