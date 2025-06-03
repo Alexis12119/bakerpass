@@ -203,26 +203,43 @@ const SecurityGuardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = new WebSocket(`${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`);
+    let socket: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
+    let isUnmounted = false;
 
-    socket.onopen = () => {
-      console.log("✅ WebSocket connected");
+    const connect = () => {
+      socket = new WebSocket(
+        `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
+      );
+
+      socket.onopen = () => {
+        console.log("✅ WebSocket connected");
+      };
+
+      socket.onmessage = () => {
+        console.log("📡 Update received: refreshing visitors...");
+        fetchVisitors();
+      };
+
+      socket.onerror = (e) => {
+        console.error("❗WebSocket error", e);
+        socket.close(); // triggers `onclose`
+      };
+
+      socket.onclose = () => {
+        console.log("❌ WebSocket connection closed");
+        if (!isUnmounted) {
+          console.log("🔄 Attempting to reconnect in 5s...");
+          reconnectTimer = setTimeout(connect, 5000);
+        }
+      };
     };
 
-    socket.onmessage = () => {
-      console.log("📡 Update received: refreshing visitors...");
-      fetchVisitors();
-    };
-
-    socket.onerror = (e) => {
-      console.error("❗WebSocket error", e);
-    };
-
-    socket.onclose = () => {
-      console.log("❌ WebSocket connection closed");
-    };
+    connect();
 
     return () => {
+      isUnmounted = true;
+      clearTimeout(reconnectTimer);
       socket.close();
     };
   }, []);

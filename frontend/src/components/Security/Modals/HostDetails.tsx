@@ -34,7 +34,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   const [lastName, setLastName] = useState("");
   const [visitPurposeId, setVisitPurposeId] = useState<number | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
-  const [newVisitorId, setNewVisitorId] = useState<number | null>(null);
   const [visitPurposes, setVisitPurposes] = useState<
     { id: number; name: string }[]
   >([]);
@@ -107,18 +106,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   const [otherProhibited, setOtherProhibited] = useState("");
 
   useEffect(() => {
-    const fetchHighestVisitorId = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors/highest-id`,
-        );
-        const highestId = response.data.highestId;
-        setNewVisitorId(highestId + 1);
-      } catch (error) {
-        console.error("Error fetching highest visitor ID:", error);
-      }
-    };
-
     const fetchVisitPurposes = async () => {
       try {
         const response = await axios.get(
@@ -142,7 +129,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
     };
 
     if (isOpen) {
-      fetchHighestVisitorId();
       fetchVisitPurposes();
       fetchAvailableTimeSlots();
       // Reset states when modal opens
@@ -195,7 +181,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
 
     if (
       !selectedTime ||
-      !newVisitorId ||
       !firstName ||
       !lastName ||
       visitPurposeId === null ||

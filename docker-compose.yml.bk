@@ -26,9 +26,8 @@ services:
       DB_USER: franklin
       DB_PASSWORD: 123
       DB_NAME: appointment_system
-      PORT: 5001  
-    expose:
-      - "5001"  # changed from ports: to expose to only allow internal access
+    ports:
+      - "5001:5001"
     extra_hosts:
       - "host.docker.internal:host-gateway" 
     volumes:
@@ -44,29 +43,17 @@ services:
     container_name: nextjs_frontend
     restart: always
     environment:
-      NEXT_PUBLIC_BACKEND_HOST: /api
+      NEXT_PUBLIC_BACKEND_HOST: http://localhost:5001
     depends_on:
       - backend
-    expose:
-      - "3000"  # only exposed internally
+    ports:
+      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
     working_dir: /app
     command: ["npm", "run", "dev"]
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx_reverse_proxy
-    depends_on:
-      - backend
-      - frontend
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    restart: always
 
 volumes:
   mysql_data:

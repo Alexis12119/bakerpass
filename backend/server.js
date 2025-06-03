@@ -46,11 +46,6 @@ fastify.register(async function (fastify) {
   fastify.get("/ws/updates", { websocket: true }, (socket, req) => {
     clients.add(socket);
 
-    if (!req.headers.origin || req.headers.origin !== "http://localhost:3000") {
-      socket.close();
-      return;
-    }
-
     socket.on("close", () => {
       clients.delete(socket);
     });

@@ -8,6 +8,7 @@ import SecurityTable from "@/components/Nurse/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
+import { jwtDecode } from "jwt-decode";
 
 interface Visitor {
   id: string;
@@ -103,8 +104,11 @@ const NursePage: React.FC = () => {
     if (!selectedVisitor) return;
 
     try {
-      const nurse = JSON.parse(sessionStorage.getItem("user") || "{}");
-      const nurseId = nurse?.id;
+      const token = sessionStorage.getItem("token");
+      const decoded = jwtDecode(token) as {
+        id: number;
+      };
+      const nurseId = decoded.id;
 
       if (!nurseId) {
         setErrorMessage("Nurse ID not found.");
@@ -134,7 +138,7 @@ const NursePage: React.FC = () => {
       await fetchVisitors();
       setSuccessMessage(`Visitor successfully ${action}.`);
     } catch (error) {
-      console.error(error);
+      alert(error);
       setErrorMessage("Failed to update approval.");
     } finally {
       setStatusActionModalOpen(false);
@@ -219,26 +223,43 @@ const NursePage: React.FC = () => {
   };
 
   useEffect(() => {
-    const socket = new WebSocket(`${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`);
+    let socket: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
+    let isUnmounted = false;
 
-    socket.onopen = () => {
-      console.log("✅ WebSocket connected");
+    const connect = () => {
+      socket = new WebSocket(
+        `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
+      );
+
+      socket.onopen = () => {
+        console.log("✅ WebSocket connected");
+      };
+
+      socket.onmessage = () => {
+        console.log("📡 Update received: refreshing visitors...");
+        fetchVisitors();
+      };
+
+      socket.onerror = (e) => {
+        console.error("❗WebSocket error", e);
+        socket.close(); // triggers `onclose`
+      };
+
+      socket.onclose = () => {
+        console.log("❌ WebSocket connection closed");
+        if (!isUnmounted) {
+          console.log("🔄 Attempting to reconnect in 5s...");
+          reconnectTimer = setTimeout(connect, 5000);
+        }
+      };
     };
 
-    socket.onmessage = () => {
-      console.log("📡 Update received: refreshing visitors...");
-      fetchVisitors();
-    };
-
-    socket.onerror = (e) => {
-      console.error("❗WebSocket error", e);
-    };
-
-    socket.onclose = () => {
-      console.log("❌ WebSocket connection closed");
-    };
+    connect();
 
     return () => {
+      isUnmounted = true;
+      clearTimeout(reconnectTimer);
       socket.close();
     };
   }, []);

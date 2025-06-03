@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 import { Dialog } from "@headlessui/react";
+import { jwtDecode } from "jwt-decode";
 
 interface HighCareApprovalFormProps {
   onClose: () => void;
@@ -24,6 +25,31 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
   const [comments, setComments] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [submittedData, setSubmittedData] = useState<any>(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token) as {
+          id: number;
+          firstName: string;
+          lastName: string;
+        };
+        setFirstName(decoded.firstName);
+        setLastName(decoded.lastName);
+      } catch (error) {
+        console.error("Invalid token:", error);
+        setFirstName("");
+        setLastName("");
+        sessionStorage.removeItem("token");
+      }
+    } else {
+      setFirstName("");
+      setLastName("");
+    }
+  }, []);
 
   const areas = ["DC", "VCO", "PPI", "CWC", "FSP", "WAREHOUSE"];
   const gear = ["Gloves", "Facemask", "Coat"];
@@ -227,11 +253,7 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
           <div className="mt-6 text-left text-sm">
             Approved by:{" "}
             <span className="font-semibold">
-              {typeof window !== "undefined"
-                ? JSON.parse(sessionStorage.getItem("user") || "{}")?.firstName +
-                  " " +
-                  JSON.parse(sessionStorage.getItem("user") || "{}")?.lastName
-                : ""}
+              {typeof window !== "undefined" ? firstName + " " + lastName : ""}
             </span>
           </div>
 
