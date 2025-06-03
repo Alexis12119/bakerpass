@@ -28,7 +28,7 @@ services:
       DB_NAME: appointment_system
       PORT: 5001  
     expose:
-      - "5001"  # changed from ports: to expose to only allow internal access
+      - "5001" 
     extra_hosts:
       - "host.docker.internal:host-gateway" 
     volumes:
