@@ -1185,7 +1185,12 @@ fastify.put("/visitors/:id/approval", async (request, reply) => {
 
 // Get all high care visits
 fastify.get("/nurse/high-care-visits", async (request, reply) => {
-  const { employeeId } = request.query;
+  let { date, employeeId } = request.query;
+
+  // Default to today if date is not provided
+  if (!date) {
+    date = new Date().toISOString().slice(0, 10); // yyyy-MM-dd format
+  }
 
   try {
     let query = `
@@ -1218,19 +1223,20 @@ fastify.get("/nurse/high-care-visits", async (request, reply) => {
       JOIN departments d ON e.departmentId = d.id
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
-      WHERE hcr.is_approved = FALSE
+      WHERE v.visit_date = ?
     `;
 
-    const params = [];
+    const params = [date];
 
     if (employeeId) {
       query += " AND v.visited_employee_id = ?";
       params.push(employeeId);
     }
 
-    query += " ORDER BY v.visit_date DESC, v.id ASC;";
+    query += " ORDER BY v.visit_date DESC, v.id DESC;";
 
     const [rows] = await pool.execute(query, params);
+    console.log(rows);
     return reply.send(rows);
   } catch (error) {
     fastify.log.error(error);

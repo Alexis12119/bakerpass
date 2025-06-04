@@ -9,6 +9,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
 import { format, addDays, subDays } from "date-fns";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Visitor {
   id: string;
@@ -333,17 +335,26 @@ const SecurityGuardPage: React.FC = () => {
             <h1 className="!text-xl !md:text-2xl font-bold text-black">
               VISITORS ({filteredVisitors.length})
             </h1>
+
             <div className="flex items-center space-x-2">
-              <button onClick={handlePreviousDate}>
-                <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
-              </button>
-              <span className="text-gray-500">
-                {format(new Date(currentDate), "MMMM dd, yyyy")}
-              </span>
-              <button onClick={handleNextDate}>
-                <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black" />
-              </button>
+              <ChevronLeftIcon
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+                onClick={handlePreviousDate}
+              />
+              <DatePicker
+                selected={new Date(currentDate)}
+                onChange={(date: Date) =>
+                  setCurrentDate(format(date, "yyyy-MM-dd"))
+                }
+                dateFormat="MMMM dd, yyyy"
+                className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+              />
+              <ChevronRightIcon
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+                onClick={handleNextDate}
+              />
             </div>
+
             <Filters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}

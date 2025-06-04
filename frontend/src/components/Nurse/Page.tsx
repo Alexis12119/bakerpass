@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import TopBar from "@/components/Nurse/TopBar";
 import Filters from "@/components/Nurse/Filters";
@@ -9,6 +9,9 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
 import { jwtDecode } from "jwt-decode";
+import { format, addDays, subDays } from "date-fns";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Visitor {
   id: string;
@@ -28,10 +31,9 @@ interface VisitorWithDropdown extends Visitor {
 }
 
 const NursePage: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    return format(today, "yyyy-MM-dd");
   });
 
   const [approvalStatuses, setApprovalStatuses] = useState<
@@ -45,10 +47,7 @@ const NursePage: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
-  const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
-  const [filteredVisitors, setFilteredVisitors] = useState<
-    VisitorWithDropdown[]
-  >([]);
+  const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessge, setSuccessMessage] = useState<string>("");
@@ -62,7 +61,7 @@ const NursePage: React.FC = () => {
 
   const toggleVisitorStatus = async (visitorId: string) => {
     try {
-      const currentVisitor = allVisitors.find((v) => v.id === visitorId);
+      const currentVisitor = visitors.find((v) => v.id === visitorId);
       if (!currentVisitor) return;
 
       if (currentVisitor.status === "Checked Out") {
@@ -104,7 +103,7 @@ const NursePage: React.FC = () => {
     if (!selectedVisitor) return;
 
     try {
-      const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token") as string;
       const decoded = jwtDecode(token) as {
         id: number;
       };
@@ -158,33 +157,36 @@ const NursePage: React.FC = () => {
     }
   };
 
+  const mapVisitorsData = (visitors: any[]) => {
+    return visitors.map((visitor) => ({
+      id: visitor.visit_id,
+      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      purpose: visitor.purpose,
+      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      department: visitor.employeeDepartment,
+      expectedTime:
+        visitor.expected_time ||
+        formatTimeRange(visitor.time_in, visitor.time_out),
+      timeIn: visitor.time_in || null,
+      timeOut: visitor.time_out || null,
+      status: visitor.status,
+      approvalStatus: visitor.approval_status,
+      isDropdownOpen: false,
+      isHighCare: visitor.is_high_care ?? undefined,
+    }));
+  };
+
   const fetchVisitors = async (forNurse = true) => {
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors`;
+        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`; // <-- Fix here
 
       const response = await axios.get(endpoint);
 
-      const visitorsData = response.data.map((visitor: any) => ({
-        id: visitor.visit_id,
-        name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-        purpose: visitor.purpose,
-        host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-        department: visitor.employeeDepartment,
-        expectedTime:
-          visitor.expected_time ||
-          formatTimeRange(visitor.time_in, visitor.time_out),
-        timeIn: visitor.time_in || null,
-        timeOut: visitor.time_out || null,
-        status: visitor.status,
-        approvalStatus: visitor.approval_status,
-        isDropdownOpen: false,
-        isHighCare: visitor.is_high_care ?? undefined,
-      }));
+      const visitorsData = mapVisitorsData(response.data);
 
-      setAllVisitors(visitorsData);
-      setFilteredVisitors(visitorsData);
+      setVisitors(visitorsData);
     } catch (error) {
       console.error("Error fetching visitors:", error);
     }
@@ -272,7 +274,37 @@ const NursePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let filtered = allVisitors.filter((visitor) => {
+    const fetchVisitorsByDate = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits?date=${currentDate}`,
+        );
+        const data = await res.json();
+
+        const mappedVisitors = mapVisitorsData(data);
+        setVisitors(mappedVisitors); // <-- set visitors here
+      } catch (error) {
+        console.error("Error fetching visitors by date:", error);
+        setVisitors([]); // clear fallback
+      }
+    };
+
+    fetchVisitorsByDate();
+  }, [currentDate]);
+  const handlePreviousDate = () => {
+    setCurrentDate((prev: string) =>
+      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
+  const handleNextDate = () => {
+    setCurrentDate((prev: string) =>
+      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
+  const filteredVisitors = useMemo(() => {
+    let filtered = visitors.filter((visitor) => {
       const purposeMatches =
         selectedPurpose === "All" ||
         visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase();
@@ -305,14 +337,13 @@ const NursePage: React.FC = () => {
       );
     }
 
-    setFilteredVisitors(filtered);
+    return filtered;
   }, [
+    visitors,
     searchQuery,
     selectedHost,
     selectedPurpose,
     selectedDepartment,
-    allVisitors,
-    departments,
     selectedApprovalStatus,
   ]);
 
@@ -325,13 +356,26 @@ const NursePage: React.FC = () => {
             <h1 className="!text-xl !md:text-2xl font-bold text-black">
               VISITORS ({filteredVisitors.length})
             </h1>
+
             <div className="flex items-center space-x-2">
-              <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-500" suppressHydrationWarning>
-                {currentDate}
-              </span>
-              <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              <ChevronLeftIcon
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+                onClick={handlePreviousDate}
+              />
+              <DatePicker
+                selected={new Date(currentDate)}
+                onChange={(date: Date) =>
+                  setCurrentDate(format(date, "yyyy-MM-dd"))
+                }
+                dateFormat="MMMM dd, yyyy"
+                className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+              />
+              <ChevronRightIcon
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+                onClick={handleNextDate}
+              />
             </div>
+
             <Filters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}

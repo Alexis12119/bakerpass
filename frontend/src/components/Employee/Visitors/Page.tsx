@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import TopBar from "@/components/Employee/Visitors/TopBar";
 import VisitorsSection from "@/components/Employee/Visitors/Section";
 import ErrorModal from "@/components/Modals/ErrorModal";
+import { format, addDays, subDays } from "date-fns";
+import { jwtDecode } from "jwt-decode";
 
 interface Visitor {
   id: string;
@@ -24,21 +26,65 @@ interface VisitorWithDropdown extends Visitor {
 }
 
 const EmployeeVisitorsPage: React.FC = () => {
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    return format(today, "yyyy-MM-dd");
+  });
+
   const [approvalStatuses, setApprovalStatuses] = useState<string[]>([]);
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
   const [purposes, setPurposes] = useState<string[]>([]);
   const [selectedPurpose, setSelectedPurpose] = useState("All");
-  const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
-  const [filteredVisitors, setFilteredVisitors] = useState<
-    VisitorWithDropdown[]
-  >([]);
+  const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const currentDate = new Date().toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
   const [errorMessage, setErrorMessage] = useState("");
+
+  const mapVisitorsData = (visitors: any[]) => {
+    return visitors.map((visitor) => ({
+      id: visitor.visit_id,
+      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      purpose: visitor.purpose,
+      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      department: visitor.employeeDepartment,
+      expected_time: visitor.expected_time,
+      timeIn: visitor.time_in || null,
+      timeOut: visitor.time_out || null,
+      status: visitor.status,
+      approvalStatus: visitor.approval_status,
+      isDropdownOpen: false,
+      isHighCare: visitor.is_high_care ?? undefined,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchVisitorsByDate = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
+        );
+        const data = await res.json();
+
+        const mappedVisitors = mapVisitorsData(data);
+        setVisitors(mappedVisitors); // <-- set visitors here
+      } catch (error) {
+        console.error("Error fetching visitors by date:", error);
+        setVisitors([]); // clear fallback
+      }
+    };
+
+    fetchVisitorsByDate();
+  }, [currentDate]);
+  const handlePreviousDate = () => {
+    setCurrentDate((prev: string) =>
+      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
+
+  const handleNextDate = () => {
+    setCurrentDate((prev: string) =>
+      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
+    );
+  };
 
   useEffect(() => {
     let socket: WebSocket;
@@ -110,8 +156,11 @@ const EmployeeVisitorsPage: React.FC = () => {
   };
   const fetchVisitors = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-      const employeeId = user?.id;
+      const token = sessionStorage.getItem("token") as string;
+      const decoded = jwtDecode(token) as {
+        id: number;
+      };
+      const employeeId = decoded.id;
 
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors`,
@@ -120,30 +169,11 @@ const EmployeeVisitorsPage: React.FC = () => {
         },
       );
 
-      const visitorsData = response.data.map((visitor: any) => ({
-        id: visitor.visit_id,
-        name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-        purpose: visitor.purpose,
-        host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-        department: visitor.employeeDepartment,
-        expected_time: visitor.expected_time,
-        timeIn: new Date(visitor.time_in).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        timeOut: visitor.time_out
-          ? new Date(visitor.time_out).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "N/A",
-        status: visitor.status,
-        approvalStatus: visitor.approval_status,
-        isDropdownOpen: false,
-      }));
+      console.log(response.data);
 
-      setAllVisitors(visitorsData);
-      setFilteredVisitors(visitorsData);
+      const visitorsData = mapVisitorsData(response.data);
+
+      setVisitors(visitorsData);
     } catch (error) {
       console.error("Error fetching visitors:", error);
     }
@@ -168,24 +198,20 @@ const EmployeeVisitorsPage: React.FC = () => {
     setSearchQuery(event.target.value);
   };
 
-  useEffect(() => {
-    let filtered = allVisitors;
+  const filteredVisitors = useMemo(() => {
+    let filtered = visitors.filter((visitor) => {
+      const purposeMatches =
+        selectedPurpose === "All" ||
+        visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase();
 
-    // Apply purpose filter
-    if (selectedPurpose !== "All") {
-      filtered = filtered.filter(
-        (visitor) => visitor.purpose === selectedPurpose,
-      );
-    }
+      const approvalStatusMatches =
+        selectedApprovalStatus === "All" ||
+        visitor.approvalStatus.toLowerCase() ===
+          selectedApprovalStatus.toLowerCase();
 
-    // Apply approval status filter
-    if (selectedApprovalStatus !== "All") {
-      filtered = filtered.filter(
-        (visitor) => visitor.approvalStatus === selectedApprovalStatus,
-      );
-    }
+      return purposeMatches && approvalStatusMatches;
+    });
 
-    // Apply search filter
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((visitor) =>
@@ -196,15 +222,15 @@ const EmployeeVisitorsPage: React.FC = () => {
           visitor.department,
           visitor.status,
           visitor.approvalStatus,
-        ].some((field) => field.toLowerCase().includes(query)),
+        ].some((field) => field && field.toLowerCase().includes(query)),
       );
     }
 
-    setFilteredVisitors(filtered);
-  }, [searchQuery, selectedPurpose, allVisitors, selectedApprovalStatus]);
+    return filtered;
+  }, [visitors, searchQuery, selectedPurpose, selectedApprovalStatus]);
 
   // Group visitors by time ranges
-  const groupedVisitors = filteredVisitors.reduce(
+  const groupedVisitors = visitors.reduce(
     (acc, visitor) => {
       const timeRange = `${visitor.expected_time}`;
       if (!acc[timeRange]) {
@@ -238,6 +264,9 @@ const EmployeeVisitorsPage: React.FC = () => {
             selectedApprovalStatus={selectedApprovalStatus}
             approvalStatuses={approvalStatuses}
             fetchVisitors={fetchVisitors}
+            handlePreviousDate={handlePreviousDate}
+            handleNextDate={handleNextDate}
+            setCurrentDate={setCurrentDate}
           />
         </div>
       </div>

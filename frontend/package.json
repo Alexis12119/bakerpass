@@ -25,6 +25,7 @@
     "next": "15.2.1",
     "next-cloudinary": "^6.16.0",
     "react": "^19.0.0",
+    "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
     "react-feather": "^2.0.10",
     "react-hot-toast": "^2.5.2"

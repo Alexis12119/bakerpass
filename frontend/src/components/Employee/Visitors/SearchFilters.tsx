@@ -5,6 +5,9 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
+import { format, addDays, subDays } from "date-fns";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface SearchFiltersProps {
   searchQuery: string;
@@ -18,6 +21,9 @@ interface SearchFiltersProps {
   ) => void;
   selectedApprovalStatus: string;
   approvalStatuses: string[];
+  handlePreviousDate: () => void;
+  handleNextDate: () => void;
+  setCurrentDate: (date: string) => void;
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
@@ -29,6 +35,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   handleFilterChange,
   selectedApprovalStatus,
   approvalStatuses,
+  handlePreviousDate,
+  handleNextDate,
+  setCurrentDate,
 }) => {
   return (
     <div className="bg-white rounded-lg p-4">
@@ -87,11 +96,22 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
         {/* 📅 Date Navigation */}
         <div className="flex items-center space-x-2">
-          <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
-          <span className="text-gray-500" suppressHydrationWarning>
-            {currentDate}
-          </span>
-          <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
+          <ChevronLeftIcon
+            className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+            onClick={handlePreviousDate}
+          />
+          <DatePicker
+            selected={new Date(currentDate)}
+            onChange={(date: Date) =>
+              setCurrentDate(format(date, "yyyy-MM-dd"))
+            }
+            dateFormat="MMMM dd, yyyy"
+            className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
+          />
+          <ChevronRightIcon
+            className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
+            onClick={handleNextDate}
+          />
         </div>
       </div>
     </div>

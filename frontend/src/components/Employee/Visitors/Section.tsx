@@ -29,6 +29,9 @@ interface VisitorsSectionProps {
   selectedApprovalStatus: string;
   approvalStatuses: string[];
   fetchVisitors: () => void;
+  handlePreviousDate: () => void;
+  handleNextDate: () => void;
+  setCurrentDate: (date: string) => void;
 }
 
 const VisitorsSection: React.FC<VisitorsSectionProps> = ({
@@ -42,6 +45,9 @@ const VisitorsSection: React.FC<VisitorsSectionProps> = ({
   selectedApprovalStatus,
   approvalStatuses,
   fetchVisitors,
+  handlePreviousDate,
+  handleNextDate,
+  setCurrentDate,
 }) => {
   return (
     <div className="bg-white shadow-lg rounded-lg border border-gray-300">
@@ -54,11 +60,17 @@ const VisitorsSection: React.FC<VisitorsSectionProps> = ({
         handleFilterChange={handleFilterChange}
         selectedApprovalStatus={selectedApprovalStatus}
         approvalStatuses={approvalStatuses}
+        handlePreviousDate={handlePreviousDate}
+        handleNextDate={handleNextDate}
+        setCurrentDate={setCurrentDate}
       />
 
       <div className="bg-white p-8">
         <div className="w-full">
-          <VisitorsList groupedVisitors={groupedVisitors} fetchVisitors={fetchVisitors} />
+          <VisitorsList
+            groupedVisitors={groupedVisitors}
+            fetchVisitors={fetchVisitors}
+          />
         </div>
       </div>
     </div>
