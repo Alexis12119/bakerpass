@@ -276,23 +276,9 @@ const NursePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchVisitorsByDate = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits?date=${currentDate}`,
-        );
-        const data = await res.json();
-
-        const mappedVisitors = mapVisitorsData(data);
-        setVisitors(mappedVisitors); // <-- set visitors here
-      } catch (error) {
-        console.error("Error fetching visitors by date:", error);
-        setVisitors([]); // clear fallback
-      }
-    };
-
-    fetchVisitorsByDate();
+    fetchVisitors();
   }, [currentDate]);
+
   const handlePreviousDate = () => {
     setCurrentDate((prev: string) =>
       format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
