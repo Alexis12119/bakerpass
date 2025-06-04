@@ -55,23 +55,22 @@ const EmployeeVisitorsPage: React.FC = () => {
       isHighCare: visitor.is_high_care ?? undefined,
     }));
   };
+  const fetchVisitorsByDate = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
+      );
+      const data = await res.json();
+
+      const mappedVisitors = mapVisitorsData(data);
+      setVisitors(mappedVisitors); // <-- set visitors here
+    } catch (error) {
+      console.error("Error fetching visitors by date:", error);
+      setVisitors([]); // clear fallback
+    }
+  };
 
   useEffect(() => {
-    const fetchVisitorsByDate = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
-        );
-        const data = await res.json();
-
-        const mappedVisitors = mapVisitorsData(data);
-        setVisitors(mappedVisitors); // <-- set visitors here
-      } catch (error) {
-        console.error("Error fetching visitors by date:", error);
-        setVisitors([]); // clear fallback
-      }
-    };
-
     fetchVisitorsByDate();
   }, [currentDate]);
   const handlePreviousDate = () => {
@@ -102,7 +101,7 @@ const EmployeeVisitorsPage: React.FC = () => {
 
       socket.onmessage = () => {
         console.log("📡 Update received: refreshing visitors...");
-        fetchVisitors();
+        fetchVisitorsByDate();
       };
 
       socket.onerror = (e) => {
@@ -182,7 +181,7 @@ const EmployeeVisitorsPage: React.FC = () => {
   useEffect(() => {
     fetchPurposes();
     fetchApprovalStatuses();
-    fetchVisitors();
+    fetchVisitorsByDate();
   }, []);
 
   const handleFilterChange = (
