@@ -4,6 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 interface Security {
   id: string;
   name: string;
+  profileImageUrl: string;
 }
 
 interface SecurityWithDropdown extends Security {
@@ -20,6 +21,7 @@ const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
   visitor,
   isOpen,
   onClose,
+  profileImageUrl,
 }) => {
   if (!isOpen) return null;
 
@@ -41,7 +43,7 @@ const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
           <div className="w-20 h-20 relative overflow-hidden">
             <Image
-              src="/images/jiro.jpg"
+              src={profileImageUrl}
               fill={true}
               alt=""
               className="w-full rounded-full"

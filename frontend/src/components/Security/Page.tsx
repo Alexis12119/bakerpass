@@ -23,6 +23,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -73,6 +74,7 @@ const SecurityGuardPage: React.FC = () => {
       timeOut: visitor.time_out || null,
       status: visitor.status,
       approvalStatus: visitor.approval_status,
+      profileImageUrl: visitor.profile_image_url, // ⬅️ Add this
       isDropdownOpen: false,
       isHighCare: visitor.is_high_care ?? undefined,
     }));
@@ -87,10 +89,10 @@ const SecurityGuardPage: React.FC = () => {
         const data = await res.json();
 
         const mappedVisitors = mapVisitorsData(data);
-        setVisitors(mappedVisitors); // <-- set visitors here
+        setVisitors(mappedVisitors);
       } catch (error) {
         console.error("Error fetching visitors by date:", error);
-        setVisitors([]); // clear fallback
+        setVisitors([]);
       }
     };
 
@@ -189,7 +191,7 @@ const SecurityGuardPage: React.FC = () => {
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`; // <-- Fix here
+        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`;
 
       const response = await axios.get(endpoint);
 
@@ -343,9 +345,11 @@ const SecurityGuardPage: React.FC = () => {
               />
               <DatePicker
                 selected={new Date(currentDate)}
-                onChange={(date: Date) =>
-                  setCurrentDate(format(date, "yyyy-MM-dd"))
-                }
+                onChange={(date: Date | null) => {
+                  if (date) {
+                    setCurrentDate(format(date, "yyyy-MM-dd"));
+                  }
+                }}
                 dateFormat="MMMM dd, yyyy"
                 className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
               />

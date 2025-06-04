@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "i.ibb.co",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+      },
     ],
   },
   productionBrowserSourceMaps: false,

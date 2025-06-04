@@ -14,6 +14,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 function toTitleCase(str?: string) {
@@ -36,7 +37,7 @@ interface SecurityTableProps {
   setValidIdModalOpen: (open: boolean) => void;
   statusActionModalOpen: boolean;
   setStatusActionModalOpen: (open: boolean) => void;
-  selectedVisitor: Visitor | null;
+  selectedVisitor: Visitor;
   setSelectedVisitor: (visitor: Visitor) => void;
   approvalAction: "Approved" | "Blocked" | "Cancelled" | null;
   setApprovalAction: (action: "Approved" | "Blocked" | "Cancelled") => void;
@@ -147,7 +148,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
               {/* Visitor Info */}
               <div className="flex items-center">
                 <Image
-                  src="/images/jiro.jpg"
+                  src={visitor.profileImageUrl}
                   alt=""
                   width={32}
                   height={32}

@@ -19,6 +19,7 @@ interface Visitor {
   timeOut: string;
   status: string;
   approvalStatus: string;
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -50,6 +51,7 @@ const EmployeeVisitorsPage: React.FC = () => {
       timeIn: visitor.time_in || null,
       timeOut: visitor.time_out || null,
       status: visitor.status,
+      profileImageUrl: visitor.profile_image_url,
       approvalStatus: visitor.approval_status,
       isDropdownOpen: false,
       isHighCare: visitor.is_high_care ?? undefined,

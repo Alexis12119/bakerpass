@@ -1,26 +1,27 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-interface Security {
+interface Nurse {
   id: string;
   name: string;
-  department: string;
+  profileImageUrl: string;
 }
 
-interface SecurityWithDropdown extends Security {
+interface NurseWithDropdown extends Nurse {
   isDropdownOpen: boolean;
 }
 
-interface SecurityProfileModalProps {
-  visitor: SecurityWithDropdown;
+interface NurseProfileModalProps {
+  visitor: NurseWithDropdown;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
+const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
   visitor,
   isOpen,
   onClose,
+  profileImageUrl,
 }) => {
   if (!isOpen) return null;
 
@@ -42,7 +43,7 @@ const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
           <div className="w-20 h-20 relative overflow-hidden">
             <Image
-              src="/images/jiro.jpg"
+              src={profileImageUrl}
               fill={true}
               alt=""
               className="w-full rounded-full"
@@ -60,4 +61,4 @@ const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
   );
 };
 
-export default SecurityProfileModal;
+export default NurseProfileModal;

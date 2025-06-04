@@ -10,6 +10,7 @@ interface Employee {
   department: string;
   total_visitors: number;
   avg_visitors: number;
+  profileImageUrl: string;
 }
 
 interface ReportCardProps {
@@ -34,7 +35,7 @@ const EmployeeCard: React.FC<
     <div className="bg-white rounded-2xl shadow-md p-6 flex items-center space-x-6 w-96 border-2">
       <div className="w-24 h-24 relative rounded-full overflow-hidden">
         <Image
-          src={"/images/jiro.jpg"}
+          src={employee.profileImageUrl}
           alt={`${employee.name}`}
           fill
           className="object-cover"

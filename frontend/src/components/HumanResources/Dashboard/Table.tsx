@@ -12,6 +12,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -63,12 +64,12 @@ const DashboardTable: React.FC<DashboardTableProps> = ({
                     visitor.approvalStatus === "Approved"
                       ? "bg-[#1C274C]"
                       : visitor.approvalStatus === "Waiting For Approval"
-                      ? "bg-yellow-400"
-                      : visitor.approvalStatus === "Blocked"
-                      ? "bg-red-600"
-                      : visitor.approvalStatus === "Cancelled"
-                      ? "bg-gray-400"
-                      : "bg-white"
+                        ? "bg-yellow-400"
+                        : visitor.approvalStatus === "Blocked"
+                          ? "bg-red-600"
+                          : visitor.approvalStatus === "Cancelled"
+                            ? "bg-gray-400"
+                            : "bg-white"
                   }
                 `}
                 onClick={() => {
@@ -83,8 +84,8 @@ const DashboardTable: React.FC<DashboardTableProps> = ({
                       visitor.approvalStatus === "Approved"
                         ? "text-white"
                         : visitor.approvalStatus === "Waiting For Approval"
-                        ? "text-black"
-                        : "text-white"
+                          ? "text-black"
+                          : "text-white"
                     }
                   `}
                 >
@@ -97,7 +98,7 @@ const DashboardTable: React.FC<DashboardTableProps> = ({
               {/* Visitor Info */}
               <div className="flex items-center">
                 <Image
-                  src="/images/jiro.jpg"
+                  src={visitor.profileImageUrl}
                   alt=""
                   width={32}
                   height={32}

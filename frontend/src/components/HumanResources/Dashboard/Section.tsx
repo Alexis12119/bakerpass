@@ -18,6 +18,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -42,10 +43,6 @@ const VisitorsSection: React.FC = () => {
   const [selectedHost, setSelectedHost] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
-  // const [allVisitors, setAllVisitors] = useState<VisitorWithDropdown[]>([]);
-  // const [filteredVisitors, setFilteredVisitors] = useState<
-  //   VisitorWithDropdown[]
-  // >([]);
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const fetchData = async () => {
@@ -84,6 +81,7 @@ const VisitorsSection: React.FC = () => {
       timeIn: visitor.time_in || null,
       timeOut: visitor.time_out || null,
       status: visitor.status,
+      profileImageUrl: visitor.profile_image_url,
       approvalStatus: visitor.approval_status,
       isDropdownOpen: false,
       isHighCare: visitor.is_high_care ?? undefined,

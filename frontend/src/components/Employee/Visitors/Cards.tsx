@@ -15,6 +15,7 @@ interface Visitor {
   timeIn: string;
   timeOut: string;
   approval_status: string;
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -53,7 +54,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         {/* Profile Section */}
         <div className="flex items-start">
           <Image
-            src="/images/jiro.jpg"
+            src={visitor.profileImageUrl}
             alt="Visitor"
             width={60}
             height={60}

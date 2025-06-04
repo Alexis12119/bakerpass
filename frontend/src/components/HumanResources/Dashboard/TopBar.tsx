@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,6 +10,7 @@ import {
 import HumanResourcesProfile from "@/components/HumanResources/Modals/HumanResourcesProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -19,6 +20,7 @@ interface TopBarProps {
 interface HumanResources {
   id: string;
   name: string;
+  profileImageUrl: string;
 }
 
 interface HumanResourcesWithDropdown extends HumanResources {
@@ -33,8 +35,185 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     id: string;
     firstName: string;
     lastName: string;
+    profileImage: string;
   } | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // ref for hidden file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Trigger the hidden file input click
+  const handleUploadClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent dropdown from opening when clicking profile image
+    fileInputRef.current?.click();
+  };
+
+  // Helper function to update JWT token
+  const updateJWTToken = (newProfileImageUrl: string) => {
+    try {
+      const currentToken = sessionStorage.getItem("token");
+      if (!currentToken) return;
+
+      const decoded = jwtDecode(currentToken) as any;
+
+      // Create updated payload
+      const updatedPayload = {
+        ...decoded,
+        profileImage: newProfileImageUrl,
+        // Update the issued at time to current time
+        iat: Math.floor(Date.now() / 1000),
+      };
+
+      // Note: This creates a "fake" token that won't be validated by the backend
+      // But it will persist the profile image URL for frontend display
+      const updatedTokenString = btoa(
+        JSON.stringify({
+          header: { alg: "HS256", typ: "JWT" },
+          payload: updatedPayload,
+          signature: "frontend-updated", // Placeholder signature
+        }),
+      );
+
+      // Store the updated token
+      sessionStorage.setItem("token", updatedTokenString);
+
+      return true;
+    } catch (error) {
+      console.error("Error updating JWT token:", error);
+      return false;
+    }
+  };
+
+  // Alternative: Store profile image URL separately
+  const updateProfileImageStorage = (
+    newProfileImageUrl: string,
+    userId: string,
+  ) => {
+    // Store profile image URL in a separate storage key
+    const profileImageKey = `profileImage_${userId}`;
+    sessionStorage.setItem(profileImageKey, newProfileImageUrl);
+  };
+
+  // Updated handleFileChange function
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // File validation
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const query = new URLSearchParams({
+      userId: user.id.toString(),
+      role: user.role,
+    });
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/upload-profile-image?${query.toString()}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 60000,
+        },
+      );
+
+      const data = response.data;
+
+      // Update user state with new profile image
+      setUser((prev) => {
+        if (!prev) return prev;
+        return { ...prev, profileImage: data.imageUrl };
+      });
+
+      // Method 1: Update JWT token (not recommended for production)
+      // updateJWTToken(data.imageUrl);
+
+      // Method 2: Store profile image separately (recommended)
+      updateProfileImageStorage(data.imageUrl, user.id.toString());
+
+      alert("Profile image updated successfully!");
+
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      const message =
+        error.response?.data?.message ||
+        "An error occurred while uploading the image.";
+      alert(message);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Function to get profile image URL (use this when loading user data)
+  const getProfileImageUrl = (userId: string, defaultFromToken?: string) => {
+    const profileImageKey = `profileImage_${userId}`;
+    const storedProfileImage = sessionStorage.getItem(profileImageKey);
+    return storedProfileImage || defaultFromToken || "/default-profile.png";
+  };
+
+  // Use this in your user initialization code
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token) as any;
+        const profileImageUrl = getProfileImageUrl(
+          decoded.id.toString(),
+          decoded.profileImage,
+        );
+
+        setUser({
+          id: decoded.id,
+          firstName: decoded.firstName,
+          lastName: decoded.lastName,
+          role: decoded.role,
+          profileImage: profileImageUrl, // Use the updated URL if available
+        });
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const profileImageKey = `profileImage_${user.id}`;
+    const storedProfileImage = sessionStorage.getItem(profileImageKey);
+
+    if (storedProfileImage && storedProfileImage !== user.profileImage) {
+      setUser((prev) =>
+        prev ? { ...prev, profileImage: storedProfileImage } : prev,
+      );
+    }
+  }, [user]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -46,12 +225,14 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             firstName: string;
             lastName: string;
             role: string;
+            profileImage: string;
           };
           setUser({
             id: decoded.id,
             firstName: decoded.firstName,
             lastName: decoded.lastName,
             role: decoded.role,
+            profileImage: decoded.profileImage,
           });
         } catch (error) {
           console.error("Invalid token:", error);
@@ -69,14 +250,24 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
+
   const handleLogout = () => {
+    // Clear all session storage keys that start with "profileImage_"
+    for (const key in sessionStorage) {
+      if (key.startsWith("profileImage_")) {
+        sessionStorage.removeItem(key);
+      }
+    }
+
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("lastValidRoute");
     sessionStorage.removeItem("role");
+
     setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
   };
+
 
   return (
     <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">
@@ -117,14 +308,35 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           )}
         </div>
 
-        <div className="flex items-center">
-          <Image
-            src="/images/jiro.jpg"
-            alt="User profile"
-            width={42}
-            height={42}
-            className="rounded-full mr-3"
-          />
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Image
+              src={user?.profileImage}
+              alt="Profile Image"
+              width={42}
+              height={42}
+              className={`rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all duration-200 ${
+                isUploading ? "opacity-50 animate-pulse" : ""
+              }`}
+              onClick={handleUploadClick}
+              title="Click to change profile image"
+            />
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+              disabled={isUploading}
+            />
+          </div>
+
           <div className="relative">
             <div
               className="flex items-center cursor-pointer"
@@ -136,9 +348,11 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
                 </div>
                 <div className="text-xs text-gray-600">Human Resources</div>
               </div>
-              <ChevronDownIcon className="h-5 w-5 text-black mr-4 ml-4" />
+              <ChevronDownIcon className="h-5 w-5 text-black mr-4 ml-2" />
             </div>
-
+            {isProfileModalOpen && (
+              <div className="fixed inset-0 backdrop-blur-md z-10"></div>
+            )}
             {isOpen && (
               <div className="absolute right-0 mt-3 w-60 bg-white border-b">
                 <ul className="py-2 text-sm text-gray-700">
@@ -193,21 +407,23 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
                 </ul>
               </div>
             )}
-            {isConfirmLogoutOpen && (
-              <ConfirmationModal
-                message="Are you sure you want to log out?"
-                onConfirm={handleLogout}
-                onCancel={() => setIsConfirmLogoutOpen(false)}
-              />
-            )}
-            {/* Profile Modal */}
-            <HumanResourcesProfile
-              visitor={HumanResources}
-              isOpen={isProfileModalOpen}
-              onClose={() => setIsProfileModalOpen(false)}
-            />
           </div>
         </div>
+
+        {isConfirmLogoutOpen && (
+          <ConfirmationModal
+            message="Are you sure you want to log out?"
+            onConfirm={handleLogout}
+            onCancel={() => setIsConfirmLogoutOpen(false)}
+          />
+        )}
+        {/* Profile Modal */}
+        <HumanResourcesProfile
+          visitor={HumanResources}
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          profileImageUrl={user?.profileImage}
+        />
       </div>
     </div>
   );

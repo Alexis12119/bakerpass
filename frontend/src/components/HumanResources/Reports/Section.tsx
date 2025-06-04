@@ -9,6 +9,7 @@ interface Employee {
   rating: number;
   total_visitors: number;
   avg_visitors: number;
+  profileImageUrl: string;
 }
 
 const HumanResourcesReportSection: React.FC = () => {
@@ -35,8 +36,6 @@ const HumanResourcesReportSection: React.FC = () => {
       const response = await fetch(url);
       const rawData = await response.json();
 
-      // alert(JSON.stringify(rawData, null, 2));
-
       // Transform backend response into Employee format expected by frontend
       const formattedData: Employee[] = rawData.map((emp: any) => ({
         id: emp.id.toString(),
@@ -45,6 +44,7 @@ const HumanResourcesReportSection: React.FC = () => {
         rating: emp.rating ?? 0,
         total_visitors: emp.total_visitors ?? 0,
         avg_visitors: emp.avg_visitors ?? 0,
+        profileImageUrl: emp.profile_image_url,
       }));
 
       // Transform into Record<string, Employee[]>

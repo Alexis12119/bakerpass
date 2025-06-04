@@ -24,6 +24,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -169,6 +170,7 @@ const NursePage: React.FC = () => {
         formatTimeRange(visitor.time_in, visitor.time_out),
       timeIn: visitor.time_in || null,
       timeOut: visitor.time_out || null,
+      profileImageUrl: visitor.profile_image_url,
       status: visitor.status,
       approvalStatus: visitor.approval_status,
       isDropdownOpen: false,

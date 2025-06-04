@@ -6,12 +6,15 @@ import {
   TrashIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
+import jwtDecode from "jwt-decode";
 import axios from "axios";
 
 interface Employee {
   id: string;
   name: string;
   department: string;
+  profileImageUrl: string;
+  employeeId: string;
 }
 
 interface TimeSlot {
@@ -31,11 +34,12 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   visitor,
   isOpen,
   onClose,
+  profileImageUrl,
+  employeeId,
 }) => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
   const [newSlot, setNewSlot] = useState({ startTime: "", endTime: "" });
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -108,21 +112,10 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   };
 
   useEffect(() => {
-    // Ensure this only runs in the client-side
-    if (typeof window !== "undefined") {
-      const user = sessionStorage.getItem("user");
-      if (user) {
-        const parsedUser = JSON.parse(user);
-        setEmployeeId(parsedUser.id.toString());
-      }
-    }
-  }, []);
-
-  useEffect(() => {
     if (employeeId && isOpen) {
       fetchTimeSlots();
     }
-  }, [employeeId, isOpen]);
+  }, [employeeId]);
 
   if (!isOpen) return null;
 
@@ -140,7 +133,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
           <div className="w-20 h-20 relative overflow-hidden rounded-full">
-            <Image src="/images/jiro.jpg" fill alt="Profile" />
+            <Image src={profileImageUrl} fill alt="Profile" />
           </div>
         </div>
 

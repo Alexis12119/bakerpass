@@ -5,6 +5,7 @@ interface HumanResources {
   id: string;
   name: string;
   department: string;
+  profileImageUrl: string;
 }
 
 interface HumanResourcesWithDropdown extends HumanResources {
@@ -21,6 +22,7 @@ const HumanResourcesProfileModal: React.FC<HumanResourcesProfileModalProps> = ({
   visitor,
   isOpen,
   onClose,
+  profileImageUrl,
 }) => {
   if (!isOpen) return null;
 
@@ -42,7 +44,7 @@ const HumanResourcesProfileModal: React.FC<HumanResourcesProfileModalProps> = ({
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
           <div className="w-20 h-20 relative overflow-hidden">
             <Image
-              src="/images/jiro.jpg"
+              src={profileImageUrl}
               fill={true}
               alt=""
               className="w-full rounded-full"

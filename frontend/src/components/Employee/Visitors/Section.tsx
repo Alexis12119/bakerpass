@@ -10,6 +10,7 @@ interface Visitor {
   timeIn: string;
   timeOut: string;
   approval_status: string;
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {

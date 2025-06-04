@@ -13,6 +13,7 @@ interface Visitor {
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
   approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  profileImageUrl: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -91,7 +92,7 @@ const NurseTable: React.FC<NurseTableProps> = ({
                     setSelectedVisitor(visitor);
                     setStatusActionModalOpen(true);
                   }
-                  console.log("Visitor Status: ",visitor.status)
+                  console.log("Visitor Status: ", visitor.status);
                 }}
               >
                 <span
@@ -114,7 +115,7 @@ const NurseTable: React.FC<NurseTableProps> = ({
               {/* Visitor Info */}
               <div className="flex items-center">
                 <Image
-                  src="/images/jiro.jpg"
+                  src={visitor.profileImageUrl}
                   alt=""
                   width={32}
                   height={32}
