@@ -144,12 +144,12 @@ fastify.post("/register", async (request, reply) => {
     // Insert user
     if (role === "Employee") {
       await pool.query(
-        `INSERT INTO ${tableName} (email, password, firstName, lastName, departmentId) VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO ${tableName} (email, password, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?)`,
         [email, hashedPassword, firstName, lastName, departmentId],
       );
     } else {
       await pool.query(
-        `INSERT INTO ${tableName} (email, password, firstName, lastName) VALUES (?, ?, ?, ?)`,
+        `INSERT INTO ${tableName} (email, password, first_name, last_name) VALUES (?, ?, ?, ?)`,
         [email, hashedPassword, firstName, lastName],
       );
     }
@@ -234,15 +234,15 @@ fastify.post("/upload-profile-image", async (request, reply) => {
     await pool.execute(updateQuery, [uploadResult.secure_url, userId]);
 
     // Get updated user data from database
-    const selectQuery = `SELECT id, firstName , lastName, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
+    const selectQuery = `SELECT id, first_name , last_name, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
     const [rows] = await pool.execute(selectQuery, [userId]);
     const updatedUser = rows[0];
 
     // Generate new JWT token with updated profile image
     const tokenPayload = {
       id: updatedUser.id,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
+      firstName: updatedUser.first_name,
+      lastName: updatedUser.last_name,
       role: role,
       profileImage: updatedUser.profileImage,
       iat: Math.floor(Date.now() / 1000),
@@ -258,8 +258,8 @@ fastify.post("/upload-profile-image", async (request, reply) => {
       token: newToken, // Send new token
       user: {
         id: updatedUser.id,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
         role: role,
         profileImage: updatedUser.profileImage,
       },
@@ -315,8 +315,8 @@ fastify.post("/login", async (request, reply) => {
           {
             id: user.id,
             role: role,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            firstName: user.first_name,
+            lastName: user.last_name,
             profileImage: user.profile_image_url,
           },
           { expiresIn: "1h" },
@@ -328,9 +328,9 @@ fastify.post("/login", async (request, reply) => {
             token,
             id: user.id,
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            contactNumber: user.contactNumber,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            contactNumber: user.contact_number,
             address: user.address,
             profileImage: user.profile_image_url,
             role: role,
@@ -359,8 +359,8 @@ fastify.get("/employees", async (request, reply) => {
     let query = `
       SELECT 
         e.id,
-        e.firstName,
-        e.lastName,
+        e.first_name,
+        e.last_name,
         e.profile_image_url,
         d.name AS department,
         ROUND(AVG(r.rating), 1) AS rating,
@@ -368,7 +368,7 @@ fastify.get("/employees", async (request, reply) => {
         COUNT(DISTINCT v.visit_date) AS active_days,
         ROUND(COUNT(v.id) / NULLIF(COUNT(DISTINCT v.visit_date), 0), 1) AS avg_visitors
       FROM employees e
-      LEFT JOIN departments d ON e.departmentId = d.id
+      LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN ratings r ON r.rated_employee_id = e.id
       LEFT JOIN visits v ON v.visited_employee_id = e.id
     `;
@@ -383,7 +383,7 @@ fastify.get("/employees", async (request, reply) => {
 
     if (search) {
       conditions.push(
-        "(e.firstName LIKE ? OR e.lastName LIKE ? OR e.email LIKE ?)",
+        "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)",
       );
       queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
@@ -399,7 +399,7 @@ fastify.get("/employees", async (request, reply) => {
     return reply.send(
       rows.map((row) => ({
         id: row.id,
-        name: `${row.firstName} ${row.lastName}`,
+        name: `${row.first_name} ${row.last_name}`,
         department: row.department,
         rating: row.rating || 0,
         total_visitors: row.total_visitors || 0,
@@ -420,25 +420,25 @@ fastify.get("/employees/hosts", async (request, reply) => {
     let query = `
       SELECT 
         e.id, 
-        e.firstName, 
-        e.lastName, 
-        e.departmentId, 
+        e.first_name,
+        e.last_name,
+        e.department_id,
         d.name AS departmentName 
       FROM employees e
-      LEFT JOIN departments d ON e.departmentId = d.id
+      LEFT JOIN departments d ON e.department_id = d.id
     `;
     let queryParams = [];
 
     // Apply departmentId filter if provided
     if (departmentId && departmentId !== "All") {
-      query += " WHERE e.departmentId = ?";
+      query += " WHERE e.department_id = ?";
       queryParams.push(departmentId);
     }
 
     // Apply search filter if provided
     if (search) {
       query += queryParams.length ? " AND" : " WHERE";
-      query += " (e.firstName LIKE ? OR e.lastName LIKE ? OR e.email LIKE ?)";
+      query += " (e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)";
       queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
@@ -449,7 +449,7 @@ fastify.get("/employees/hosts", async (request, reply) => {
     return reply.send(
       rows.map((row) => ({
         id: row.id,
-        name: `${row.firstName} ${row.lastName}`, // Full name of the host
+        name: `${row.first_name} ${row.last_name}`, // Full name of the host
         department: row.departmentName, // Use the department name
       })),
     );
@@ -646,17 +646,17 @@ fastify.put("/visitors/:id", async (request, reply) => {
   const valuesToUpdate = [];
 
   if (firstName != null) {
-    fieldsToUpdate.push("firstName = ?");
+    fieldsToUpdate.push("first_name= ?");
     valuesToUpdate.push(firstName);
   }
 
   if (lastName != null) {
-    fieldsToUpdate.push("lastName = ?");
+    fieldsToUpdate.push("last_name = ?");
     valuesToUpdate.push(lastName);
   }
 
   if (contactNumber != null) {
-    fieldsToUpdate.push("contactNumber = ?");
+    fieldsToUpdate.push("contact_number = ?");
     valuesToUpdate.push(contactNumber);
   }
 
@@ -778,7 +778,7 @@ fastify.post("/visits", async (request, reply) => {
     } else {
       // Insert new visitor
       const [visitorResult] = await pool.execute(
-        `INSERT INTO visitors (email, password, firstName, lastName, contactNumber, address)
+        `INSERT INTO visitors (email, password, first_name, last_name, contact_number, address)
      VALUES (?, ?, ?, ?, ?, ?)`,
         [
           email,
@@ -794,7 +794,7 @@ fastify.post("/visits", async (request, reply) => {
 
     // Insert visit
     const [visitResult] = await pool.execute(
-      `INSERT INTO visits (visitor_id, visited_employee_id, purposeId, visit_date, expected_time, time_slot_id)
+      `INSERT INTO visits (visitor_id, visited_employee_id, purpose_id, visit_date, expected_time, time_slot_id)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         visitorId,
@@ -905,20 +905,6 @@ fastify.post("/visits", async (request, reply) => {
   }
 });
 
-// Fetch the highest ID from the visitors table
-fastify.get("/visitors/highest-id", async (request, reply) => {
-  try {
-    const [rows] = await pool.execute(
-      "SELECT MAX(id) AS highestId FROM visitors",
-    );
-    const highestId = rows[0]?.highestId || 0; // Default to 0 if no records exist
-    reply.send({ highestId });
-  } catch (error) {
-    console.error(error);
-    reply.status(500).send({ error: "Failed to fetch highest ID" });
-  }
-});
-
 // Fetch Visitors
 fastify.get("/visitors", async (request, reply) => {
   const { employeeId } = request.query;
@@ -935,19 +921,20 @@ fastify.get("/visitors", async (request, reply) => {
         v.time_out,
         v.expected_time,
         vs.name AS status,
-        vi.firstName AS visitorFirstName, 
-        vi.lastName AS visitorLastName, 
+        vi.first_name AS visitorFirstName,
+        vi.last_name AS visitorLastName,
         vi.email, 
         vi.profile_image_url,    
-        e.firstName AS employeeFirstName, 
+        e.first_name AS employeeFirstName,
+        e.last_name AS employeeLastName,
         e.lastName AS employeeLastName,
         d.name AS employeeDepartment,
         a.name AS approval_status
       FROM visits v
       JOIN visitors vi ON v.visitor_id = vi.id
       JOIN employees e ON v.visited_employee_id = e.id
-      JOIN purposes p ON v.purposeId = p.id
-      JOIN departments d ON e.departmentId = d.id
+      JOIN purposes p ON v.purpose_id = p.id
+      JOIN departments d ON e.department_id = d.id
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
       WHERE NOT EXISTS (
@@ -998,10 +985,6 @@ fastify.put("/visitors/:id/status", async (request, reply) => {
     // 2. Build the update query depending on status
     let query = "";
     let values = [];
-
-    // Assuming your visit_statuses has these names:
-    // Checked In, Checked Out, Ongoing
-    // Adjust status_id numbers or do a check by name if preferred
 
     if (
       status.toLowerCase() === "checked in" ||
@@ -1348,11 +1331,11 @@ fastify.get("/nurse/high-care-visits", async (request, reply) => {
         v.time_out,
         v.expected_time,
         vs.name AS status,
-        vi.firstName AS visitorFirstName, 
-        vi.lastName AS visitorLastName, 
+        vi.first_name AS visitorFirstName, 
+        vi.last_name AS visitorLastName,
         vi.email, 
-        e.firstName AS employeeFirstName, 
-        e.lastName AS employeeLastName,
+        e.first_name AS employeeFirstName, 
+        e.last_name AS employeeLastName,
         d.name AS employeeDepartment,
         a.name AS approval_status,
         hcr.id AS high_care_request_id,
@@ -1363,8 +1346,8 @@ fastify.get("/nurse/high-care-visits", async (request, reply) => {
       JOIN visits v ON hcr.visit_id = v.id
       JOIN visitors vi ON v.visitor_id = vi.id
       JOIN employees e ON v.visited_employee_id = e.id
-      JOIN purposes p ON v.purposeId = p.id
-      JOIN departments d ON e.departmentId = d.id
+      JOIN purposes p ON v.purpose_id = p.id
+      JOIN departments d ON e.department_id = d.id
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
       WHERE hcr.is_approved = FALSE
@@ -1434,7 +1417,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
   const [rows] = await pool.execute(
     `
     SELECT vs.id AS visit_id,
-           v.firstName AS host_name,
+           v.first_name AS host_name,
            d.name AS department,
            p.name AS purpose,
            ts.start_time,
@@ -1443,7 +1426,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     FROM visits vs
     JOIN visitors vi ON vi.id = vs.visitor_id
     JOIN employees v ON v.id = vs.visited_employee_id
-    JOIN departments d ON d.id = v.departmentId
+    JOIN departments d ON d.id = v.department_id
     JOIN purposes p ON p.id = vs.purposeid
     JOIN time_slots ts ON ts.id = vs.time_slot_id
     JOIN approval_status a ON a.id = vs.approval_status_id
@@ -1488,15 +1471,15 @@ fastify.get("/history", async (request, reply) => {
     const [visits] = await pool.execute(
       `SELECT 
         v.id AS visit_id,
-        e.firstName AS employee_first_name,
-        e.lastName AS employee_last_name,
+        e.first_name AS employee_first_name,
+        e.last_name AS employee_last_name,
         d.name AS department_name,
         v.visit_date,
         v.time_in,
         v.time_out
       FROM visits v
       JOIN employees e ON v.visited_employee_id = e.id
-      LEFT JOIN departments d ON e.departmentId = d.id
+      LEFT JOIN departments d ON e.department_id = d.id
       WHERE v.visitor_id = ?
       ORDER BY v.visit_date DESC`,
       [visitorId],
@@ -1560,18 +1543,18 @@ fastify.get("/visitors-date", async (request, reply) => {
         v.time_out,
         v.expected_time,
         vs.name AS status,
-        vi.firstName AS visitorFirstName, 
-        vi.lastName AS visitorLastName, 
+        vi.first_name AS visitorFirstName, 
+        vi.last_name AS visitorLastName,
         vi.email, 
-        e.firstName AS employeeFirstName, 
-        e.lastName AS employeeLastName,
+        e.first_name AS employeeFirstName, 
+        e.last_name AS employeeLastName,
         d.name AS employeeDepartment,
         a.name AS approval_status
       FROM visits v
       JOIN visitors vi ON v.visitor_id = vi.id
       JOIN employees e ON v.visited_employee_id = e.id
-      JOIN purposes p ON v.purposeId = p.id
-      JOIN departments d ON e.departmentId = d.id
+      JOIN purposes p ON v.purpose_id = p.id
+      JOIN departments d ON e.department_id = d.id
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
       WHERE v.visit_date = ? 

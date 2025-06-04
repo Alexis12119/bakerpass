@@ -2,8 +2,6 @@ import React from "react";
 import {
   MagnifyingGlassIcon,
   ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
 interface SearchFiltersProps {
@@ -24,12 +22,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   handleSearchChange,
   handleFilterChange,
 }) => {
-  const currentDate = new Date().toLocaleDateString("en-PH", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
     <div className="bg-white rounded-lg p-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
@@ -63,15 +55,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             </select>
             <ChevronDownIcon className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-        </div>
-
-        {/* 📅 Date Navigation */}
-        <div className="flex items-center space-x-2">
-          <ChevronLeftIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
-          <span className="text-gray-500" suppressHydrationWarning>
-            {currentDate}
-          </span>
-          <ChevronRightIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
         </div>
       </div>
     </div>
