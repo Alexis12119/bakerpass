@@ -161,128 +161,6 @@ fastify.post("/register", async (request, reply) => {
   }
 });
 
-// Upload profile image
-fastify.post("/upload-profile-image", async (request, reply) => {
-  const data = await request.file();
-  const { userId, role } = request.query;
-
-  if (!data || !userId || !role) {
-    return reply.status(400).send({ message: "Missing file, userId, or role" });
-  }
-
-  const userTables = {
-    Visitor: "visitors",
-    Employee: "employees",
-    Security: "security_guards",
-    "Human Resources": "human_resources",
-    Nurse: "nurses",
-  };
-
-  const table = userTables[role];
-  if (!table) {
-    return reply.status(400).send({ message: "Invalid role" });
-  }
-
-  try {
-    const buffer = await data.toBuffer();
-
-    // Retry logic for Cloudinary upload
-    const uploadWithRetry = async (retries = 3, delay = 1000) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          return await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-              {
-                folder: `${table}_profiles`,
-                resource_type: "image",
-                timeout: 60000,
-                eager_async: true,
-              },
-              (error, result) => {
-                if (error) {
-                  reject(error);
-                } else {
-                  resolve(result);
-                }
-              },
-            );
-
-            const timeoutId = setTimeout(() => {
-              reject(new Error("Cloudinary upload timeout"));
-            }, 60000);
-
-            uploadStream.on("finish", () => {
-              clearTimeout(timeoutId);
-            });
-
-            uploadStream.end(buffer);
-          });
-        } catch (error) {
-          request.log.warn(`Upload attempt ${i + 1} failed:`, error.message);
-          if (i === retries - 1) {
-            throw error;
-          }
-          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
-        }
-      }
-    };
-
-    const uploadResult = await uploadWithRetry();
-
-    // Save URL in DB
-    const updateQuery = `UPDATE ${table} SET profile_image_url = ? WHERE id = ?`;
-    await pool.execute(updateQuery, [uploadResult.secure_url, userId]);
-
-    // Get updated user data from database
-    const selectQuery = `SELECT id, first_name , last_name, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
-    const [rows] = await pool.execute(selectQuery, [userId]);
-    const updatedUser = rows[0];
-
-    // Generate new JWT token with updated profile image
-    const tokenPayload = {
-      id: updatedUser.id,
-      firstName: updatedUser.first_name,
-      lastName: updatedUser.last_name,
-      role: role,
-      profileImage: updatedUser.profileImage,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-    };
-
-    const newToken = fastify.jwt.sign(tokenPayload, process.env.JWT_SECRET);
-
-    return reply.send({
-      message: "Upload successful",
-      imageUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      token: newToken, // Send new token
-      user: {
-        id: updatedUser.id,
-        firstName: updatedUser.first_name,
-        lastName: updatedUser.last_name,
-        role: role,
-        profileImage: updatedUser.profileImage,
-      },
-    });
-  } catch (err) {
-    request.log.error(err);
-
-    let errorMessage = "Internal Server Error";
-    if (err.code === "ETIMEDOUT" || err.code === "ENETUNREACH") {
-      errorMessage = "Network connectivity issue. Please try again later.";
-    } else if (err.message && err.message.includes("timeout")) {
-      errorMessage = "Upload timeout. Please try again with a smaller file.";
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-
-    return reply.status(500).send({
-      message: errorMessage,
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-});
-
 // Login Endpoint
 fastify.post("/login", async (request, reply) => {
   const { email, password } = request.body;
@@ -346,113 +224,6 @@ fastify.post("/login", async (request, reply) => {
     }
 
     return reply.status(401).send({ message: "Invalid email or password" });
-  } catch (error) {
-    fastify.log.error(error);
-    return reply.status(500).send({ message: "Internal Server Error" });
-  }
-});
-
-// Fetch Employees (With Optional Filters)
-fastify.get("/employees", async (request, reply) => {
-  try {
-    const { search, department } = request.query;
-    let query = `
-      SELECT 
-        e.id,
-        e.first_name,
-        e.last_name,
-        e.profile_image_url,
-        d.name AS department,
-        ROUND(AVG(r.rating), 1) AS rating,
-        COUNT(v.id) AS total_visitors,
-        COUNT(DISTINCT v.visit_date) AS active_days,
-        ROUND(COUNT(v.id) / NULLIF(COUNT(DISTINCT v.visit_date), 0), 1) AS avg_visitors
-      FROM employees e
-      LEFT JOIN departments d ON e.department_id = d.id
-      LEFT JOIN ratings r ON r.rated_employee_id = e.id
-      LEFT JOIN visits v ON v.visited_employee_id = e.id
-    `;
-
-    const queryParams = [];
-    const conditions = [];
-
-    if (department && department !== "All") {
-      conditions.push("d.name = ?");
-      queryParams.push(department);
-    }
-
-    if (search) {
-      conditions.push(
-        "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)",
-      );
-      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
-    }
-
-    if (conditions.length) {
-      query += " WHERE " + conditions.join(" AND ");
-    }
-
-    query += " GROUP BY e.id";
-
-    const [rows] = await pool.execute(query, queryParams);
-
-    return reply.send(
-      rows.map((row) => ({
-        id: row.id,
-        name: `${row.first_name} ${row.last_name}`,
-        department: row.department,
-        rating: row.rating || 0,
-        total_visitors: row.total_visitors || 0,
-        avg_visitors: row.avg_visitors || 0,
-        profileImage: row.profile_image_url,
-      })),
-    );
-  } catch (error) {
-    fastify.log.error(error);
-    return reply.status(500).send({ message: "Internal Server Error" });
-  }
-});
-
-// Fetch Hosts
-fastify.get("/employees/hosts", async (request, reply) => {
-  try {
-    const { search, departmentId } = request.query;
-    let query = `
-      SELECT 
-        e.id, 
-        e.first_name,
-        e.last_name,
-        e.department_id,
-        d.name AS departmentName 
-      FROM employees e
-      LEFT JOIN departments d ON e.department_id = d.id
-    `;
-    let queryParams = [];
-
-    // Apply departmentId filter if provided
-    if (departmentId && departmentId !== "All") {
-      query += " WHERE e.department_id = ?";
-      queryParams.push(departmentId);
-    }
-
-    // Apply search filter if provided
-    if (search) {
-      query += queryParams.length ? " AND" : " WHERE";
-      query += " (e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)";
-      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
-    }
-
-    // Execute the query
-    const [rows] = await pool.execute(query, queryParams);
-
-    // Return the list of hosts with department name
-    return reply.send(
-      rows.map((row) => ({
-        id: row.id,
-        name: `${row.first_name} ${row.last_name}`, // Full name of the host
-        department: row.departmentName, // Use the department name
-      })),
-    );
   } catch (error) {
     fastify.log.error(error);
     return reply.status(500).send({ message: "Internal Server Error" });
@@ -634,6 +405,234 @@ fastify.post("/reset", async (request, reply) => {
   } catch (error) {
     fastify.log.error(error);
     return reply.status(500).send({ message: "Error resetting password." });
+  }
+});
+
+// Upload profile image
+fastify.post("/upload-profile-image", async (request, reply) => {
+  const data = await request.file();
+  const { userId, role } = request.query;
+
+  if (!data || !userId || !role) {
+    return reply.status(400).send({ message: "Missing file, userId, or role" });
+  }
+
+  const userTables = {
+    Visitor: "visitors",
+    Employee: "employees",
+    Security: "security_guards",
+    "Human Resources": "human_resources",
+    Nurse: "nurses",
+  };
+
+  const table = userTables[role];
+  if (!table) {
+    return reply.status(400).send({ message: "Invalid role" });
+  }
+
+  try {
+    const buffer = await data.toBuffer();
+
+    // Retry logic for Cloudinary upload
+    const uploadWithRetry = async (retries = 3, delay = 1000) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              {
+                folder: `${table}_profiles`,
+                resource_type: "image",
+                timeout: 60000,
+                eager_async: true,
+              },
+              (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              },
+            );
+
+            const timeoutId = setTimeout(() => {
+              reject(new Error("Cloudinary upload timeout"));
+            }, 60000);
+
+            uploadStream.on("finish", () => {
+              clearTimeout(timeoutId);
+            });
+
+            uploadStream.end(buffer);
+          });
+        } catch (error) {
+          request.log.warn(`Upload attempt ${i + 1} failed:`, error.message);
+          if (i === retries - 1) {
+            throw error;
+          }
+          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+        }
+      }
+    };
+
+    const uploadResult = await uploadWithRetry();
+
+    // Save URL in DB
+    const updateQuery = `UPDATE ${table} SET profile_image_url = ? WHERE id = ?`;
+    await pool.execute(updateQuery, [uploadResult.secure_url, userId]);
+
+    // Get updated user data from database
+    const selectQuery = `SELECT id, first_name , last_name, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
+    const [rows] = await pool.execute(selectQuery, [userId]);
+    const updatedUser = rows[0];
+
+    // Generate new JWT token with updated profile image
+    const tokenPayload = {
+      id: updatedUser.id,
+      firstName: updatedUser.first_name,
+      lastName: updatedUser.last_name,
+      role: role,
+      profileImage: updatedUser.profileImage,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+    };
+
+    const newToken = fastify.jwt.sign(tokenPayload, process.env.JWT_SECRET);
+
+    return reply.send({
+      message: "Upload successful",
+      imageUrl: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+      token: newToken, // Send new token
+      user: {
+        id: updatedUser.id,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
+        role: role,
+        profileImage: updatedUser.profileImage,
+      },
+    });
+  } catch (err) {
+    request.log.error(err);
+
+    let errorMessage = "Internal Server Error";
+    if (err.code === "ETIMEDOUT" || err.code === "ENETUNREACH") {
+      errorMessage = "Network connectivity issue. Please try again later.";
+    } else if (err.message && err.message.includes("timeout")) {
+      errorMessage = "Upload timeout. Please try again with a smaller file.";
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    return reply.status(500).send({
+      message: errorMessage,
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+// Fetch Employees (With Optional Filters)
+fastify.get("/employees", async (request, reply) => {
+  try {
+    const { search, department } = request.query;
+    let query = `
+      SELECT 
+        e.id,
+        e.first_name,
+        e.last_name,
+        e.profile_image_url,
+        d.name AS department,
+        ROUND(AVG(r.rating), 1) AS rating,
+        COUNT(v.id) AS total_visitors,
+        COUNT(DISTINCT v.visit_date) AS active_days,
+        ROUND(COUNT(v.id) / NULLIF(COUNT(DISTINCT v.visit_date), 0), 1) AS avg_visitors
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
+      LEFT JOIN ratings r ON r.rated_employee_id = e.id
+      LEFT JOIN visits v ON v.visited_employee_id = e.id
+    `;
+
+    const queryParams = [];
+    const conditions = [];
+
+    if (department && department !== "All") {
+      conditions.push("d.name = ?");
+      queryParams.push(department);
+    }
+
+    if (search) {
+      conditions.push(
+        "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)",
+      );
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    if (conditions.length) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    query += " GROUP BY e.id";
+
+    const [rows] = await pool.execute(query, queryParams);
+
+    return reply.send(
+      rows.map((row) => ({
+        id: row.id,
+        name: `${row.first_name} ${row.last_name}`,
+        department: row.department,
+        rating: row.rating || 0,
+        total_visitors: row.total_visitors || 0,
+        avg_visitors: row.avg_visitors || 0,
+        profileImage: row.profile_image_url,
+      })),
+    );
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ message: "Internal Server Error" });
+  }
+});
+// Fetch Hosts
+fastify.get("/employees/hosts", async (request, reply) => {
+  try {
+    const { search, departmentId } = request.query;
+    let query = `
+      SELECT 
+        e.id, 
+        e.first_name,
+        e.last_name,
+        e.department_id,
+        d.name AS departmentName 
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
+    `;
+    let queryParams = [];
+
+    // Apply departmentId filter if provided
+    if (departmentId && departmentId !== "All") {
+      query += " WHERE e.department_id = ?";
+      queryParams.push(departmentId);
+    }
+
+    // Apply search filter if provided
+    if (search) {
+      query += queryParams.length ? " AND" : " WHERE";
+      query += " (e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)";
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    // Execute the query
+    const [rows] = await pool.execute(query, queryParams);
+
+    // Return the list of hosts with department name
+    return reply.send(
+      rows.map((row) => ({
+        id: row.id,
+        name: `${row.first_name} ${row.last_name}`, // Full name of the host
+        department: row.departmentName, // Use the department name
+      })),
+    );
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ message: "Internal Server Error" });
   }
 });
 
