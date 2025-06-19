@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'evaluate_page.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'visit_history.dart';
