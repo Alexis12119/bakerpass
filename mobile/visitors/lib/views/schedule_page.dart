@@ -197,13 +197,7 @@ class _SchedulePageState extends State<SchedulePage> {
                               const SizedBox(height: 10),
                               if (visit!.approvalStatus == "Approved")
                                 GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) => const EvaluatePage()),
-                                    );
-                                  },
+                                  onTap: () {},
                                   child: const Icon(Icons.check_circle,
                                       color: Color(0xFF1C274C), size: 48),
                                 )
