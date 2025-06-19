@@ -1460,21 +1460,26 @@ fastify.get("/history", async (request, reply) => {
     const visitorId = visitor[0].id;
 
     const [visits] = await pool.execute(
-      `SELECT 
-        v.id AS visit_id,
-        e.first_name AS employee_first_name,
-        e.last_name AS employee_last_name,
-        d.name AS department_name,
-        v.visit_date,
-        v.time_in,
-        v.time_out
-      FROM visits v
-      JOIN employees e ON v.visited_employee_id = e.id
-      LEFT JOIN departments d ON e.department_id = d.id
-      WHERE v.visitor_id = ?
-      ORDER BY v.visit_date DESC`,
+      ` SELECT 
+  v.id AS visit_id,
+  e.first_name AS employee_first_name,
+  e.last_name AS employee_last_name,
+  d.name AS department_name,
+  v.visit_date,
+  v.time_in,
+  v.time_out,
+  v.comment_id,
+  c.content AS comment
+FROM visits v
+JOIN employees e ON v.visited_employee_id = e.id
+LEFT JOIN departments d ON e.department_id = d.id
+LEFT JOIN comments c ON v.comment_id = c.id
+WHERE v.visitor_id = ?
+ORDER BY v.visit_date DESC
+      `,
       [visitorId],
     );
+    console.log(visits);
 
     reply.send(visits);
   } catch (err) {
