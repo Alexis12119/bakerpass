@@ -20,14 +20,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const testCloudinaryConnection = async () => {
-  try {
-    await cloudinary.api.ping();
-    console.log("Cloudinary connection successful");
-  } catch (error) {
-    console.error("Cloudinary connection failed:", error);
-  }
-};
 fastify.register(require("@fastify/multipart"));
 
 // Register CORS
@@ -1426,7 +1418,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     JOIN visitors vi ON vi.id = vs.visitor_id
     JOIN employees v ON v.id = vs.visited_employee_id
     JOIN departments d ON d.id = v.department_id
-    JOIN purposes p ON p.id = vs.purposeid
+    JOIN purposes p ON p.id = vs.purpose_id
     JOIN time_slots ts ON ts.id = vs.time_slot_id
     JOIN approval_status a ON a.id = vs.approval_status_id
     WHERE vi.email = ?
@@ -1578,6 +1570,53 @@ fastify.get("/visitors-date", async (request, reply) => {
   } catch (error) {
     fastify.log.error(error);
     return reply.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
+fastify.post("/visit/:visitId/comment", async (request, reply) => {
+  const visitId = request.params.visitId;
+  const { content } = request.body;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Check if visit already has a comment
+    const [[visit]] = await connection.execute(
+      "SELECT comment_id FROM visits WHERE id = ?",
+      [visitId],
+    );
+
+    let commentId = visit?.comment_id;
+
+    if (commentId) {
+      // Update existing comment
+      await connection.execute("UPDATE comments SET content = ? WHERE id = ?", [
+        content,
+        commentId,
+      ]);
+    } else {
+      // Insert new comment
+      const [insertResult] = await connection.execute(
+        "INSERT INTO comments (content) VALUES (?)",
+        [content],
+      );
+      commentId = insertResult.insertId;
+
+      await connection.execute(
+        "UPDATE visits SET comment_id = ? WHERE id = ?",
+        [commentId, visitId],
+      );
+    }
+
+    await connection.commit();
+    reply.send({ message: "Comment saved successfully." });
+  } catch (err) {
+    await connection.rollback();
+    fastify.log.error(err);
+    reply.status(500).send({ error: "Failed to save comment." });
+  } finally {
+    connection.release();
   }
 });
 

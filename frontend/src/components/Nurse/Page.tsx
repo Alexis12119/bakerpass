@@ -7,7 +7,6 @@ import Filters from "@/components/Nurse/Filters";
 import SecurityTable from "@/components/Nurse/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import ErrorModal from "@/components/Modals/ErrorModal";
-import SuccessModal from "@/components/Modals/SuccessModal";
 import { jwtDecode } from "jwt-decode";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";

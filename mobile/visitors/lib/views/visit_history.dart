@@ -64,6 +64,58 @@ class _VisitHistoryPageState extends State<VisitHistoryPage> {
     }
   }
 
+  void _showCommentDialog(Map<String, dynamic> visit) async {
+    final TextEditingController commentController =
+        TextEditingController(text: visit['comment'] ?? '');
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add/Edit Comment'),
+          content: TextField(
+            controller: commentController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Enter your comment here',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final comment = commentController.text.trim();
+                final response = await http.post(
+                  Uri.parse('$baseUrl/visit/${visit['visit_id']}/comment'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({'content': comment}),
+                );
+
+                if (response.statusCode == 200) {
+                  Navigator.pop(context);
+                  fetchVisitHistory(); // Refresh data
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comment saved')),
+                  );
+                } else {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to save comment')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,13 +169,9 @@ class _VisitHistoryPageState extends State<VisitHistoryPage> {
                             ),
                             padding: const EdgeInsets.all(12),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const CircleAvatar(
-                                  backgroundImage: AssetImage(
-                                      'assets/images/jiro.jpg'), // Placeholder image
-                                  radius: 30,
-                                ),
-                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -132,25 +180,51 @@ class _VisitHistoryPageState extends State<VisitHistoryPage> {
                                       Text(
                                         "${visit['employee_first_name']} ${visit['employee_last_name']}",
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
                                       Text(visit['department_name'] ??
                                           'Unknown Department'),
+                                      if (visit['comment'] != null &&
+                                          visit['comment']
+                                              .toString()
+                                              .trim()
+                                              .isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 4.0),
+                                          child: Text(
+                                            "Comment: ${visit['comment']}",
+                                            style: const TextStyle(
+                                              fontStyle: FontStyle.italic,
+                                              fontSize: 12,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ),
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
                                           _VisitTimeChip(
-                                              time: visit['time_in'] ?? "N/A",
-                                              isIn: true),
+                                            time: visit['time_in'] ?? "N/A",
+                                            isIn: true,
+                                          ),
                                           const SizedBox(width: 8),
                                           _VisitTimeChip(
-                                              time: visit['time_out'] ?? "N/A",
-                                              isIn: false),
+                                            time: visit['time_out'] ?? "N/A",
+                                            isIn: false,
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.comment,
+                                      color: Color(0xFF1C274C)),
+                                  tooltip: 'Add/Edit Comment',
+                                  onPressed: () => _showCommentDialog(visit),
                                 ),
                               ],
                             ),
