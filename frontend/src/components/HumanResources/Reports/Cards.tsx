@@ -3,6 +3,7 @@ import Image from "next/image";
 import { mockEmployees } from "@/data/mockEmployees";
 import EmployeeProfileModal from "@/components/HumanResources/Reports/Modals/EmployeeProfile";
 import { Briefcase, Star } from "react-feather";
+import { User } from "lucide-react";
 
 interface Employee {
   id: string;
@@ -33,13 +34,33 @@ const EmployeeCard: React.FC<
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-6 flex items-center space-x-6 w-96 border-2">
-      <div className="w-24 h-24 relative rounded-full overflow-hidden">
-        <Image
-          src={employee.profileImageUrl}
-          alt={`${employee.name}`}
-          fill
-          className="object-cover"
-        />
+      <div className="w-24 h-24 relative rounded-full overflow-hidden bg-gray-100">
+        {employee.profileImageUrl &&
+        employee.profileImageUrl !== "undefined" ? (
+          <Image
+            src={employee.profileImageUrl}
+            alt={employee.name}
+            fill
+            className="object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLElement;
+              target.style.display = "none";
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = "";
+                const fallbackDiv = document.createElement("div");
+                fallbackDiv.className =
+                  "absolute inset-0 flex items-center justify-center";
+                fallbackDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.965 9.965 0 0112 15c2.485 0 4.736.908 6.879 2.404M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
+                parent.appendChild(fallbackDiv);
+              }
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <User className="h-12 w-12 text-gray-400" />
+          </div>
+        )}
       </div>
       <div className="flex-1">
         <h3 className="text-xl font-semibold text-gray-900">{employee.name}</h3>

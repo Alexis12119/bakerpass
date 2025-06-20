@@ -44,7 +44,7 @@ const HumanResourcesReportSection: React.FC = () => {
         rating: emp.rating ?? 0,
         total_visitors: emp.total_visitors ?? 0,
         avg_visitors: emp.avg_visitors ?? 0,
-        profileImageUrl: emp.profile_image_url,
+        profileImageUrl: emp.profileImage,
       }));
 
       // Transform into Record<string, Employee[]>

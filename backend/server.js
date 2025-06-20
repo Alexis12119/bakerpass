@@ -582,6 +582,7 @@ fastify.get("/employees", async (request, reply) => {
     return reply.status(500).send({ message: "Internal Server Error" });
   }
 });
+
 // Fetch Hosts
 fastify.get("/employees/hosts", async (request, reply) => {
   try {
