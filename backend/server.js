@@ -592,7 +592,8 @@ fastify.get("/employees/hosts", async (request, reply) => {
         e.first_name,
         e.last_name,
         e.department_id,
-        d.name AS departmentName 
+        d.name AS departmentName,
+        e.profile_image_url
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
     `;
@@ -620,6 +621,7 @@ fastify.get("/employees/hosts", async (request, reply) => {
         id: row.id,
         name: `${row.first_name} ${row.last_name}`, // Full name of the host
         department: row.departmentName, // Use the department name
+        profileImage: row.profile_image_url,
       })),
     );
   } catch (error) {

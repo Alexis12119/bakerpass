@@ -4,11 +4,13 @@ import axios from "axios";
 import HostDetailsModal from "@/components/Security/Modals/HostDetails";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import Image from "next/image";
+import { User } from "lucide-react";
 
 interface Host {
   id: string;
   name: string;
   department: string;
+  profileImage: string;
 }
 
 const NewVisitModal: React.FC<{
@@ -100,13 +102,19 @@ const NewVisitModal: React.FC<{
                   onClick={() => handleHostClick(host)}
                 >
                   <div className="h-10 w-10 relative rounded-full bg-gray-200 mr-3 overflow-hidden">
-                    <Image
-                      src={`/images/jiro.jpg`}
-                      alt="Host image"
-                      layout="fill" // Use 'layout="fill"' for the image to cover the parent container
-                      objectFit="cover" // Ensures the image covers the entire container
-                      className="h-full w-full" // Optional, you can keep the styles for control
-                    />
+                    {host.profileImage?.trim() ? (
+                      <Image
+                        src={host.profileImage}
+                        alt="Host image"
+                        layout="fill"
+                        objectFit="cover"
+                        className="h-full w-full"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full">
+                        <User className="w-5 h-5 text-gray-500" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">{host.name}</span>

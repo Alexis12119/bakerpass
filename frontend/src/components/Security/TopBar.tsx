@@ -10,7 +10,7 @@ import axios from "axios";
 interface Security {
   id: string;
   name: string;
-  profileImage: string;
+  profileImageUrl: string;
 }
 
 interface SecurityWithDropdown extends Security {
@@ -209,6 +209,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
     id: user?.id?.toString() || "",
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false,
+    profileImageUrl: user?.profileImage || "",
   };
 
   const handleLogout = () => {
@@ -279,7 +280,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Image
-                  src={user?.profileImage}
+                  src={user?.profileImage ?? ""}
                   alt="Profile Image"
                   width={42}
                   height={42}
@@ -399,7 +400,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
         visitor={security}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
-        profileImageUrl={user?.profileImage}
+        profileImageUrl={user?.profileImage ?? ""}
       />
     </>
   );

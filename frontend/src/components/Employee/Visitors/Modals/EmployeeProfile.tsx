@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { User } from "lucide-react";
 import {
   XMarkIcon,
   PencilIcon,
   TrashIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
-import jwtDecode from "jwt-decode";
 import axios from "axios";
 
 interface Employee {
@@ -19,15 +19,17 @@ interface Employee {
 
 interface TimeSlot {
   id: number;
-  employeeId: int;
-  startTime: string;
-  endTime: string;
+  employeeId: string;
+  start_time: string;
+  end_time: string;
 }
 
 interface EmployeeProfileModalProps {
   visitor: Employee;
   isOpen: boolean;
   onClose: () => void;
+  profileImageUrl: string;
+  employeeId: string;
 }
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
@@ -40,6 +42,8 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
   const [newSlot, setNewSlot] = useState({ startTime: "", endTime: "" });
+  const isValidImage = profileImageUrl && profileImageUrl.trim() !== "";
+  console.log(isValidImage);
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -64,14 +68,11 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const addTimeSlot = async () => {
     if (!newSlot.startTime || !newSlot.endTime) return;
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots`,
-        {
-          employeeId: employeeId,
-          startTime: newSlot.startTime,
-          endTime: newSlot.endTime,
-        },
-      );
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots`, {
+        employeeId: employeeId,
+        startTime: newSlot.startTime,
+        endTime: newSlot.endTime,
+      });
       setNewSlot({ startTime: "", endTime: "" });
       fetchTimeSlots();
     } catch (err) {
@@ -132,8 +133,19 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         </div>
 
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
-          <div className="w-20 h-20 relative overflow-hidden rounded-full">
-            <Image src={profileImageUrl} fill alt="Profile" />
+          <div className="w-20 h-20 relative overflow-hidden rounded-full bg-white">
+            {isValidImage ? (
+              <Image
+                src={profileImageUrl}
+                alt="Profile"
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full text-gray-400">
+                <User className="w-10 h-10" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -149,7 +161,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
           <ul className="space-y-2">
             {timeSlots.length === 0 ? (
-              <li>No time slots available</li>
+              <li className="text-black">No time slots available</li>
             ) : (
               timeSlots.map((slot) => (
                 <li

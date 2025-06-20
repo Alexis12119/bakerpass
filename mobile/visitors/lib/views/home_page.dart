@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      'assets/images/jiro.jpg', // Replace with actual path
+                      'assets/images/franklin-logo.png', // Replace with actual path
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,

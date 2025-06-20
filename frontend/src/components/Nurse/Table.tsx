@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import HighCareApprovalForm from "@/components/Nurse/Modals/HighCareApprovalForm";
+import { User } from "lucide-react";
 
 interface Visitor {
   id: string;
@@ -114,13 +115,19 @@ const NurseTable: React.FC<NurseTableProps> = ({
 
               {/* Visitor Info */}
               <div className="flex items-center">
-                <Image
-                  src={visitor.profileImageUrl}
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="rounded-full mr-3"
-                />
+                {visitor.profileImageUrl?.trim() ? (
+                  <Image
+                    src={visitor.profileImageUrl}
+                    alt="Visitor"
+                    width={32}
+                    height={32}
+                    className="rounded-full mr-3 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                    <User className="w-6 h-6 text-gray-500" />
+                  </div>
+                )}
                 <span className="text-sm font-medium">{visitor.name}</span>
               </div>
               <div className="text-sm pt-2">

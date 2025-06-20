@@ -15,6 +15,7 @@ interface SecurityProfileModalProps {
   visitor: SecurityWithDropdown;
   isOpen: boolean;
   onClose: () => void;
+  profileImageUrl: string;
 }
 
 const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
@@ -54,7 +55,7 @@ const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
         {/* Visitor details */}
         <div className="p-5 text-center">
           <h2 className="text-xl font-bold text-black">{visitor.name}</h2>
-          <p className="text-gray-600">{visitor.department}</p>
+          <p className="text-gray-600">Security Guard</p>
         </div>
       </div>
     </div>

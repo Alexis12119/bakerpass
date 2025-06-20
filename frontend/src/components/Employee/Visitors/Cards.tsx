@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
+import { User } from "lucide-react";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import EmployeeProfile from "@/components/Employee/Visitors/Modals/EmployeeProfile";
 import VisitorProfileModal from "@/components/Employee/Visitors/Modals/VisitorProfile";
@@ -16,6 +17,7 @@ interface Visitor {
   timeOut: string;
   approval_status: string;
   profileImageUrl: string;
+  employeeId: string;
 }
 
 interface VisitorWithDropdown extends Visitor {
@@ -53,13 +55,19 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
       <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-5 w-full max-w-xs sm:max-w-sm">
         {/* Profile Section */}
         <div className="flex items-start">
-          <Image
-            src={visitor.profileImageUrl}
-            alt="Visitor"
-            width={60}
-            height={60}
-            className="rounded-full border-2 border-gray-300 shadow-sm"
-          />
+          {visitor.profileImageUrl?.trim() ? (
+            <Image
+              src={visitor.profileImageUrl}
+              alt="Visitor"
+              width={60}
+              height={60}
+              className="rounded-full border-2 border-gray-300 shadow-sm object-cover"
+            />
+          ) : (
+            <div className="w-[60px] h-[60px] rounded-full border-2 border-gray-300 shadow-sm flex items-center justify-center bg-gray-100">
+              <User className="w-6 h-6 text-gray-400" />
+            </div>
+          )}
           <div className="ml-4">
             <p className="text-sm text-gray-500 font-semibold">Name</p>
             <h4 className="text-sm text-gray-900">{visitor.name}</h4>
@@ -119,6 +127,8 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         visitor={visitor}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        profileImageUrl={visitor.profileImageUrl}
+        employeeId={visitor.id}
       />
       {isVisitorProfileModalOpen && (
         <div className="fixed inset-0 backdrop-blur-md z-10"></div>

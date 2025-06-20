@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import SuccessModal from "@/components/Modals/SuccessModal";
-import { Laptop, Smartphone, Tablet, Package } from "lucide-react";
+import { User, Laptop, Smartphone, Tablet, Package } from "lucide-react";
 
 interface HostDetailsModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface HostDetailsModalProps {
     id: string;
     name: string;
     department: string;
+    profileImage: string;
   };
   fetchVisitors: () => Promise<void>;
 }
@@ -283,13 +284,19 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         {/* Host profile */}
         <div className="bg-[#0D1F72] p-6 flex flex-col items-center">
           <div className="w-22 h-22 relative rounded-full bg-white overflow-hidden mb-2">
-            <Image
-              src={`/images/jiro.jpg`}
-              alt="Host image"
-              layout="fill"
-              objectFit="cover"
-              className="h-full w-full"
-            />
+            {host.profileImage?.trim() ? (
+              <Image
+                src={host.profileImage}
+                alt="Host image"
+                layout="fill"
+                objectFit="cover"
+                className="h-full w-full"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full">
+                <User className="w-5 h-5 text-gray-500" />
+              </div>
+            )}
           </div>
           <h3 className="text-white font-semibold text-lg text-center">
             {host.name}
