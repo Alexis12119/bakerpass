@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'home_page.dart';
 import 'schedule_page.dart';
 import 'visit_history.dart';
@@ -17,6 +18,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  String profileImage = '';
   String contactNumber = '';
   String address = '';
   final baseUrl = dotenv.env['BASE_URL'] ?? '';
@@ -76,11 +78,47 @@ class _ProfilePageState extends State<ProfilePage> {
       _lastNameController.text = prefs.getString('lastName') ?? '';
       contactNumber = prefs.getString('contactNumber') ?? '';
       address = prefs.getString('address') ?? '';
-      print(_firstNameController.text);
-      print(_lastNameController.text);
+      profileImage = prefs.getString('profileImage') ?? '';
       _contactController.text = contactNumber;
       _addressController.text = address;
     });
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return;
+
+    final file = File(pickedFile.path);
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+    final role = prefs.getString('role') ?? 'visitor';
+
+    final uri =
+        Uri.parse('$baseUrl/upload-profile-image?userId=$userId&role=$role');
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final resBody = await response.stream.bytesToString();
+      final imageUrl = jsonDecode(resBody)['imageUrl'];
+
+      setState(() {
+        profileImage = imageUrl;
+      });
+      await prefs.setString('profileImage', imageUrl);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile image updated')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Image upload failed')),
+      );
+    }
   }
 
   Future<void> _saveUpdatedInfo() async {
@@ -110,16 +148,31 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Column(
                     children: [
                       const SizedBox(height: 24),
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/jiro.jpg'),
-                            fit: BoxFit.cover,
+                      GestureDetector(
+                        onTap: _pickAndUploadImage,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
                           ),
+                          child: profileImage.isNotEmpty
+                              ? ClipOval(
+                                  child: Image.network(
+                                    profileImage,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.person,
+                                          size: 60, color: Colors.white);
+                                    },
+                                  ),
+                                )
+                              : const CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  child: Icon(Icons.person,
+                                      size: 60, color: Color(0xFF1C274C)),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 32),

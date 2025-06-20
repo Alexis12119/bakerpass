@@ -34,6 +34,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   int? newVisitorId;
   List<dynamic> visitPurposes = [];
   List<dynamic> timeSlots = [];
+  String? profileImage;
 
   // Step 2 - Device selection
   List<String> selectedDevices = [];
@@ -87,9 +88,17 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   @override
   void initState() {
     super.initState();
+    _loadProfileImage();
     if (widget.isOpen) {
       _initializeModal();
     }
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      profileImage = prefs.getString('profileImage');
+    });
   }
 
   Future<void> _initializeModal() async {
@@ -307,19 +316,26 @@ class HostDetailsModalState extends State<HostDetailsModal> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Profile image placeholder
+                  // Profile image from localStorage
                   Container(
                     width: 80,
                     height: 80,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
+                      color: Colors.white,
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: primaryColor,
-                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: (profileImage != null && profileImage!.isNotEmpty)
+                        ? Image.network(
+                            profileImage!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person,
+                                  size: 40, color: primaryColor);
+                            },
+                          )
+                        : const Icon(Icons.person,
+                            size: 40, color: primaryColor),
                   ),
                   const SizedBox(height: 12),
                   Text(

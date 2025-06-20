@@ -8,12 +8,14 @@ class EmployeeCard extends StatefulWidget {
   final int id;
   final String name;
   final String department;
+  final String profileImage;
 
   const EmployeeCard(
       {super.key,
       required this.id,
       required this.name,
-      required this.department});
+      required this.department,
+      required this.profileImage});
 
   @override
   State<EmployeeCard> createState() => _EmployeeCardState();
@@ -49,13 +51,13 @@ class _EmployeeCardState extends State<EmployeeCard> {
             'timeIn': visitor['time_in'],
             'timeOut': visitor['time_out'],
             'status': visitor['status'],
+            'profileImage': visitor['profile_image_url'],
             'approvalStatus': visitor['approval_status'],
             'isDropdownOpen': false,
             'isHighCare': visitor['is_high_care'],
           };
         }).toList();
 
-        print("This is working");
         return visitors;
       } else {
         throw Exception('Failed to fetch visitors');
@@ -76,10 +78,23 @@ class _EmployeeCardState extends State<EmployeeCard> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundImage:
-                AssetImage('assets/images/jiro.jpg'), // Use your image
+          CircleAvatar(
             radius: 30,
+            backgroundColor: Colors.grey[200],
+            child: widget.profileImage.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      widget.profileImage,
+                      fit: BoxFit.cover,
+                      width: 60,
+                      height: 60,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.person,
+                            size: 30, color: Colors.grey);
+                      },
+                    ),
+                  )
+                : const Icon(Icons.person, size: 30, color: Colors.grey),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -116,6 +131,7 @@ class _EmployeeCardState extends State<EmployeeCard> {
                       'id': widget.id,
                       'name': widget.name,
                       'department': widget.department,
+                      'profileImage': widget.profileImage,
                     },
                     fetchVisitors: () async {
                       await fetchVisitors();

@@ -39,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
         await prefs.setString('contactNumber', data['contactNumber'] ?? '');
         await prefs.setString('address', data['address'] ?? '');
         await prefs.setString('role', data['role']);
+        await prefs.setString('profileImage', data['profileImage'] ?? '');
 
         return true;
       } else {

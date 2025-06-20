@@ -6,6 +6,7 @@ import 'home/feature_icon.dart';
 import 'home/employee_card.dart';
 import '../models/employee.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,11 +19,20 @@ class _HomePageState extends State<HomePage> {
   List<Employee> _employees = [];
   bool _isLoading = true;
   String _searchQuery = "";
+  String? profileImage;
 
   @override
   void initState() {
     super.initState();
     _loadEmployees();
+    _loadProfileImage();
+  }
+
+  void _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      profileImage = prefs.getString('profileImage');
+    });
   }
 
   void _loadEmployees() async {
@@ -165,10 +175,24 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const CircleAvatar(
-                      backgroundImage: AssetImage(
-                          'assets/images/jiro.jpg'), // Replace with default
+                    CircleAvatar(
                       radius: 30,
+                      backgroundColor: Colors.grey[200],
+                      child: profileImage != null && profileImage!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                profileImage!,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.person,
+                                      size: 30, color: Colors.grey);
+                                },
+                              ),
+                            )
+                          : const Icon(Icons.person,
+                              size: 30, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -223,6 +247,7 @@ class _HomePageState extends State<HomePage> {
                               id: employee.id,
                               name: employee.name,
                               department: employee.department,
+                              profileImage: employee.profileImage,
                             ),
                           );
                         },

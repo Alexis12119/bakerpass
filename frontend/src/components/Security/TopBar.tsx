@@ -45,42 +45,6 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
     fileInputRef.current?.click();
   };
 
-  // Helper function to update JWT token
-  const updateJWTToken = (newProfileImageUrl: string) => {
-    try {
-      const currentToken = sessionStorage.getItem("token");
-      if (!currentToken) return;
-
-      const decoded = jwtDecode(currentToken) as any;
-
-      // Create updated payload
-      const updatedPayload = {
-        ...decoded,
-        profileImage: newProfileImageUrl,
-        // Update the issued at time to current time
-        iat: Math.floor(Date.now() / 1000),
-      };
-
-      // Note: This creates a "fake" token that won't be validated by the backend
-      // But it will persist the profile image URL for frontend display
-      const updatedTokenString = btoa(
-        JSON.stringify({
-          header: { alg: "HS256", typ: "JWT" },
-          payload: updatedPayload,
-          signature: "frontend-updated", // Placeholder signature
-        }),
-      );
-
-      // Store the updated token
-      sessionStorage.setItem("token", updatedTokenString);
-
-      return true;
-    } catch (error) {
-      console.error("Error updating JWT token:", error);
-      return false;
-    }
-  };
-
   // Alternative: Store profile image URL separately
   const updateProfileImageStorage = (
     newProfileImageUrl: string,

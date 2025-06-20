@@ -73,7 +73,6 @@ void showProfilePopup(
   );
 }
 
-
 class ScheduleOption extends StatefulWidget {
   final String time;
   final bool isSelected;
