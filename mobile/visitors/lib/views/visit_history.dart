@@ -6,6 +6,7 @@ import 'schedule_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class VisitHistoryPage extends StatefulWidget {
   const VisitHistoryPage({super.key});
@@ -278,11 +279,21 @@ class _VisitTimeChip extends StatelessWidget {
 
   const _VisitTimeChip({required this.time, required this.isIn});
 
+  String _formatTime(String rawTime) {
+    try {
+      final parsedTime = DateFormat("HH:mm:ss").parse(rawTime);
+      return DateFormat("h:mm a")
+          .format(parsedTime); // Converts to 12-hour format
+    } catch (e) {
+      return rawTime; // fallback if parsing fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Chip(
       label: Text(
-        time,
+        _formatTime(time),
         style: const TextStyle(color: Colors.white),
       ),
       backgroundColor: isIn ? Colors.green : Colors.red,
