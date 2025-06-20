@@ -21,7 +21,10 @@ interface VisitorsListProps {
   groupedVisitors: Record<string, VisitorWithDropdown[]>;
   fetchVisitors: () => void;
 }
-const VisitorsList: React.FC<VisitorsListProps> = ({ groupedVisitors, fetchVisitors }) => {
+const VisitorsList: React.FC<VisitorsListProps> = ({
+  groupedVisitors,
+  fetchVisitors,
+}) => {
   return (
     <div className="bg-white p-4 max-h-[400px] overflow-y-auto w-full">
       {Object.keys(groupedVisitors).length > 0 ? (
@@ -36,7 +39,10 @@ const VisitorsList: React.FC<VisitorsListProps> = ({ groupedVisitors, fetchVisit
                     key={visitor.id}
                     className="w-full min-w-[280px] max-w-xs flex-shrink-0"
                   >
-                    <VisitorCard visitor={visitor} fetchVisitors={fetchVisitors} />
+                    <VisitorCard
+                      visitor={visitor}
+                      fetchVisitors={fetchVisitors}
+                    />
                   </div>
                 ))}
               </div>

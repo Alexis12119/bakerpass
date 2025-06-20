@@ -28,6 +28,9 @@ interface VisitorWithDropdown extends Visitor {
 
 const EmployeeVisitorsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
+    const savedDate = sessionStorage.getItem("visitor_filter_date");
+    if (savedDate) return savedDate;
+
     const today = new Date();
     return format(today, "yyyy-MM-dd");
   });
@@ -75,16 +78,21 @@ const EmployeeVisitorsPage: React.FC = () => {
   useEffect(() => {
     fetchVisitorsByDate();
   }, [currentDate]);
+
   const handlePreviousDate = () => {
-    setCurrentDate((prev: string) =>
-      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
 
   const handleNextDate = () => {
-    setCurrentDate((prev: string) =>
-      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
 
   useEffect(() => {

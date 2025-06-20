@@ -102,9 +102,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           />
           <DatePicker
             selected={new Date(currentDate)}
-            onChange={(date: Date) =>
-              setCurrentDate(format(date, "yyyy-MM-dd"))
-            }
+            onChange={(date: Date | null) => {
+              if (date) {
+                const formatted = format(date, "yyyy-MM-dd");
+                setCurrentDate(formatted);
+                sessionStorage.setItem("visitor_filter_date", formatted);
+              }
+            }}
             dateFormat="MMMM dd, yyyy"
             className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
           />
