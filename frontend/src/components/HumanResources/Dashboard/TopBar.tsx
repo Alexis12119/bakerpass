@@ -262,12 +262,11 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("lastValidRoute");
     sessionStorage.removeItem("role");
-
+    sessionStorage.removeItem("visitor_filter_date");
     setUser(null);
     window.location.href = "/login";
     setIsConfirmLogoutOpen(false);
   };
-
 
   return (
     <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">

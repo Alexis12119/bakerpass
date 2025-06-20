@@ -32,6 +32,9 @@ interface VisitorWithDropdown extends Visitor {
 
 const SecurityGuardPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
+    const savedDate = sessionStorage.getItem("visitor_filter_date");
+    if (savedDate) return savedDate;
+
     const today = new Date();
     return format(today, "yyyy-MM-dd");
   });
@@ -85,15 +88,19 @@ const SecurityGuardPage: React.FC = () => {
   }, [currentDate]);
 
   const handlePreviousDate = () => {
-    setCurrentDate((prev: string) =>
-      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
 
   const handleNextDate = () => {
-    setCurrentDate((prev: string) =>
-      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
 
   const toggleVisitorStatus = async (
@@ -333,7 +340,9 @@ const SecurityGuardPage: React.FC = () => {
                 selected={new Date(currentDate)}
                 onChange={(date: Date | null) => {
                   if (date) {
-                    setCurrentDate(format(date, "yyyy-MM-dd"));
+                    const formatted = format(date, "yyyy-MM-dd");
+                    setCurrentDate(formatted);
+                    sessionStorage.setItem("visitor_filter_date", formatted);
                   }
                 }}
                 dateFormat="MMMM dd, yyyy"

@@ -27,6 +27,9 @@ interface VisitorWithDropdown extends Visitor {
 
 const VisitorsSection: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
+    const savedDate = sessionStorage.getItem("visitor_filter_date");
+    if (savedDate) return savedDate;
+
     const today = new Date();
     return format(today, "yyyy-MM-dd");
   });
@@ -89,20 +92,25 @@ const VisitorsSection: React.FC = () => {
   };
 
   useEffect(() => {
-     fetchVisitors();
+    fetchVisitors();
   }, [currentDate]);
 
   const handlePreviousDate = () => {
-    setCurrentDate((prev: string) =>
-      format(subDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
 
   const handleNextDate = () => {
-    setCurrentDate((prev: string) =>
-      format(addDays(new Date(prev), 1), "yyyy-MM-dd"),
-    );
+    setCurrentDate((prev: string) => {
+      const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
+      sessionStorage.setItem("visitor_filter_date", newDate);
+      return newDate;
+    });
   };
+
   const toggleVisitorStatus = async (visitorId: string) => {
     try {
       // First, find the current visitor and status
@@ -274,9 +282,13 @@ const VisitorsSection: React.FC = () => {
             />
             <DatePicker
               selected={new Date(currentDate)}
-              onChange={(date: Date) =>
-                setCurrentDate(format(date, "yyyy-MM-dd"))
-              }
+              onChange={(date: Date | null) => {
+                if (date) {
+                  const formatted = format(date, "yyyy-MM-dd");
+                  setCurrentDate(formatted);
+                  sessionStorage.setItem("visitor_filter_date", formatted);
+                }
+              }}
               dateFormat="MMMM dd, yyyy"
               className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"
             />

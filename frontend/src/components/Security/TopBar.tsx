@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import NewVisitModal from "@/components/Security/Modals/NewVisit";
 import SecurityProfileModal from "@/components/Security/Modals/SecurityProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
@@ -22,7 +22,6 @@ interface TopBarProps {
 }
 
 const TopBar = ({ fetchVisitors }: TopBarProps) => {
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -223,6 +222,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("lastValidRoute");
     sessionStorage.removeItem("role");
+    sessionStorage.removeItem("visitor_filter_date");
 
     setUser(null);
     window.location.href = "/login";
@@ -250,32 +250,6 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
             >
               + NEW VISIT
             </button>
-
-            <div className="relative">
-              <button
-                onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative"
-              >
-                <BellIcon className="h-6 w-6 text-yellow-500" />
-                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-              </button>
-              {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white border rounded-lg shadow-lg p-3 z-50">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Notifications
-                  </h3>
-                  <ul className="text-sm text-gray-600">
-                    <li className="py-2 border-b">New visitor checked in.</li>
-                    <li className="py-2 border-b">
-                      Package delivered at the front desk.
-                    </li>
-                    <li className="py-2">
-                      Security alert: Unusual activity detected.
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
 
             <div className="flex items-center space-x-2">
               <div className="relative">

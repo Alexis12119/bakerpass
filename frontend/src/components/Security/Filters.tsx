@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { MagnifyingGlassIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
+import {
+  MagnifyingGlassIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/solid";
 import axios from "axios";
 
 interface FiltersProps {
@@ -29,19 +32,27 @@ const Filters: React.FC<FiltersProps> = ({
 }) => {
   const [hosts, setHosts] = useState<{ id: string; name: string }[]>([]);
   const [purposes, setPurposes] = useState<{ id: string; name: string }[]>([]);
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
-  const [approvalStatuses, setApprovalStatuses] = useState<{ id: string; name: string }[]>([]);
+  const [departments, setDepartments] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [approvalStatuses, setApprovalStatuses] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [hostsResponse, purposesResponse, departmentsResponse, approvalStatuses] =
-          await Promise.all([
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
-          ]);
+        const [
+          hostsResponse,
+          purposesResponse,
+          departmentsResponse,
+          approvalStatuses,
+        ] = await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
+        ]);
 
         setHosts(hostsResponse.data);
         setPurposes(purposesResponse.data);
@@ -62,7 +73,7 @@ const Filters: React.FC<FiltersProps> = ({
 
   const handleFilterChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
-    filterType: string
+    filterType: string,
   ) => {
     const value = event.target.value;
     console.log("Value:", value);
@@ -110,7 +121,7 @@ const Filters: React.FC<FiltersProps> = ({
           options: approvalStatuses,
           state: selectedApprovalStatus,
           type: "approvalStatus",
-        }
+        },
       ].map(({ label, options, state, type }) => (
         <div key={label} className="relative">
           <select

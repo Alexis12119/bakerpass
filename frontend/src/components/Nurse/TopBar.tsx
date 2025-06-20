@@ -253,6 +253,7 @@ const TopBar = () => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("lastValidRoute");
     sessionStorage.removeItem("role");
+    sessionStorage.removeItem("visitor_filter_date");
 
     setUser(null);
     window.location.href = "/login";
