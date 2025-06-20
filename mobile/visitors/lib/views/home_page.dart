@@ -19,6 +19,8 @@ class _HomePageState extends State<HomePage> {
   List<Employee> _employees = [];
   bool _isLoading = true;
   String _searchQuery = "";
+  String? firstName;
+  String? lastName;
   String? profileImage;
 
   @override
@@ -26,6 +28,15 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadEmployees();
     _loadProfileImage();
+    _loadUserName();
+  }
+
+  void _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      firstName = prefs.getString('firstName') ?? '';
+      lastName = prefs.getString('lastName') ?? '';
+    });
   }
 
   void _loadProfileImage() async {
@@ -108,7 +119,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final userName = "Guest";
+    final userName = (firstName != null && lastName != null)
+        ? '$firstName $lastName'
+        : 'Guest';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),

@@ -10,6 +10,9 @@ services:
       MYSQL_PASSWORD: 123
     ports:
       - "3307:3306"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - mysql_data:/var/lib/mysql
 
@@ -31,6 +34,9 @@ services:
       PORT: 5001  
     expose:
       - "5001" 
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     extra_hosts:
       - "host.docker.internal:host-gateway" 
     volumes:
@@ -51,6 +57,9 @@ services:
       - backend
     expose:
       - "3000"  # only exposed internally
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -55,12 +55,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
-      body: Stack(
-        children: [
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Centered Franklin Baker logo
+              Image.asset(
+                'assets/images/franklin-logo.png',
+                height: 100,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 24),
+
+              // Forgot Password Container
+              Container(
                 width: 400,
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
@@ -144,18 +154,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-          Positioned(
-            top: 40,
-            left: 20,
-            child: Image.asset(
-              'assets/images/franklin-logo.png', // Make sure the path is correct
-              width: 150,
-              height: 100,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
