@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { mockEmployees } from "@/data/mockEmployees";
 import EmployeeProfileModal from "@/components/HumanResources/Reports/Modals/EmployeeProfile";
-import { Briefcase, Star } from "react-feather";
+import { Briefcase } from "react-feather";
 import { User } from "lucide-react";
 
 interface Employee {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   BellIcon,
   XMarkIcon,
@@ -18,7 +17,7 @@ interface TopBarProps {
 }
 
 interface HumanResources {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   profileImageUrl: string;
@@ -33,10 +32,11 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [user, setUser] = useState<{
-    id: string;
+    id: number;
     firstName: string;
     lastName: string;
     profileImage: string;
+    role: string;
   } | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,42 +48,6 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const handleUploadClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent dropdown from opening when clicking profile image
     fileInputRef.current?.click();
-  };
-
-  // Helper function to update JWT token
-  const updateJWTToken = (newProfileImageUrl: string) => {
-    try {
-      const currentToken = sessionStorage.getItem("token");
-      if (!currentToken) return;
-
-      const decoded = jwtDecode(currentToken) as any;
-
-      // Create updated payload
-      const updatedPayload = {
-        ...decoded,
-        profileImage: newProfileImageUrl,
-        // Update the issued at time to current time
-        iat: Math.floor(Date.now() / 1000),
-      };
-
-      // Note: This creates a "fake" token that won't be validated by the backend
-      // But it will persist the profile image URL for frontend display
-      const updatedTokenString = btoa(
-        JSON.stringify({
-          header: { alg: "HS256", typ: "JWT" },
-          payload: updatedPayload,
-          signature: "frontend-updated", // Placeholder signature
-        }),
-      );
-
-      // Store the updated token
-      sessionStorage.setItem("token", updatedTokenString);
-
-      return true;
-    } catch (error) {
-      console.error("Error updating JWT token:", error);
-      return false;
-    }
   };
 
   // Alternative: Store profile image URL separately
@@ -122,7 +86,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
     const query = new URLSearchParams({
       userId: user.id.toString(),
-      role: user.role,
+      role: "Human Resources",
     });
 
     try {
@@ -194,7 +158,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           id: decoded.id,
           firstName: decoded.firstName,
           lastName: decoded.lastName,
-          role: decoded.role,
+          role: "Human Resources",
           profileImage: profileImageUrl, // Use the updated URL if available
         });
       } catch (error) {
@@ -247,7 +211,11 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   }, []);
 
   const HumanResources: HumanResourcesWithDropdown = {
-    isDropdownOpen: false, // Required property from VisitorWithDropdown
+    isDropdownOpen: false,
+    id: user?.id || 0,
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    profileImageUrl: user?.profileImage || "",
   };
 
   const handleLogout = () => {
@@ -309,7 +277,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         <div className="flex items-center space-x-2">
           <div className="relative">
             <Image
-              src={user?.profileImage}
+              src={user?.profileImage ?? ""}
               alt="Profile Image"
               width={42}
               height={42}
@@ -420,7 +388,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           visitor={HumanResources}
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
-          profileImageUrl={user?.profileImage}
+          profileImageUrl={user?.profileImage ?? ""}
         />
       </div>
     </div>

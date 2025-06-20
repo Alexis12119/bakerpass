@@ -1,11 +1,10 @@
 import React from "react";
 import Image from "next/image";
-import { XMarkIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 interface HumanResources {
-  id: string;
-  name: string;
-  department: string;
-  profileImageUrl: string;
+  id: number;
+  firstName: string;
+  lastName: string;
 }
 
 interface HumanResourcesWithDropdown extends HumanResources {
@@ -16,6 +15,7 @@ interface HumanResourcesProfileModalProps {
   visitor: HumanResourcesWithDropdown;
   isOpen: boolean;
   onClose: () => void;
+  profileImageUrl: string;
 }
 
 const HumanResourcesProfileModal: React.FC<HumanResourcesProfileModalProps> = ({
@@ -54,8 +54,10 @@ const HumanResourcesProfileModal: React.FC<HumanResourcesProfileModalProps> = ({
 
         {/* Visitor details */}
         <div className="p-5 text-center">
-          <h2 className="text-xl font-bold text-black">{visitor.name}</h2>
-          <p className="text-gray-600">{visitor.department}</p>
+          <h2 className="text-xl font-bold text-black">
+            {visitor.firstName} {visitor.lastName}
+          </h2>
+          <p className="text-gray-600">Human Resources</p>
         </div>
       </div>
     </div>

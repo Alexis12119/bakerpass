@@ -45,7 +45,7 @@ const DashboardCards: React.FC = () => {
         console.log("✅ WebSocket connected");
       };
 
-      socket.onmessage = (event) => {
+      socket.onmessage = () => {
         console.log("📡 Update received: refreshing dashboard stats...");
         fetchStats();
       };

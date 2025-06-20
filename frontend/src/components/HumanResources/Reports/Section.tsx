@@ -95,7 +95,7 @@ const HumanResourcesReportSection: React.FC = () => {
         console.log("✅ WebSocket connected");
       };
 
-      socket.onmessage = (event) => {
+      socket.onmessage = () => {
         console.log("📡 Update received: refreshing employee stats...");
         fetchEmployees();
       };

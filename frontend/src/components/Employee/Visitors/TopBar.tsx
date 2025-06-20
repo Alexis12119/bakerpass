@@ -308,7 +308,7 @@ const TopBar = () => {
         <div className="flex items-center space-x-2">
           <div className="relative">
             <Image
-              src={user?.profileImage}
+              src={user?.profileImage ?? ""}
               alt="Profile Image"
               width={42}
               height={42}

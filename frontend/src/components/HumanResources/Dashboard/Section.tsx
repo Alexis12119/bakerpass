@@ -111,41 +111,6 @@ const VisitorsSection: React.FC = () => {
     });
   };
 
-  const toggleVisitorStatus = async (visitorId: string) => {
-    try {
-      // First, find the current visitor and status
-      const currentVisitor = visitors.find((v) => v.id === visitorId);
-      if (!currentVisitor) return;
-
-      // Determine the current status and decide on the next status
-      let newStatus: "Checked In" | "Checked Out" | "Ongoing" = "Checked In";
-
-      // If the visitor has checked in but not checked out, set status to "Ongoing"
-      if (currentVisitor.status === "Checked In" && !currentVisitor.timeOut) {
-        newStatus = "Ongoing";
-      }
-      // If the visitor has completed their visit, set status to "Checked Out"
-      else if (
-        currentVisitor.status === "Ongoing" ||
-        (currentVisitor.status === "Checked In" && currentVisitor.timeOut)
-      ) {
-        newStatus = "Checked Out";
-      }
-
-      // Send the update request to the server with the new status
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors/${visitorId}/status`,
-        { status: newStatus },
-      );
-
-      await fetchVisitors(); // Refresh the list of visitors
-      // Show success message
-      console.log("Toggled visitor status:", newStatus);
-    } catch (error) {
-      console.error("Error toggling visitor status:", error);
-    }
-  };
-
   const fetchVisitors = async (forNurse = false) => {
     try {
       const endpoint = forNurse
@@ -317,10 +282,7 @@ const VisitorsSection: React.FC = () => {
         </div>
       </div>
 
-      <DashboardTable
-        visitors={filteredVisitors}
-        toggleVisitorStatus={toggleVisitorStatus}
-      />
+      <DashboardTable visitors={filteredVisitors} />
     </div>
   );
 };

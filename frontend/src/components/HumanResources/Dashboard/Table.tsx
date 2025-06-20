@@ -22,13 +22,9 @@ interface VisitorWithDropdown extends Visitor {
 
 interface DashboardTableProps {
   visitors: VisitorWithDropdown[];
-  toggleVisitorStatus: (visitorId: string) => void;
 }
 
-const DashboardTable: React.FC<DashboardTableProps> = ({
-  visitors,
-  toggleVisitorStatus,
-}) => {
+const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
   const formatTimeForDisplay = (time: string | null) => {
     if (!time || time === "00:00:00") return "Pending";
     const [hoursStr, minutes] = time.split(":");
