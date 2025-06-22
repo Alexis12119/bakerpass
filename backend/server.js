@@ -690,35 +690,10 @@ fastify.post("/visits", async (request, reply) => {
       visitedEmployeeId,
       visitPurposeId,
       selectedTimeSlot, // time_slots.id
-      isHighCare,
-
-      // High care modal fields
-      fever,
-      cough,
-      openWound,
-      nausea,
-      otherAllergies,
-      recentPlaces,
-      mobilePhone,
-      camera,
-      medicines,
-      notebook,
-      earrings,
-      otherProhibited,
-
-      // New symptoms
-      skinBoils,
-      skinAllergies,
-      diarrhea,
-      openSores,
-
-      // New prohibited items
-      ring,
-      id_card,
-      ballpen,
-      wristwatch,
-      necklace,
+      deviceType,
+      deviceBrand,
     } = request.body;
+
     if (
       !firstName ||
       !lastName ||
@@ -773,7 +748,7 @@ fastify.post("/visits", async (request, reply) => {
       // Insert new visitor
       const [visitorResult] = await pool.execute(
         `INSERT INTO visitors (email, password, first_name, last_name, contact_number, address)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           email,
           "", // password is optional
@@ -786,10 +761,10 @@ fastify.post("/visits", async (request, reply) => {
       visitorId = visitorResult.insertId;
     }
 
-    // Insert visit
+    // Insert visit with device information
     const [visitResult] = await pool.execute(
-      `INSERT INTO visits (visitor_id, visited_employee_id, purpose_id, visit_date, expected_time, time_slot_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO visits (visitor_id, visited_employee_id, purpose_id, visit_date, expected_time, time_slot_id, device_type, device_brand)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         visitorId,
         visitedEmployeeId,
@@ -797,102 +772,27 @@ fastify.post("/visits", async (request, reply) => {
         visitDate,
         expectedTime,
         selectedTimeSlot,
+        deviceType || null,
+        deviceBrand || null,
       ],
     );
-    clients.forEach((socket) => {
-      if (socket.readyState === 1) {
-        // 1 means OPEN
-        socket.send("update");
-      }
-    });
 
     const visitId = visitResult.insertId;
 
-    // If high care is requested
-    if (isHighCare === "Yes") {
-      // Insert into high_care_requests
-      const [highCareResult] = await pool.execute(
-        `INSERT INTO high_care_requests (visit_id) VALUES (?)`,
-        [visitId],
-      );
-
-      const highCareRequestId = highCareResult.insertId;
-
-      // Insert into high_care_symptoms
-      await pool.execute(
-        `INSERT INTO high_care_symptoms (
-    high_care_request_id,
-    fever,
-    cough,
-    open_wound,
-    nausea,
-    other_allergies,
-    recent_places,
-    skin_boils,
-    skin_allergies,
-    diarrhea,
-    open_sores
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          highCareRequestId,
-          fever ? 1 : 0,
-          cough ? 1 : 0,
-          openWound ? 1 : 0,
-          nausea ? 1 : 0,
-          otherAllergies || null,
-          recentPlaces || null,
-          skinBoils ? 1 : 0,
-          skinAllergies ? 1 : 0,
-          diarrhea ? 1 : 0,
-          openSores ? 1 : 0,
-        ],
-      );
-
-      // Insert into high_care_prohibited_items
-      await pool.execute(
-        `INSERT INTO high_care_prohibited_items (
-    high_care_request_id,
-    mobile_phone,
-    camera,
-    medicines,
-    notebook,
-    earrings,
-    other_prohibited_items,
-    ring,
-    id_card,
-    ballpen,
-    wristwatch,
-    necklace
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          highCareRequestId,
-          mobilePhone ? 1 : 0,
-          camera ? 1 : 0,
-          medicines ? 1 : 0,
-          notebook ? 1 : 0,
-          earrings ? 1 : 0,
-          otherProhibited || null,
-          ring ? 1 : 0,
-          id_card ? 1 : 0,
-          ballpen ? 1 : 0,
-          wristwatch ? 1 : 0,
-          necklace ? 1 : 0,
-        ],
-      );
-    }
-
+    // Notify connected clients
     clients.forEach((socket) => {
       if (socket.readyState === 1) {
         // 1 means OPEN
         socket.send("update");
       }
     });
+
     return reply.status(201).send({
       message: "Visit created successfully",
       visitId,
     });
   } catch (error) {
-    fastify.log.error(error, "Error creating visit"); // <- this logs full details
+    fastify.log.error(error, "Error creating visit");
     return reply
       .status(500)
       .send({ message: "Internal Server Error", error: error.message });

@@ -32,6 +32,7 @@ const EmployeeVisitorsPage: React.FC = () => {
     if (savedDate) return savedDate;
 
     const today = new Date();
+    sessionStorage.setItem("visitor_filter_date", format(today, "yyyy-MM-dd"));
     return format(today, "yyyy-MM-dd");
   });
 
@@ -61,14 +62,15 @@ const EmployeeVisitorsPage: React.FC = () => {
     }));
   };
   const fetchVisitorsByDate = async () => {
+    const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`,
       );
       const data = await res.json();
 
       const mappedVisitors = mapVisitorsData(data);
-      setVisitors(mappedVisitors); // <-- set visitors here
+      setVisitors(mappedVisitors);
     } catch (error) {
       console.error("Error fetching visitors by date:", error);
       setVisitors([]); // clear fallback

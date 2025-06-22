@@ -31,6 +31,7 @@ const VisitorsSection: React.FC = () => {
     if (savedDate) return savedDate;
 
     const today = new Date();
+    sessionStorage.setItem("visitor_filter_date", format(today, "yyyy-MM-dd"));
     return format(today, "yyyy-MM-dd");
   });
 
@@ -112,10 +113,11 @@ const VisitorsSection: React.FC = () => {
   };
 
   const fetchVisitors = async (forNurse = false) => {
+    const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${currentDate}`; // <-- Fix here
+        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
 
       const response = await axios.get(endpoint);
 
