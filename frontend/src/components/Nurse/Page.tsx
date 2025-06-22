@@ -180,7 +180,7 @@ const NursePage: React.FC = () => {
     }));
   };
 
-  const fetchVisitors = async (forNurse = true) => {
+  const fetchVisitors = async (forNurse = false) => {
     try {
       const endpoint = forNurse
         ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
