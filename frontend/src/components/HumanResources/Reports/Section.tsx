@@ -6,7 +6,6 @@ interface Employee {
   id: string;
   name: string;
   department: string;
-  rating: number;
   total_visitors: number;
   avg_visitors: number;
   profileImageUrl: string;
@@ -41,7 +40,6 @@ const HumanResourcesReportSection: React.FC = () => {
         id: emp.id.toString(),
         name: emp.name,
         department: emp.department,
-        rating: emp.rating ?? 0,
         total_visitors: emp.total_visitors ?? 0,
         avg_visitors: emp.avg_visitors ?? 0,
         profileImageUrl: emp.profileImage,

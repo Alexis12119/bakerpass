@@ -533,13 +533,11 @@ fastify.get("/employees", async (request, reply) => {
         e.last_name,
         e.profile_image_url,
         d.name AS department,
-        ROUND(AVG(r.rating), 1) AS rating,
         COUNT(v.id) AS total_visitors,
         COUNT(DISTINCT v.visit_date) AS active_days,
         ROUND(COUNT(v.id) / NULLIF(COUNT(DISTINCT v.visit_date), 0), 1) AS avg_visitors
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
-      LEFT JOIN ratings r ON r.rated_employee_id = e.id
       LEFT JOIN visits v ON v.visited_employee_id = e.id
     `;
 
@@ -571,7 +569,6 @@ fastify.get("/employees", async (request, reply) => {
         id: row.id,
         name: `${row.first_name} ${row.last_name}`,
         department: row.department,
-        rating: row.rating || 0,
         total_visitors: row.total_visitors || 0,
         avg_visitors: row.avg_visitors || 0,
         profileImage: row.profile_image_url,
