@@ -181,7 +181,7 @@ const NursePage: React.FC = () => {
     }));
   };
 
-  const fetchVisitors = async (forNurse = false) => {
+  const fetchVisitors = async (forNurse = true) => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse

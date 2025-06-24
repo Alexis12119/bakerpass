@@ -249,29 +249,6 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           {isProfileModalOpen && (
             <div className="fixed inset-0 backdrop-blur-md z-10"></div>
           )}
-          <button
-            onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className="relative"
-          >
-            <BellIcon className="h-6 w-6 text-yellow-500" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-          </button>
-          {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-60 bg-white border rounded-lg shadow-lg p-3">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                Notifications
-              </h3>
-              <ul className="text-sm text-gray-600">
-                <li className="py-2 border-b">New visitor checked in.</li>
-                <li className="py-2 border-b">
-                  Package delivered at the front desk.
-                </li>
-                <li className="py-2">
-                  Security alert: Unusual activity detected.
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
 
         <div className="flex items-center space-x-2">

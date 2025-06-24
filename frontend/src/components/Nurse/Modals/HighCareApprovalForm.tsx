@@ -166,8 +166,7 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
             onChange={(e) => setPermissionType(e.target.value)}
           >
             <option value="CLEAR WITH RECTAL">CLEAR WITH RECTAL</option>
-            <option value="CLEAR WITH URINE">CLEAR WITH URINE</option>
-            <option value="CLEAR WITHOUT TEST">CLEAR WITHOUT TEST</option>
+            <option value="CLEAR WITHOUT TEST">CLEAR WITHOUT RECTAL</option>
           </select>
         </div>
 

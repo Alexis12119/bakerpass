@@ -26,9 +26,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen }) => {
             />
           </div>
           <nav>
-            <div 
-            onClick={() => router.push("/hr")}
-            className="mb-4 bg-white p-3 rounded-lg flex flex-col items-center md:hover:bg-[#1C274C] text-[#1C274C] md:hover:text-white w-full">
+            <div
+              onClick={() => router.push("/hr")}
+              className="mb-4 bg-white p-3 rounded-lg flex flex-col items-center md:hover:bg-[#1C274C] text-[#1C274C] md:hover:text-white w-full"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -43,9 +44,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen }) => {
               </svg>
               <span className="text-md">Dashboard</span>
             </div>
-            <div 
-            onClick={() => router.push("/hr/reports")}
-            className="flex-col bg-white md:hover:bg-[#1C274C] text-[#1C274C] md:hover:text-white mb-4 p-3 flex items-center rounded-lg w-full">
+            <div
+              onClick={() => router.push("/hr/reports")}
+              className="flex-col bg-white md:hover:bg-[#1C274C] text-[#1C274C] md:hover:text-white mb-4 p-3 flex items-center rounded-lg w-full"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
