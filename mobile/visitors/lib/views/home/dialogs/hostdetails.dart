@@ -595,10 +595,20 @@ class HostDetailsModalState extends State<HostDetailsModal> {
           ElevatedButton(
             onPressed: () {
               if (step < 2) {
+                if (visitPurposeId == null || selectedTimeSlotId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content:
+                            Text('Please select a purpose and time slot.')),
+                  );
+                  return;
+                }
+
                 setState(() {
                   step += 1;
                 });
               } else {
+                // Step 2 Submit
                 submit();
               }
             },

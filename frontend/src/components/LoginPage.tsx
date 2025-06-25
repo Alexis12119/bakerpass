@@ -49,14 +49,29 @@ const LoginPage = () => {
       const decoded: { role: string } = jwtDecode(token);
       const basePath = roleToBasePath(decoded.role);
 
-      // Save only in sessionStorage (per tab)
       sessionStorage.setItem("token", token);
       sessionStorage.setItem("role", basePath);
       sessionStorage.setItem("lastValidRoute", `/${basePath}`);
-
       router.push(`/${basePath}`);
     } catch (error: any) {
-      setErrorMessage(error?.response?.data?.message || "Login failed");
+      if (error?.response?.status === 502) {
+        setErrorMessage(
+          "Server temporarily unavailable. Please try again later.",
+        );
+      } else if (error?.response?.status === 429) {
+        setErrorMessage(
+          error.response.data.message ||
+            "Too many login attempts. Please try again later.",
+        );
+      } else if (error?.response?.status === 401) {
+        setErrorMessage(error.response.data.message || "Invalid credentials");
+      } else if (error?.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else if (error?.message) {
+        setErrorMessage(`Connection error: ${error.message}`);
+      } else {
+        setErrorMessage("Login failed. Please try again.");
+      }
     }
   };
 
