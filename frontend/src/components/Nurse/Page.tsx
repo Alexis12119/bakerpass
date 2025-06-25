@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import TopBar from "@/components/Nurse/TopBar";
 import Filters from "@/components/Nurse/Filters";
@@ -11,6 +11,7 @@ import { jwtDecode } from "jwt-decode";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import SuccessModal from "@/components/Modals/SuccessModal";
 
 interface Visitor {
   id: string;
@@ -22,7 +23,12 @@ interface Visitor {
   timeIn: string | null;
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  approvalStatus:
+    | "Waiting For Approval"
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Nurse Approved";
   profileImageUrl: string;
 }
 
@@ -40,11 +46,11 @@ const NursePage: React.FC = () => {
     return format(today, "yyyy-MM-dd");
   });
 
-  const [approvalStatuses, setApprovalStatuses] = useState<
+  const [_approvalStatuses, setApprovalStatuses] = useState<
     { id: string; name: string }[]
   >([]);
-  const [purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
-  const [departments, setDepartments] = useState<
+  const [_purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
+  const [_departments, setDepartments] = useState<
     { id: number; name: string }[]
   >([]);
   const [selectedHost, setSelectedHost] = useState("All");
@@ -59,41 +65,10 @@ const NursePage: React.FC = () => {
   // For confirmation modal
   const [statusActionModalOpen, setStatusActionModalOpen] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
-  const [approvalAction, setApprovalAction] = useState<"Yes" | "No" | null>(
+
+  const [_approvalAction, setApprovalAction] = useState<"Yes" | "No" | null>(
     null,
   );
-
-  const toggleVisitorStatus = async (visitorId: string) => {
-    try {
-      const currentVisitor = visitors.find((v) => v.id === visitorId);
-      if (!currentVisitor) return;
-
-      if (currentVisitor.status === "Checked Out") {
-        setErrorMessage("Visitor has already checked out.");
-        return;
-      }
-
-      let newStatus: "Checked In" | "Checked Out" | "Ongoing" = "Checked In";
-
-      if (currentVisitor.status === "Checked In" && !currentVisitor.timeOut) {
-        newStatus = "Ongoing";
-      } else if (
-        currentVisitor.status === "Ongoing" ||
-        (currentVisitor.status === "Checked In" && currentVisitor.timeOut)
-      ) {
-        newStatus = "Checked Out";
-      }
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors/${visitorId}/status`,
-        { status: newStatus },
-      );
-
-      await fetchVisitors();
-    } catch (error) {
-      console.error("Error toggling visitor status:", error);
-    }
-  };
 
   const handleVisitorApproval = async (
     action: "Yes" | "No",
@@ -392,13 +367,10 @@ const NursePage: React.FC = () => {
         </div>
         <SecurityTable
           visitors={filteredVisitors}
-          onToggleStatus={toggleVisitorStatus}
           statusActionModalOpen={statusActionModalOpen}
           setStatusActionModalOpen={setStatusActionModalOpen}
           selectedVisitor={selectedVisitor}
           setSelectedVisitor={setSelectedVisitor}
-          approvalAction={approvalAction}
-          setApprovalAction={setApprovalAction}
           handleVisitorApproval={handleVisitorApproval}
         />
       </div>
@@ -407,6 +379,12 @@ const NursePage: React.FC = () => {
         <ErrorModal
           message={errorMessage}
           onClose={() => setErrorMessage("")}
+        />
+      )}
+      {successMessge && (
+        <SuccessModal
+          message={successMessge}
+          onClose={() => setSuccessMessage("")}
         />
       )}
     </div>

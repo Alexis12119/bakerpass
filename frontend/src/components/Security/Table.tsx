@@ -14,7 +14,12 @@ interface Visitor {
   timeIn: string | null;
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  approvalStatus:
+    | "Waiting For Approval"
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Nurse Approved";
   profileImageUrl: string;
 }
 
@@ -40,7 +45,6 @@ interface SecurityTableProps {
   setStatusActionModalOpen: (open: boolean) => void;
   selectedVisitor: Visitor;
   setSelectedVisitor: (visitor: Visitor) => void;
-  approvalAction: "Approved" | "Blocked" | "Cancelled" | null;
   setApprovalAction: (action: "Approved" | "Blocked" | "Cancelled") => void;
   handleVisitorApproval: (action: "Approved" | "Blocked" | "Cancelled") => void;
 }
@@ -54,7 +58,6 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
   setStatusActionModalOpen,
   selectedVisitor,
   setSelectedVisitor,
-  approvalAction,
   setApprovalAction,
   handleVisitorApproval,
 }) => {

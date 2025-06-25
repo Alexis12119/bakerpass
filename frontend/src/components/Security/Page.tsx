@@ -379,7 +379,6 @@ const SecurityGuardPage: React.FC = () => {
           setStatusActionModalOpen={setStatusActionModalOpen}
           selectedVisitor={selectedVisitor}
           setSelectedVisitor={setSelectedVisitor}
-          approvalAction={approvalAction}
           setApprovalAction={setApprovalAction}
           handleVisitorApproval={handleVisitorApproval}
         />

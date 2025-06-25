@@ -13,7 +13,12 @@ interface Visitor {
   timeIn: string | null;
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  approvalStatus:
+    | "Waiting For Approval"
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Nurse Approved";
   profileImageUrl: string;
 }
 
@@ -23,37 +28,21 @@ interface VisitorWithDropdown extends Visitor {
 
 interface NurseTableProps {
   visitors: VisitorWithDropdown[];
-  onToggleStatus: (visitorId: string) => void;
   statusActionModalOpen: boolean;
   setStatusActionModalOpen: (open: boolean) => void;
   selectedVisitor: Visitor | null;
   setSelectedVisitor: (visitor: Visitor) => void;
-  approvalAction: "Yes" | "No" | null;
-  setApprovalAction: (action: "Yes" | "No") => void;
   handleVisitorApproval: (action: "Yes" | "No", formData?: any) => void;
 }
 
 const NurseTable: React.FC<NurseTableProps> = ({
   visitors,
-  onToggleStatus,
   statusActionModalOpen,
   setStatusActionModalOpen,
   selectedVisitor,
   setSelectedVisitor,
-  approvalAction,
-  setApprovalAction,
   handleVisitorApproval,
 }) => {
-  const formatTimeForDisplay = (time: string | null) => {
-    if (!time || time === "00:00:00") return "Pending";
-
-    const [hoursStr, minutes] = time.split(":");
-    let hours = parseInt(hoursStr, 10);
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
-
   return (
     <div className="bg-white shadow-md border border-gray-300 mt-3 text-center">
       <div className="hidden md:grid grid-cols-6 bg-gray-200 py-3 px-6 font-semibold text-sm text-black border-b border-gray-300">
@@ -63,8 +52,6 @@ const NurseTable: React.FC<NurseTableProps> = ({
         <div>Host Name</div>
         <div>Department</div>
         <div>Expected Time</div>
-        {/* <div>Time In</div> */}
-        {/* <div>Time Out</div> */}
       </div>
       {visitors.length > 0 ? (
         <div className="max-h-[400px] overflow-y-auto">
