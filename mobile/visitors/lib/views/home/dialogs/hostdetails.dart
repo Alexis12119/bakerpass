@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,38 +43,6 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   String otherDevice = '';
   String deviceBrand = '';
 
-  // Step 3 - High care prompt
-  bool wantsHighCareAccess = false;
-
-  // Step 4 - Symptoms / Conditions
-  Map<String, bool> symptoms = {
-    'fever': false,
-    'cough': false,
-    'openWound': false,
-    'nausea': false,
-    'skinBoils': false,
-    'skinAllergies': false,
-    'diarrhea': false,
-    'openSores': false,
-  };
-  String otherAllergies = '';
-  TextEditingController recentPlacesVisitedController = TextEditingController();
-
-  // Step 5 - Prohibited Items
-  Map<String, bool> prohibitedItems = {
-    'mobilePhone': false,
-    'camera': false,
-    'medicines': false,
-    'notebook': false,
-    'earrings': false,
-    'ring': false,
-    'id_card': false,
-    'ballpen': false,
-    'wristwatch': false,
-    'necklace': false,
-  };
-  TextEditingController otherProhibitedItemController = TextEditingController();
-
   // Colors matching your web UI
   static const Color primaryColor = Color(0xFF1C274C);
   static const Color backgroundColor = Color(0xFF0D1F72);
@@ -109,30 +79,10 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       selectedDevices = [];
       otherDevice = '';
       deviceBrand = '';
-      wantsHighCareAccess = false;
-      symptoms.updateAll((key, value) => false);
-      prohibitedItems.updateAll((key, value) => false);
-      otherAllergies = '';
-      recentPlacesVisitedController.clear();
-      otherProhibitedItemController.clear();
     });
 
-    fetchHighestVisitorId();
     fetchVisitPurposes();
     fetchTimeSlots();
-  }
-
-  Future<void> fetchHighestVisitorId() async {
-    try {
-      final response =
-          await http.get(Uri.parse('$baseUrl/visitors/highest-id'));
-      final data = jsonDecode(response.body);
-      setState(() {
-        newVisitorId = data['highestId'] + 1;
-      });
-    } catch (e) {
-      print('Error fetching visitor ID: $e');
-    }
   }
 
   Future<void> fetchVisitPurposes() async {
@@ -176,10 +126,8 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     final email = prefs.getString('email') ?? '';
     final contactNumber = prefs.getString('contactNumber') ?? '';
     final address = prefs.getString('address') ?? '';
-    final recentPlacesVisited = recentPlacesVisitedController.text;
-    final otherProhibitedItem = otherProhibitedItemController.text;
 
-    // Validation logic (mimic web behavior)
+    // Validation logic
     if (firstName.isEmpty ||
         lastName.isEmpty ||
         visitPurposeId == null ||
@@ -199,9 +147,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
             .join(', ')
         : selectedDevices.join(', ');
 
-    final bool isHighCareVisit = wantsHighCareAccess;
-
-    // Base payload
+    // Simplified payload without high care fields
     final Map<String, dynamic> visitorData = {
       'firstName': firstName,
       'lastName': lastName,
@@ -211,37 +157,9 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       'visitedEmployeeId': widget.host['id'],
       'visitPurposeId': visitPurposeId,
       'selectedTimeSlot': selectedTimeSlotId,
-      'isHighCare': isHighCareVisit ? "Yes" : "No",
       'deviceType': deviceType,
       'deviceBrand': deviceBrand,
     };
-
-    // Add high care-specific fields if necessary
-    if (isHighCareVisit && step >= 4) {
-      visitorData.addAll({
-        'fever': symptoms['fever'] ?? false,
-        'cough': symptoms['cough'] ?? false,
-        'openWound': symptoms['openWound'] ?? false,
-        'nausea': symptoms['nausea'] ?? false,
-        'otherAllergies': otherAllergies,
-        'recentPlaces': recentPlacesVisited,
-        'skinBoils': symptoms['skinBoils'] ?? false,
-        'skinAllergies': symptoms['skinAllergies'] ?? false,
-        'diarrhea': symptoms['diarrhea'] ?? false,
-        'openSores': symptoms['openSores'] ?? false,
-        'mobilePhone': prohibitedItems['mobilePhone'] ?? false,
-        'camera': prohibitedItems['camera'] ?? false,
-        'medicines': prohibitedItems['medicines'] ?? false,
-        'notebook': prohibitedItems['notebook'] ?? false,
-        'earrings': prohibitedItems['earrings'] ?? false,
-        'otherProhibited': otherProhibitedItem,
-        'necklace': prohibitedItems['necklace'] ?? false,
-        'ring': prohibitedItems['ring'] ?? false,
-        'id_card': prohibitedItems['id_card'] ?? false,
-        'ballpen': prohibitedItems['ballpen'] ?? false,
-        'wristwatch': prohibitedItems['wristwatch'] ?? false,
-      });
-    }
 
     try {
       final response = await http.post(
@@ -325,9 +243,10 @@ class HostDetailsModalState extends State<HostDetailsModal> {
                       color: Colors.white,
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: (profileImage != null && profileImage!.isNotEmpty)
+                    child: (widget.host['profileImage'] != null &&
+                            widget.host['profileImage'].isNotEmpty)
                         ? Image.network(
-                            profileImage!,
+                            widget.host['profileImage'],
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return const Icon(Icons.person,
@@ -366,7 +285,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
               ),
             ),
             // Navigation buttons
-            if (step != 3) _buildNavigationButtons(),
+            _buildNavigationButtons(),
           ],
         ),
       ),
@@ -379,12 +298,6 @@ class HostDetailsModalState extends State<HostDetailsModal> {
         return _buildStep1();
       case 2:
         return _buildStep2();
-      case 3:
-        return _buildStep3();
-      case 4:
-        return _buildStep4();
-      case 5:
-        return _buildStep5();
       default:
         return _buildStep1();
     }
@@ -497,7 +410,8 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       {'name': 'Others', 'icon': Icons.inventory},
     ];
 
-    return Column(
+    return SingleChildScrollView(
+        child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
@@ -543,25 +457,28 @@ class HostDetailsModalState extends State<HostDetailsModal> {
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       device['icon'] as IconData,
                       size: 32,
                       color: Colors.grey[700],
                     ),
-                    const SizedBox(height: 8),
-                    Checkbox(
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            selectedDevices.add(deviceName);
-                          } else {
-                            selectedDevices.remove(deviceName);
-                          }
-                        });
-                      },
-                      activeColor: primaryColor,
+                    const SizedBox(height: 4),
+                    Flexible(
+                      child: Checkbox(
+                        value: isSelected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedDevices.add(deviceName);
+                            } else {
+                              selectedDevices.remove(deviceName);
+                            }
+                          });
+                        },
+                        activeColor: primaryColor,
+                      ),
                     ),
                     Text(
                       deviceName.toUpperCase(),
@@ -608,283 +525,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
           onChanged: (value) => setState(() => deviceBrand = value),
         ),
       ],
-    );
-  }
-
-  Widget _buildStep3() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text(
-          "Do you want to enter the high care area?",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  wantsHighCareAccess = true;
-                  step = 4;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Yes'),
-            ),
-            const SizedBox(width: 16),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  wantsHighCareAccess = false;
-                });
-                submit();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[400],
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('No'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep4() {
-    final symptomList = [
-      {'label': 'Fever', 'key': 'fever'},
-      {'label': 'Cough', 'key': 'cough'},
-      {'label': 'Open wounds', 'key': 'openWound'},
-      {'label': 'Skin Boils', 'key': 'skinBoils'},
-      {'label': 'Skin Allergies', 'key': 'skinAllergies'},
-      {'label': 'Diarrhea', 'key': 'diarrhea'},
-      {'label': 'Nausea', 'key': 'nausea'},
-      {'label': 'Open Sores', 'key': 'openSores'},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "HEALTH AND PROHIBITED PERSONAL ITEMS DECLARATION",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          "Do you have any of the following symptoms or physical conditions?",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        // Symptoms grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: symptomList.length,
-          itemBuilder: (context, index) {
-            final symptom = symptomList[index];
-            final key = symptom['key'] as String;
-            final label = symptom['label'] as String;
-            final isSelected = symptoms[key] ?? false;
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  symptoms[key] = !isSelected;
-                });
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryColor : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? primaryColor : Colors.grey[300]!,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          decoration: InputDecoration(
-            hintText: "Allergies / use (,) to separate if multiple",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-          onChanged: (value) => setState(() => otherAllergies = value),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: recentPlacesVisitedController,
-          decoration: InputDecoration(
-            hintText: "Place/s visited for the past 7 days",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep5() {
-    final prohibitedList = [
-      {'label': 'Mobile Phone', 'key': 'mobilePhone'},
-      {'label': 'Necklace', 'key': 'necklace'},
-      {'label': 'Camera', 'key': 'camera'},
-      {'label': 'Ring', 'key': 'ring'},
-      {'label': 'Medicines', 'key': 'medicines'},
-      {'label': 'ID', 'key': 'id_card'},
-      {'label': 'Notebook', 'key': 'notebook'},
-      {'label': 'Ballpen', 'key': 'ballpen'},
-      {'label': 'Earrings', 'key': 'earrings'},
-      {'label': 'Wristwatch', 'key': 'wristwatch'},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "HEALTH AND PROHIBITED PERSONAL ITEMS DECLARATION",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          "Do you possess any of the following prohibited items?",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        // Prohibited items grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: prohibitedList.length,
-          itemBuilder: (context, index) {
-            final item = prohibitedList[index];
-            final key = item['key'] as String;
-            final label = item['label'] as String;
-            final isSelected = prohibitedItems[key] ?? false;
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  prohibitedItems[key] = !isSelected;
-                });
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryColor : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? primaryColor : Colors.grey[300]!,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: otherProhibitedItemController,
-          decoration: InputDecoration(
-            hintText: "Item/s (use , to separate if multiple)",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-        ),
-      ],
-    );
+    ));
   }
 
   Widget _buildNavigationButtons() {
@@ -910,16 +551,18 @@ class HostDetailsModalState extends State<HostDetailsModal> {
                 ),
               ),
               child: const Text('Back'),
-            ),
+            )
+          else
+            const SizedBox.shrink(), // Empty space when no back button
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                if (step < 5) {
+              if (step < 2) {
+                setState(() {
                   step += 1;
-                } else {
-                  submit();
-                }
-              });
+                });
+              } else {
+                submit();
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
@@ -929,7 +572,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text(step == 5 ? 'Submit' : 'Next'),
+            child: Text(step == 2 ? 'Submit' : 'Next'),
           ),
         ],
       ),

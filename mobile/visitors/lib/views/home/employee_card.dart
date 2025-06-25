@@ -29,7 +29,7 @@ class _EmployeeCardState extends State<EmployeeCard> {
   Future<List<Map<String, dynamic>>> fetchVisitors(
       {bool forNurse = false}) async {
     final endpoint =
-        forNurse ? '$baseUrl/nurses/${widget.id}/visits' : '$baseUrl/visitors';
+        forNurse ? '$baseUrl/nurses/high-care-visits' : '$baseUrl/visitors';
 
     try {
       final response = await http.get(Uri.parse(endpoint));
@@ -51,10 +51,9 @@ class _EmployeeCardState extends State<EmployeeCard> {
             'timeIn': visitor['time_in'],
             'timeOut': visitor['time_out'],
             'status': visitor['status'],
-            'profileImage': visitor['profile_image_url'],
+            'profileImageUrl': visitor['profile_image_url'],
             'approvalStatus': visitor['approval_status'],
             'isDropdownOpen': false,
-            'isHighCare': visitor['is_high_care'],
           };
         }).toList();
 

@@ -20,7 +20,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-fastify.register(require("@fastify/multipart"));
+fastify.register(require("@fastify/multipart"), {
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB
+  },
+});
 
 // Register CORS
 fastify.register(cors, {
@@ -687,35 +691,10 @@ fastify.post("/visits", async (request, reply) => {
       visitedEmployeeId,
       visitPurposeId,
       selectedTimeSlot, // time_slots.id
-      isHighCare,
-
-      // High care modal fields
-      fever,
-      cough,
-      openWound,
-      nausea,
-      otherAllergies,
-      recentPlaces,
-      mobilePhone,
-      camera,
-      medicines,
-      notebook,
-      earrings,
-      otherProhibited,
-
-      // New symptoms
-      skinBoils,
-      skinAllergies,
-      diarrhea,
-      openSores,
-
-      // New prohibited items
-      ring,
-      id_card,
-      ballpen,
-      wristwatch,
-      necklace,
+      deviceType,
+      deviceBrand,
     } = request.body;
+
     if (
       !firstName ||
       !lastName ||
@@ -763,14 +742,13 @@ fastify.post("/visits", async (request, reply) => {
     );
 
     let visitorId;
-
     if (existingVisitor.length > 0) {
       visitorId = existingVisitor[0].id; // reuse existing visitor
     } else {
       // Insert new visitor
       const [visitorResult] = await pool.execute(
         `INSERT INTO visitors (email, password, first_name, last_name, contact_number, address)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           email,
           "", // password is optional
@@ -785,8 +763,8 @@ fastify.post("/visits", async (request, reply) => {
 
     // Insert visit
     const [visitResult] = await pool.execute(
-      `INSERT INTO visits (visitor_id, visited_employee_id, purpose_id, visit_date, expected_time, time_slot_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO visits (visitor_id, visited_employee_id, purpose_id, visit_date, expected_time, time_slot_id, device_type, device_brand)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         visitorId,
         visitedEmployeeId,
@@ -794,108 +772,33 @@ fastify.post("/visits", async (request, reply) => {
         visitDate,
         expectedTime,
         selectedTimeSlot,
+        deviceType || null,
+        deviceBrand || null,
       ],
     );
-    clients.forEach((socket) => {
-      if (socket.readyState === 1) {
-        // 1 means OPEN
-        socket.send("update");
-      }
-    });
 
     const visitId = visitResult.insertId;
 
-    // If high care is requested
-    if (isHighCare === "Yes") {
-      // Insert into high_care_requests
-      const [highCareResult] = await pool.execute(
-        `INSERT INTO high_care_requests (visit_id) VALUES (?)`,
-        [visitId],
-      );
-
-      const highCareRequestId = highCareResult.insertId;
-
-      // Insert into high_care_symptoms
-      await pool.execute(
-        `INSERT INTO high_care_symptoms (
-    high_care_request_id,
-    fever,
-    cough,
-    open_wound,
-    nausea,
-    other_allergies,
-    recent_places,
-    skin_boils,
-    skin_allergies,
-    diarrhea,
-    open_sores
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          highCareRequestId,
-          fever ? 1 : 0,
-          cough ? 1 : 0,
-          openWound ? 1 : 0,
-          nausea ? 1 : 0,
-          otherAllergies || null,
-          recentPlaces || null,
-          skinBoils ? 1 : 0,
-          skinAllergies ? 1 : 0,
-          diarrhea ? 1 : 0,
-          openSores ? 1 : 0,
-        ],
-      );
-
-      // Insert into high_care_prohibited_items
-      await pool.execute(
-        `INSERT INTO high_care_prohibited_items (
-    high_care_request_id,
-    mobile_phone,
-    camera,
-    medicines,
-    notebook,
-    earrings,
-    other_prohibited_items,
-    ring,
-    id_card,
-    ballpen,
-    wristwatch,
-    necklace
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          highCareRequestId,
-          mobilePhone ? 1 : 0,
-          camera ? 1 : 0,
-          medicines ? 1 : 0,
-          notebook ? 1 : 0,
-          earrings ? 1 : 0,
-          otherProhibited || null,
-          ring ? 1 : 0,
-          id_card ? 1 : 0,
-          ballpen ? 1 : 0,
-          wristwatch ? 1 : 0,
-          necklace ? 1 : 0,
-        ],
-      );
-    }
-
+    // Notify clients of update
     clients.forEach((socket) => {
       if (socket.readyState === 1) {
         // 1 means OPEN
         socket.send("update");
       }
     });
+
     return reply.status(201).send({
       message: "Visit created successfully",
       visitId,
     });
   } catch (error) {
-    fastify.log.error(error, "Error creating visit"); // <- this logs full details
-    return reply
-      .status(500)
-      .send({ message: "Internal Server Error", error: error.message });
+    fastify.log.error(error, "Error creating visit");
+    return reply.status(500).send({
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 });
-
 // Fetch Visitors
 fastify.get("/visitors", async (request, reply) => {
   const { employeeId } = request.query;
@@ -1075,17 +978,29 @@ fastify.put("/visits/:id/approval", async (request, reply) => {
 
     const statusId = statusRows[0].id;
 
-    // Update the visit's approval_status_id
-    await pool.execute(
-      "UPDATE visits SET approval_status_id = ? WHERE id = ?",
-      [statusId, visitId],
-    );
+    // If status is Blocked or Cancelled, set time_slot_id to null
+    const shouldClearTimeSlot =
+      statusName.toLowerCase() === "blocked" ||
+      statusName.toLowerCase() === "cancelled";
+
+    if (shouldClearTimeSlot) {
+      await pool.execute(
+        "UPDATE visits SET approval_status_id = ?, time_slot_id = NULL WHERE id = ?",
+        [statusId, visitId],
+      );
+    } else {
+      await pool.execute(
+        "UPDATE visits SET approval_status_id = ? WHERE id = ?",
+        [statusId, visitId],
+      );
+    }
+
     clients.forEach((socket) => {
       if (socket.readyState === 1) {
-        // 1 means OPEN
         socket.send("update");
       }
     });
+
     return reply.send({ message: "Approval status updated successfully" });
   } catch (error) {
     fastify.log.error(error);
@@ -1095,34 +1010,42 @@ fastify.put("/visits/:id/approval", async (request, reply) => {
   }
 });
 
-// Create a high care request
-fastify.post("/highcare/:visitId/request", async (request, reply) => {
+// Update visit approval status to "Nurse Approved"
+fastify.put("/nurse/:visitId/approval", async (request, reply) => {
   const visitId = request.params.visitId;
-  const { nurseId, areas, equipment, permissionType, comments } = request.body;
+  const { nurseId } = request.body;
 
   try {
-    await pool.execute(
-      `
-      INSERT INTO high_care_requests 
-        (visit_id, approved_by_nurse_id, is_approved, approved_at, areas, equipment, permission_type, comments) 
-      VALUES (?, ?, 1, NOW(), ?, ?, ?, ?)
-      `,
-      [
-        visitId,
-        nurseId,
-        JSON.stringify(areas),
-        JSON.stringify(equipment),
-        permissionType,
-        comments,
-      ],
+    // Look up the ID for "Nurse Approved" status
+    const [rows] = await pool.execute(
+      `SELECT id FROM approval_status WHERE name = 'Nurse Approved'`,
     );
 
-    return reply.send({ message: "High care request recorded." });
+    if (rows.length === 0) {
+      return reply.status(400).send({ message: "Approval status not found" });
+    }
+
+    const nurseApprovedStatusId = rows[0].id;
+
+    // Update the visit's approval status
+    await pool.execute(
+      `UPDATE visits SET approval_status_id = ? WHERE id = ?`,
+      [nurseApprovedStatusId, visitId],
+    );
+
+    clients.forEach((socket) => {
+      if (socket.readyState === 1) {
+        // 1 means OPEN
+        socket.send("update");
+      }
+    });
+
+    return reply.send({ message: "Visitor marked as Nurse Approved" });
   } catch (error) {
     fastify.log.error(error);
     return reply
       .status(500)
-      .send({ message: "Failed to insert high care request." });
+      .send({ message: "Failed to mark as Nurse Approved" });
   }
 });
 
@@ -1249,7 +1172,16 @@ fastify.put("/visitors/:id/approval", async (request, reply) => {
 
   const visitorId = Number(id);
 
-  if (!visitorId || !["Approved", "Blocked", "Cancelled"].includes(status)) {
+  if (
+    !visitorId ||
+    ![
+      "Approved",
+      "Blocked",
+      "Cancelled",
+      "Nurse Approved",
+      "Partial Approved",
+    ].includes(status)
+  ) {
     return reply.code(400).send({ error: "Invalid visitor ID or status" });
   }
 
@@ -1305,9 +1237,8 @@ fastify.put("/visitors/:id/approval", async (request, reply) => {
 fastify.get("/nurse/high-care-visits", async (request, reply) => {
   let { date, employeeId } = request.query;
 
-  // Default to today if date is not provided
   if (!date) {
-    date = new Date().toISOString().slice(0, 10); // yyyy-MM-dd format
+    date = new Date().toISOString().slice(0, 10);
   }
 
   try {
@@ -1333,16 +1264,15 @@ fastify.get("/nurse/high-care-visits", async (request, reply) => {
         hcr.is_approved AS high_care_approved,
         hcr.approved_at AS high_care_approved_at,
         hcr.approved_by_nurse_id
-      FROM high_care_requests hcr
-      JOIN visits v ON hcr.visit_id = v.id
+      FROM visits v
       JOIN visitors vi ON v.visitor_id = vi.id
       JOIN employees e ON v.visited_employee_id = e.id
       JOIN purposes p ON v.purpose_id = p.id
       JOIN departments d ON e.department_id = d.id
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
-      WHERE hcr.is_approved = FALSE
-        AND v.visit_date = ?
+      LEFT JOIN high_care_requests hcr ON hcr.visit_id = v.id
+      WHERE v.visit_date = ?
     `;
 
     const params = [date];
@@ -1359,46 +1289,6 @@ fastify.get("/nurse/high-care-visits", async (request, reply) => {
   } catch (error) {
     fastify.log.error(error);
     return reply.status(500).send({ message: "Internal Server Error" });
-  }
-});
-
-fastify.put("/nurse/:id/approval", async (request, reply) => {
-  const visitId = request.params.id;
-  const { status, nurseId } = request.body;
-
-  if (!nurseId) {
-    return reply.status(400).send({ message: "Missing nurse ID" });
-  }
-
-  try {
-    if (status === "Yes") {
-      await pool.execute(
-        `UPDATE high_care_requests
-         SET is_approved = 1, approved_by_nurse_id = ?, approved_at = NOW()
-         WHERE visit_id = ?`,
-        [nurseId, visitId],
-      );
-    } else if (status === "No") {
-      await pool.execute(
-        `UPDATE high_care_requests
-         SET is_approved = 0, approved_by_nurse_id = ?, approved_at = NOW()
-         WHERE visit_id = ?`,
-        [nurseId, visitId],
-      );
-    }
-
-    clients.forEach((socket) => {
-      if (socket.readyState === 1) {
-        // 1 means OPEN
-        socket.send("update");
-      }
-    });
-    return reply.send({ message: "High care approval updated successfully" });
-  } catch (error) {
-    fastify.log.error(error);
-    return reply
-      .status(500)
-      .send({ message: "Failed to update high care approval" });
   }
 });
 
@@ -1428,7 +1318,7 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     JOIN time_slots ts ON ts.id = vs.time_slot_id
     JOIN approval_status a ON a.id = vs.approval_status_id
     WHERE vi.email = ?
-      AND a.name IN ('Approved', 'Waiting For Approval')
+      AND a.name IN ('Approved', 'Waiting For Approval', 'Nurse Approved', 'Partial Approved')
     LIMIT 1
     `,
     [email],
@@ -1485,7 +1375,6 @@ ORDER BY v.visit_date DESC
       `,
       [visitorId],
     );
-    console.log(visits);
 
     reply.send(visits);
   } catch (err) {
@@ -1560,6 +1449,7 @@ fastify.get("/visitors-date", async (request, reply) => {
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
       WHERE v.visit_date = ? 
+        AND a.name NOT IN ('Partial Approved')
         AND NOT EXISTS (
           SELECT 1
           FROM high_care_requests hcr
@@ -1628,6 +1518,172 @@ fastify.post("/visit/:visitId/comment", async (request, reply) => {
     reply.status(500).send({ error: "Failed to save comment." });
   } finally {
     connection.release();
+  }
+});
+
+fastify.post("/highcare/:visitId/request", async (request, reply) => {
+  const visitId = request.params.visitId;
+  const { nurseId, areas, equipment, permissionType, comments } = request.body;
+
+  try {
+    const [result] = await pool.execute(
+      `INSERT INTO high_care_requests (
+        visit_id, approved_by_nurse_id,is_approved, areas, equipment, permission_type, comments
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        visitId,
+        nurseId,
+        1,
+        JSON.stringify(areas),
+        JSON.stringify(equipment),
+        permissionType,
+        comments,
+      ],
+    );
+
+    const highCareRequestId = result.insertId;
+
+    return reply.send({
+      message: "High care request created successfully",
+      highCareRequestId,
+    });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply
+      .status(500)
+      .send({ message: "Failed to create high care request" });
+  }
+});
+fastify.post("/health/:visitId/submit", async (request, reply) => {
+  const visitId = request.params.visitId;
+  const nurseId = request.body.nurseId;
+
+  const {
+    fever,
+    cough,
+    openWound,
+    nausea,
+    skinBoils,
+    skinAllergies,
+    diarrhea,
+    openSores,
+    otherAllergies,
+    recentPlaces,
+    mobilePhone,
+    camera,
+    medicines,
+    notebook,
+    earrings,
+    necklace,
+    ring,
+    id_card,
+    ballpen,
+    wristwatch,
+    otherProhibited,
+  } = request.body;
+
+  if (!nurseId) {
+    return reply.status(400).send({ message: "Missing nurse ID" });
+  }
+
+  try {
+    // Fetch high care request
+    const [rows] = await pool.execute(
+      `SELECT id FROM high_care_requests WHERE visit_id = ? ORDER BY id DESC LIMIT 1`,
+      [visitId],
+    );
+
+    if (rows.length === 0) {
+      return reply
+        .status(404)
+        .send({ message: "High care request not found for this visit" });
+    }
+
+    const highCareRequestId = rows[0].id;
+
+    // Check if already submitted
+    const [symptomsExist] = await pool.execute(
+      `SELECT id FROM high_care_symptoms WHERE high_care_request_id = ?`,
+      [highCareRequestId],
+    );
+
+    if (symptomsExist.length > 0) {
+      return reply
+        .status(400)
+        .send({ message: "Health declaration already submitted" });
+    }
+
+    // Insert symptoms
+    await pool.execute(
+      `INSERT INTO high_care_symptoms (
+        high_care_request_id,
+        fever,
+        cough,
+        open_wound,
+        nausea,
+        other_allergies,
+        recent_places,
+        skin_boils,
+        skin_allergies,
+        diarrhea,
+        open_sores
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        highCareRequestId,
+        fever ? 1 : 0,
+        cough ? 1 : 0,
+        openWound ? 1 : 0,
+        nausea ? 1 : 0,
+        otherAllergies || null,
+        recentPlaces || null,
+        skinBoils ? 1 : 0,
+        skinAllergies ? 1 : 0,
+        diarrhea ? 1 : 0,
+        openSores ? 1 : 0,
+      ],
+    );
+
+    // Insert prohibited items
+    await pool.execute(
+      `INSERT INTO high_care_prohibited_items (
+        high_care_request_id,
+        mobile_phone,
+        camera,
+        medicines,
+        notebook,
+        earrings,
+        other_prohibited_items,
+        ring,
+        id_card,
+        ballpen,
+        wristwatch,
+        necklace
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        highCareRequestId,
+        mobilePhone ? 1 : 0,
+        camera ? 1 : 0,
+        medicines ? 1 : 0,
+        notebook ? 1 : 0,
+        earrings ? 1 : 0,
+        otherProhibited || null,
+        ring ? 1 : 0,
+        id_card ? 1 : 0,
+        ballpen ? 1 : 0,
+        wristwatch ? 1 : 0,
+        necklace ? 1 : 0,
+      ],
+    );
+
+    return reply.send({
+      message: "Health declaration successfully submitted.",
+    });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({
+      message: "Failed to submit health declaration",
+      error: error.message,
+    });
   }
 });
 

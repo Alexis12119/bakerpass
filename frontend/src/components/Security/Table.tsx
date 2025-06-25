@@ -19,6 +19,7 @@ interface Visitor {
     | "Approved"
     | "Blocked"
     | "Cancelled"
+    | "Partial Approved"
     | "Nurse Approved";
   profileImageUrl: string;
 }
@@ -43,10 +44,24 @@ interface SecurityTableProps {
   setValidIdModalOpen: (open: boolean) => void;
   statusActionModalOpen: boolean;
   setStatusActionModalOpen: (open: boolean) => void;
-  selectedVisitor: Visitor;
-  setSelectedVisitor: (visitor: Visitor) => void;
-  setApprovalAction: (action: "Approved" | "Blocked" | "Cancelled") => void;
-  handleVisitorApproval: (action: "Approved" | "Blocked" | "Cancelled") => void;
+  selectedVisitor: Visitor | null;
+  setSelectedVisitor: (visitor: Visitor | null) => void;
+  setApprovalAction: (
+    action:
+      | "Approved"
+      | "Blocked"
+      | "Cancelled"
+      | "Nurse Approved"
+      | "Partial Approved",
+  ) => void;
+  handleVisitorApproval: (
+    action:
+      | "Approved"
+      | "Blocked"
+      | "Cancelled"
+      | "Nurse Approved"
+      | "Partial Approved",
+  ) => void;
 }
 
 const SecurityTable: React.FC<SecurityTableProps> = ({
@@ -100,28 +115,33 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                         ? "bg-yellow-400"
                         : visitor.approvalStatus === "Blocked"
                           ? "bg-red-600"
-                          : visitor.approvalStatus === "Cancelled"
-                            ? "bg-gray-400"
-                            : "bg-white"
+                          : visitor.approvalStatus === "Partial Approved"
+                            ? "bg-blue-500"
+                            : visitor.approvalStatus === "Nurse Approved"
+                              ? "bg-green-800"
+                              : visitor.approvalStatus === "Cancelled"
+                                ? "bg-gray-400"
+                                : "bg-white"
                   }
                 `}
                 onClick={() => {
-                  if (visitor.approvalStatus === "Approved") {
-                    if (
-                      visitor.status.toLowerCase() ===
-                        "Checked In".toLowerCase() &&
-                      !visitor.timeIn
-                    ) {
+                  const approvedStatuses = ["Approved", "Nurse Approved"];
+                  const isApproved = approvedStatuses.includes(
+                    visitor.approvalStatus,
+                  );
+
+                  if (isApproved) {
+                    const isCheckedInWithoutTime =
+                      visitor.status === "Checked In" && !visitor.timeIn;
+                    const isOngoingOrCheckedOut =
+                      visitor.status === "Ongoing" ||
+                      (visitor.status === "Checked In" && visitor.timeOut);
+
+                    if (isCheckedInWithoutTime) {
                       setSelectedVisitor(visitor);
                       setValidIdModalOpen(true);
-                    } else if (
-                      visitor.status.toLowerCase() ===
-                        "Ongoing".toLowerCase() ||
-                      (visitor.status.toLowerCase() ===
-                        "Checked In".toLowerCase() &&
-                        visitor.timeOut)
-                    ) {
-                      onToggleStatus(visitor.id, 0); // or pass previously saved ID type if available
+                    } else if (isOngoingOrCheckedOut) {
+                      onToggleStatus(visitor.id, 0); // You can pass 0 or previously selected ID here
                     }
                   } else if (
                     visitor.approvalStatus === "Waiting For Approval"
@@ -143,7 +163,9 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                     }
                   `}
                 >
-                  {visitor.approvalStatus === "Approved"
+                  {["Approved", "Nurse Approved"].includes(
+                    visitor.approvalStatus,
+                  )
                     ? toTitleCase(visitor.status)
                     : toTitleCase(visitor.approvalStatus)}
                 </span>

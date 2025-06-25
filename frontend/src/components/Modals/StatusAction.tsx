@@ -6,7 +6,9 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 interface StatusActionModalProps {
   title: string;
   message: string;
-  onConfirm: (action: "Approved" | "Blocked" | "Cancelled") => void;
+  onConfirm: (
+    action: "Approved" | "Blocked" | "Cancelled" | "Partial Approved",
+  ) => void;
   onClose: () => void;
 }
 
@@ -34,12 +36,19 @@ const StatusActionModal: FC<StatusActionModalProps> = ({
         <p className="text-gray-800 mb-6">{message}</p>
 
         {/* Buttons */}
+
         <div className="flex flex-col gap-3">
           <button
             className="w-full px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition"
             onClick={onConfirm.bind(null, "Approved")}
           >
             Approve
+          </button>
+          <button
+            className="w-full px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition"
+            onClick={onConfirm.bind(null, "Partial Approved")}
+          >
+            Move to Clinic
           </button>
           <button
             className="w-full px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"

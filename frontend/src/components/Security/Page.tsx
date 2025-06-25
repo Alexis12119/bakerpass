@@ -22,7 +22,14 @@ interface Visitor {
   timeIn: string | null;
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  approvalStatus:
+    | "Waiting For Approval"
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Partial Approved"
+    | "Nurse Approved";
+
   profileImageUrl: string;
 }
 
@@ -40,11 +47,11 @@ const SecurityGuardPage: React.FC = () => {
     return format(today, "yyyy-MM-dd");
   });
 
-  const [approvalStatuses, setApprovalStatuses] = useState<
+  const [_approvalStatuses, setApprovalStatuses] = useState<
     { id: string; name: string }[]
   >([]);
-  const [purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
-  const [departments, setDepartments] = useState<
+  const [_purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
+  const [_departments, setDepartments] = useState<
     { id: number; name: string }[]
   >([]);
   const [selectedHost, setSelectedHost] = useState("All");
@@ -60,8 +67,13 @@ const SecurityGuardPage: React.FC = () => {
   // For confirmation modal
   const [statusActionModalOpen, setStatusActionModalOpen] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
-  const [approvalAction, setApprovalAction] = useState<
-    "Approved" | "Blocked" | "Cancelled" | null
+  const [_approvalAction, setApprovalAction] = useState<
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Nurse Approved"
+    | "Partial Approved"
+    | null
   >(null);
 
   const mapVisitorsData = (visitors: any[]) => {
@@ -147,16 +159,19 @@ const SecurityGuardPage: React.FC = () => {
   };
 
   const handleVisitorApproval = async (
-    action: "Approved" | "Blocked" | "Cancelled",
+    action:
+      | "Approved"
+      | "Blocked"
+      | "Cancelled"
+      | "Nurse Approved"
+      | "Partial Approved",
   ) => {
     if (!selectedVisitor) return;
 
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors/${selectedVisitor.id}/approval`,
-        {
-          status: action,
-        },
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visits/${selectedVisitor.id}/approval`,
+        { statusName: action },
       );
       await fetchVisitors();
       setSuccessMessage(`Visitor successfully ${action}.`);
@@ -185,7 +200,7 @@ const SecurityGuardPage: React.FC = () => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
-        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
+        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits?date=${date}`
         : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
 
       const response = await axios.get(endpoint);

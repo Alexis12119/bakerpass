@@ -9,6 +9,9 @@ import 'visit_history.dart';
 import 'package:http/http.dart' as http;
 import 'package:visitors/models/Visit.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
+import 'package:intl/intl.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -21,12 +24,51 @@ class _SchedulePageState extends State<SchedulePage> {
   Visit? visit;
   bool isLoading = true;
   String? userEmail;
-
+  WebSocketChannel? channel;
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
+
+  String formatTimeToAmPm(String timeStr) {
+    final time = DateFormat("HH:mm:ss").parse(timeStr);
+    return DateFormat("hh:mm a")
+        .format(time)
+        .replaceAll("AM", "A.M.")
+        .replaceAll("PM", "P.M.");
+  }
+
   @override
   void initState() {
     super.initState();
-    loadUserEmailAndFetchVisit();
+    loadUserEmailAndFetchVisit().then((_) {
+      if (userEmail != null) {
+        connectWebSocket();
+      }
+    });
+  }
+
+  void connectWebSocket() {
+    // Remove trailing `/api` if present
+    final base = baseUrl.replaceFirst('/api', '');
+    final wsUrl = '${base.replaceFirst('http', 'ws')}/ws/updates';
+    print(wsUrl);
+
+    channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+
+    channel!.stream.listen((message) {
+      print('WebSocket message: $message');
+      if (message == 'update' && userEmail != null) {
+        fetchVisit(userEmail!);
+      }
+    }, onError: (error) {
+      print('WebSocket error: $error');
+    }, onDone: () {
+      print('WebSocket closed');
+    });
+  }
+
+  @override
+  void dispose() {
+    channel?.sink.close(status.goingAway);
+    super.dispose();
   }
 
   Future<void> fetchVisit(String email) async {
@@ -88,34 +130,118 @@ class _SchedulePageState extends State<SchedulePage> {
       return Scaffold(
         backgroundColor: const Color(0xFFF3F6FB),
         body: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const Text(
-                'SCHEDULE',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1C274C),
+          child: RefreshIndicator(
+            onRefresh: () => fetchVisit(userEmail ?? ''),
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 100),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                const SizedBox(height: 20),
+                const Center(
+                  child: Text(
+                    'SCHEDULE',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C274C),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: Center(
+                const SizedBox(height: 20),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C274C),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.event_busy, size: 80, color: Colors.grey),
-                      SizedBox(height: 20),
-                      Text(
-                        "No visit appointment found.",
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                    children: [
+                      QrImageView(
+                        data: visit!.qrCodeData.toString(),
+                        version: QrVersions.auto,
+                        size: 120.0,
+                        backgroundColor: Colors.white,
                       ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            infoRow('Host Name', visit!.hostName),
+                            infoRow('Departments', visit!.department),
+                            infoRow('Purpose', visit!.purpose),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ScheduleTimeBox(
+                                  label: 'Expected Time In',
+                                  time: formatTimeToAmPm(visit!.timeIn),
+                                  color: Colors.green,
+                                ),
+                                ScheduleTimeBox(
+                                  label: 'Expected Time Out',
+                                  time: formatTimeToAmPm(visit!.timeOut),
+                                  color: Colors.red,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    visit!.approvalStatus,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1C274C),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  if (visit!.approvalStatus == "Approved")
+                                    const Icon(Icons.check_circle,
+                                        color: Color(0xFF1C274C), size: 48),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const SchedulePage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text("Refresh"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF1C274C),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      )
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         bottomNavigationBar: bottomNavBar(context),
@@ -125,91 +251,114 @@ class _SchedulePageState extends State<SchedulePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FB),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            const Text(
-              'SCHEDULE',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1C274C)),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C274C),
-                borderRadius: BorderRadius.circular(16),
+        child: RefreshIndicator(
+          onRefresh: () => fetchVisit(userEmail ?? ''),
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 100),
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              const SizedBox(height: 20),
+              const Center(
+                child: Text(
+                  'SCHEDULE',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C274C)),
+                ),
               ),
-              child: Column(
-                children: [
-                  QrImageView(
-                    data: visit!.qrCodeData.toString(),
-                    version: QrVersions.auto,
-                    size: 120.0,
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 20),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1C274C),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    QrImageView(
+                      data: visit!.qrCodeData.toString(),
+                      version: QrVersions.auto,
+                      size: 120.0,
+                      backgroundColor: Colors.white,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        infoRow('Host Name', visit!.hostName),
-                        infoRow('Department', visit!.department),
-                        infoRow('Purpose', visit!.purpose),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ScheduleTimeBox(
-                              label: 'Expected Time In',
-                              time: visit!.timeIn,
-                              color: Colors.green,
-                            ),
-                            ScheduleTimeBox(
-                              label: 'Expected Time Out',
-                              time: visit!.timeOut,
-                              color: Colors.red,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Center(
-                          child: Column(
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          infoRow('Host Name', visit!.hostName),
+                          infoRow('Department', visit!.department),
+                          infoRow('Purpose', visit!.purpose),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                visit!.approvalStatus,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1C274C),
-                                ),
+                              ScheduleTimeBox(
+                                label: 'Expected Time In',
+                                time: formatTimeToAmPm(visit!.timeIn),
+                                color: Colors.green,
                               ),
-                              const SizedBox(height: 10),
-                              if (visit!.approvalStatus == "Approved")
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: const Icon(Icons.check_circle,
-                                      color: Color(0xFF1C274C), size: 48),
-                                )
+                              ScheduleTimeBox(
+                                label: 'Expected Time Out',
+                                time: formatTimeToAmPm(visit!.timeOut),
+                                color: Colors.red,
+                              ),
                             ],
                           ),
-                        )
-                      ],
+                          const SizedBox(height: 12),
+                          Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  visit!.approvalStatus,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1C274C),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (visit!.approvalStatus == "Approved")
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: const Icon(Icons.check_circle,
+                                        color: Color(0xFF1C274C), size: 48),
+                                  )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
                     ),
-                  )
-                ],
-              ),
-            )
-          ],
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        fetchVisit(userEmail ?? '');
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Refresh"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1C274C),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: bottomNavBar(context),

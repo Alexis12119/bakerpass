@@ -28,6 +28,7 @@ interface Visitor {
     | "Approved"
     | "Blocked"
     | "Cancelled"
+    | "Partial Approved"
     | "Nurse Approved";
   profileImageUrl: string;
 }
@@ -78,14 +79,13 @@ const NursePage: React.FC = () => {
       permissionType: string;
       comments: string;
     },
+    healthData?: any,
   ) => {
     if (!selectedVisitor) return;
 
     try {
       const token = sessionStorage.getItem("token") as string;
-      const decoded = jwtDecode(token) as {
-        id: number;
-      };
+      const decoded = jwtDecode(token) as { id: number };
       const nurseId = decoded.id;
 
       if (!nurseId) {
@@ -93,13 +93,7 @@ const NursePage: React.FC = () => {
         return;
       }
 
-      // Step 1: Update approval status
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/${selectedVisitor.id}/approval`,
-        { status: action, nurseId },
-      );
-
-      // Step 2: Submit high care form if approved and formData exists
+      // Step 1: Create high care request (only if action is Yes and formData exists)
       if (action === "Yes" && formData) {
         await axios.post(
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/highcare/${selectedVisitor.id}/request`,
@@ -113,10 +107,27 @@ const NursePage: React.FC = () => {
         );
       }
 
+      // Step 2: Submit health declaration
+      if (action === "Yes" && healthData) {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/health/${selectedVisitor.id}/submit`,
+          {
+            ...healthData,
+            nurseId,
+          },
+        );
+      }
+
+      // Step 3: Final approval
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/${selectedVisitor.id}/approval`,
+        { nurseId },
+      );
+
       await fetchVisitors();
-      setSuccessMessage(`Visitor successfully ${action}.`);
+      setSuccessMessage(`Successfully Submitted.`);
     } catch (error) {
-      alert(error);
+      console.error(error);
       setErrorMessage("Failed to update approval.");
     } finally {
       setStatusActionModalOpen(false);
@@ -160,7 +171,7 @@ const NursePage: React.FC = () => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
-        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
+        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits?date=${date}`
         : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
 
       const response = await axios.get(endpoint);
