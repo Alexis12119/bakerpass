@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
-  BellIcon,
   XMarkIcon,
   Bars3Icon,
   ChevronDownIcon,
@@ -28,7 +27,6 @@ interface HumanResourcesWithDropdown extends HumanResources {
 }
 
 const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [user, setUser] = useState<{

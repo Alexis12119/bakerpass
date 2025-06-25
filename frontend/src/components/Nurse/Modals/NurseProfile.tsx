@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 interface Nurse {
-  id: string;
+  id: number;
   name: string;
   profileImageUrl: string;
 }
@@ -15,6 +15,7 @@ interface NurseProfileModalProps {
   visitor: NurseWithDropdown;
   isOpen: boolean;
   onClose: () => void;
+  profileImageUrl: string;
 }
 
 const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
@@ -54,7 +55,7 @@ const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
         {/* Visitor details */}
         <div className="p-5 text-center">
           <h2 className="text-xl font-bold text-black">{visitor.name}</h2>
-          <p className="text-gray-600">{visitor.department}</p>
+          <p className="text-gray-600">Nurse</p>
         </div>
       </div>
     </div>

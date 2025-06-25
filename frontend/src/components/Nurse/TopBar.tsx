@@ -1,25 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import NurseProfileModal from "@/components/Nurse/Modals/NurseProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
 interface Nurse {
-  id: string;
+  id: number;
   name: string;
-  department: string;
 }
 
 interface NurseWithDropdown extends Nurse {
   isDropdownOpen: boolean;
+  profileImageUrl: string;
 }
 
 const TopBar = () => {
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [user, setUser] = useState<{
     id: number;
@@ -38,42 +36,6 @@ const TopBar = () => {
   const handleUploadClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent dropdown from opening when clicking profile image
     fileInputRef.current?.click();
-  };
-
-  // Helper function to update JWT token
-  const updateJWTToken = (newProfileImageUrl: string) => {
-    try {
-      const currentToken = sessionStorage.getItem("token");
-      if (!currentToken) return;
-
-      const decoded = jwtDecode(currentToken) as any;
-
-      // Create updated payload
-      const updatedPayload = {
-        ...decoded,
-        profileImage: newProfileImageUrl,
-        // Update the issued at time to current time
-        iat: Math.floor(Date.now() / 1000),
-      };
-
-      // Note: This creates a "fake" token that won't be validated by the backend
-      // But it will persist the profile image URL for frontend display
-      const updatedTokenString = btoa(
-        JSON.stringify({
-          header: { alg: "HS256", typ: "JWT" },
-          payload: updatedPayload,
-          signature: "frontend-updated", // Placeholder signature
-        }),
-      );
-
-      // Store the updated token
-      sessionStorage.setItem("token", updatedTokenString);
-
-      return true;
-    } catch (error) {
-      console.error("Error updating JWT token:", error);
-      return false;
-    }
   };
 
   // Alternative: Store profile image URL separately
@@ -237,9 +199,10 @@ const TopBar = () => {
   }, []);
 
   const nurse: NurseWithDropdown = {
-    id: user?.id || "",
+    id: user?.id || 0,
     name: user?.firstName + " " + user?.lastName || "Guest",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
+    profileImageUrl: user?.profileImage ?? "",
   };
 
   const handleLogout = () => {
@@ -276,36 +239,10 @@ const TopBar = () => {
             />
           </div>
           <div className="flex items-center space-x-3 md:space-x-4">
-            <div className="relative">
-              <button
-                onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative"
-              >
-                <BellIcon className="h-6 w-6 text-yellow-500" />
-                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-              </button>
-              {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white border rounded-lg shadow-lg p-3">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Notifications
-                  </h3>
-                  <ul className="text-sm text-gray-600">
-                    <li className="py-2 border-b">New visitor checked in.</li>
-                    <li className="py-2 border-b">
-                      Package delivered at the front desk.
-                    </li>
-                    <li className="py-2">
-                      Security alert: Unusual activity detected.
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
-
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Image
-                  src={user?.profileImage}
+                  src={user?.profileImage ?? ""}
                   alt="Profile Image"
                   width={42}
                   height={42}
@@ -419,7 +356,7 @@ const TopBar = () => {
         visitor={nurse}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
-        profileImageUrl={user?.profileImage}
+        profileImageUrl={user?.profileImage ?? ""}
       />
     </>
   );
