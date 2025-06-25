@@ -24,6 +24,15 @@ interface DashboardTableProps {
   visitors: VisitorWithDropdown[];
 }
 
+function toTitleCase(str?: string) {
+  if (!str) return ""; // Return empty string if str is undefined/null/empty
+
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
+  );
+}
+
 const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
   const formatTimeForDisplay = (time: string | null) => {
     if (!time || time === "00:00:00") return "Pending";
@@ -64,9 +73,13 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                         ? "bg-yellow-400"
                         : visitor.approvalStatus === "Blocked"
                           ? "bg-red-600"
-                          : visitor.approvalStatus === "Cancelled"
-                            ? "bg-gray-400"
-                            : "bg-white"
+                          : visitor.approvalStatus === "Partial Approved"
+                            ? "bg-blue-500"
+                            : visitor.approvalStatus === "Nurse Approved"
+                              ? "bg-green-800"
+                              : visitor.approvalStatus === "Cancelled"
+                                ? "bg-gray-400"
+                                : "bg-white"
                   }
                 `}
                 onClick={() => {
@@ -86,9 +99,11 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                     }
                   `}
                 >
-                  {visitor.approvalStatus === "Approved"
-                    ? visitor.status
-                    : visitor.approvalStatus}
+                  {["Approved", "Nurse Approved"].includes(
+                    visitor.approvalStatus,
+                  )
+                    ? toTitleCase(visitor.status)
+                    : toTitleCase(visitor.approvalStatus)}
                 </span>
               </div>
 

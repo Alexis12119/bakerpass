@@ -310,12 +310,37 @@ class HostDetailsModalState extends State<HostDetailsModal> {
         const Text(
           "Visitor's Information",
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
         ),
         const SizedBox(height: 12),
+
+        // ✅ Visitor name display
+        FutureBuilder<SharedPreferences>(
+          future: SharedPreferences.getInstance(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData) {
+              final prefs = snapshot.data!;
+              final firstName = prefs.getString('firstName') ?? '';
+              final lastName = prefs.getString('lastName') ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Text(
+                  'Name: $firstName $lastName',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+
         // Purpose dropdown
         DropdownButtonFormField<int>(
           value: visitPurposeId,
@@ -340,6 +365,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
               .toList(),
           onChanged: (val) => setState(() => visitPurposeId = val),
         ),
+
         const SizedBox(height: 20),
         const Text(
           "Host's Time Availability",
@@ -349,55 +375,67 @@ class HostDetailsModalState extends State<HostDetailsModal> {
             color: Colors.black,
           ),
         ),
-        const SizedBox(height: 12),
-        // Time slots grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: timeSlots.length,
-          itemBuilder: (context, index) {
-            final slot = timeSlots[index];
-            final isSelected = selectedTimeSlotId == slot['id'];
-            final timeString =
-                "${formatTime(slot['start_time'])} - ${formatTime(slot['end_time'])}";
+        const SizedBox(height: 20),
 
-            return GestureDetector(
-              onTap: () => setState(() => selectedTimeSlotId = slot['id']),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryColor : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? primaryColor : Colors.grey[300]!,
-                  ),
+        // Time slots grid or fallback message
+        timeSlots.isEmpty
+            ? const Text(
+                'No available time slots.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.redAccent,
                 ),
-                child: Row(
-                  children: [
-                    if (isSelected)
-                      const Icon(Icons.check, color: Colors.white, size: 16),
-                    if (isSelected) const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        timeString,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontSize: 12,
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: timeSlots.length,
+                itemBuilder: (context, index) {
+                  final slot = timeSlots[index];
+                  final isSelected = selectedTimeSlotId == slot['id'];
+                  final timeString =
+                      "${formatTime(slot['start_time'])} - ${formatTime(slot['end_time'])}";
+
+                  return GestureDetector(
+                    onTap: () =>
+                        setState(() => selectedTimeSlotId = slot['id']),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? primaryColor : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? primaryColor : Colors.grey[300]!,
                         ),
                       ),
+                      child: Row(
+                        children: [
+                          if (isSelected)
+                            const Icon(Icons.check,
+                                color: Colors.white, size: 16),
+                          if (isSelected) const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              timeString,
+                              style: TextStyle(
+                                color:
+                                    isSelected ? Colors.white : Colors.black87,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
-        ),
       ],
     );
   }
