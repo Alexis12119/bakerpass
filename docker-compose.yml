@@ -41,7 +41,6 @@ services:
       - "host.docker.internal:host-gateway" 
     volumes:
       - ./backend:/app
-      - /app/node_modules
     working_dir: /app
     command: ["npm", "run", "dev"]
 
@@ -62,7 +61,6 @@ services:
       - 1.1.1.1
     volumes:
       - ./frontend:/app
-      - /app/node_modules
       - /app/.next
     working_dir: /app
     command: ["npm", "run", "dev"]
