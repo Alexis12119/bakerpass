@@ -13,6 +13,20 @@ function toTitleCase(str?: string) {
   );
 }
 
+function getStatusLabel(visitor) {
+  const { approvalStatus, status } = visitor;
+
+  if (["Approved", "Nurse Approved"].includes(approvalStatus)) {
+    return toTitleCase(status);
+  }
+
+  if (approvalStatus === "Partial Approved") {
+    return "Sent to Clinic";
+  }
+
+  return toTitleCase(approvalStatus);
+}
+
 const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
   const formatTimeForDisplay = (time: string | null) => {
     if (!time || time === "00:00:00") return "Pending";
@@ -77,11 +91,7 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                     }
                   `}
                 >
-                  {["Approved", "Nurse Approved"].includes(
-                    visitor.approvalStatus,
-                  )
-                    ? toTitleCase(visitor.status)
-                    : toTitleCase(visitor.approvalStatus)}
+                  {getStatusLabel(visitor)}
                 </span>
               </div>
 

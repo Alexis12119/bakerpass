@@ -26,6 +26,20 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
     );
   }
 
+  function getStatusLabel(visitor) {
+    const { approvalStatus, status } = visitor;
+
+    if (["Approved", "Nurse Approved"].includes(approvalStatus)) {
+      return toTitleCase(status);
+    }
+
+    if (approvalStatus === "Partial Approved") {
+      return "Sent to Clinic";
+    }
+
+    return toTitleCase(approvalStatus);
+  }
+
   const formatTimeForDisplay = (time: string | null) => {
     if (!time || time === "00:00:00") return "Pending";
     const [hoursStr, minutes] = time.split(":");
@@ -113,11 +127,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                     }
                   `}
                 >
-                  {["Approved", "Nurse Approved"].includes(
-                    visitor.approvalStatus,
-                  )
-                    ? toTitleCase(visitor.status)
-                    : toTitleCase(visitor.approvalStatus)}
+                  {getStatusLabel(visitor)}
                 </span>
               </div>
 
@@ -192,8 +202,8 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
       {/* ✅ Status Action Modal */}
       {statusActionModalOpen && selectedVisitor && (
         <StatusActionModal
-          title="Set Visitor Status"
-          message={`Set status for "${selectedVisitor.name}"?`}
+          title={`Approve entry for ${selectedVisitor.name}?`}
+          message="Choose how to proceed with this visitor's request."
           onConfirm={(action) => {
             setApprovalAction(action);
             handleVisitorApproval(action);

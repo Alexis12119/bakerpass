@@ -1455,12 +1455,6 @@ fastify.get("/visitors-date", async (request, reply) => {
       JOIN approval_status a ON v.approval_status_id = a.id
       JOIN visit_statuses vs ON v.status_id = vs.id
       WHERE v.visit_date = ? 
-        AND a.name NOT IN ('Partial Approved')
-        AND NOT EXISTS (
-          SELECT 1
-          FROM high_care_requests hcr
-          WHERE hcr.visit_id = v.id AND hcr.is_approved = FALSE
-        )
     `;
 
     const params = [date];
