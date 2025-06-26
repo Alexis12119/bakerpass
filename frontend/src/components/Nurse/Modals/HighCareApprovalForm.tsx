@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
-import { Dialog } from "@headlessui/react";
+import { Dialog, DialogPanel } from "@headlessui/react";
 import { jwtDecode } from "jwt-decode";
 
 interface HighCareApprovalFormProps {
@@ -191,7 +191,7 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
         onClose={() => setPreviewOpen(false)}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       >
-        <Dialog.Panel className="text-black bg-white p-6 rounded-lg max-w-2xl w-full shadow-xl overflow-y-auto max-h-[90vh]">
+        <DialogPanel className="text-black bg-white p-6 rounded-lg max-w-2xl w-full shadow-xl overflow-y-auto max-h-[90vh]">
           <h3 className="text-lg font-bold text-center mb-4">Print Preview</h3>
 
           <div
@@ -282,7 +282,7 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
               Cancel
             </button>
           </div>
-        </Dialog.Panel>
+        </DialogPanel>
       </Dialog>
     </>
   );
