@@ -38,7 +38,10 @@ const LoginPage = () => {
       setErrorMessage("All fields are required!");
       return;
     }
+
     setIsSigningIn(true);
+    const startTime = Date.now();
+
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/login`,
@@ -52,26 +55,47 @@ const LoginPage = () => {
       sessionStorage.setItem("token", token);
       sessionStorage.setItem("role", basePath);
       sessionStorage.setItem("lastValidRoute", `/${basePath}`);
-      router.push(`/${basePath}`);
+
+      const elapsed = Date.now() - startTime;
+      const remaining = 500 - elapsed;
+
+      setTimeout(
+        () => {
+          router.push(`/${basePath}`);
+        },
+        remaining > 0 ? remaining : 0,
+      );
     } catch (error: any) {
-      if (error?.response?.status === 502) {
-        setErrorMessage(
-          "Server temporarily unavailable. Please try again later.",
-        );
-      } else if (error?.response?.status === 429) {
-        setErrorMessage(
-          error.response.data.message ||
-            "Too many login attempts. Please try again later.",
-        );
-      } else if (error?.response?.status === 401) {
-        setErrorMessage(error.response.data.message || "Invalid credentials");
-      } else if (error?.response?.data?.message) {
-        setErrorMessage(error.response.data.message);
-      } else if (error?.message) {
-        setErrorMessage(`Connection error: ${error.message}`);
-      } else {
-        setErrorMessage("Login failed. Please try again.");
-      }
+      const elapsed = Date.now() - startTime;
+      const remaining = 500 - elapsed;
+
+      setTimeout(
+        () => {
+          setIsSigningIn(false);
+
+          if (error?.response?.status === 502) {
+            setErrorMessage(
+              "Server temporarily unavailable. Please try again later.",
+            );
+          } else if (error?.response?.status === 429) {
+            setErrorMessage(
+              error.response.data.message ||
+                "Too many login attempts. Please try again later.",
+            );
+          } else if (error?.response?.status === 401) {
+            setErrorMessage(
+              error.response.data.message || "Invalid credentials",
+            );
+          } else if (error?.response?.data?.message) {
+            setErrorMessage(error.response.data.message);
+          } else if (error?.message) {
+            setErrorMessage(`Connection error: ${error.message}`);
+          } else {
+            setErrorMessage("Login failed. Please try again.");
+          }
+        },
+        remaining > 0 ? remaining : 0,
+      );
     }
   };
 
@@ -157,9 +181,17 @@ const LoginPage = () => {
 
         <button
           onClick={() => handleSignIn(email, password)}
-          className="w-full bg-[#1C274C] text-white py-3 rounded-md mt-4 font-semibold transition"
+          className="w-full bg-[#1C274C] text-white py-3 rounded-md mt-4 font-semibold transition flex items-center justify-center"
+          disabled={isSigningIn}
         >
-          Sign In
+          {isSigningIn ? (
+            <div className="relative w-5 h-5">
+              <div className="absolute w-full h-full border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="absolute w-full h-full border-2 border-dashed border-[#F3F6FB] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
+            </div>
+          ) : (
+            "Sign In"
+          )}
         </button>
 
         <div className="flex items-center my-4">
@@ -177,18 +209,6 @@ const LoginPage = () => {
           </Link>
         </div>
       </div>
-
-      {isSigningIn && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
-          <div className="relative w-14 h-14">
-            <div className="absolute w-full h-full border-[5px] border-[#1C274C] border-t-transparent rounded-full animate-spin" />
-            <div className="absolute w-full h-full border-[5px] border-dashed border-[#374151] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
-          </div>
-          <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
-            Signing in...
-          </span>
-        </div>
-      )}
     </div>
   );
 };

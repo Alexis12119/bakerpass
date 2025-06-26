@@ -55,8 +55,6 @@ export default function ProtectedRoute({
     }
 
     const verifyToken = async () => {
-      const startTime = Date.now(); // record start
-
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/verify`,
@@ -74,14 +72,10 @@ export default function ProtectedRoute({
         if (user.role !== allowedRole) {
           redirectToFallback(user.role);
         } else {
-          const elapsed = Date.now() - startTime;
-          const remaining = 500 - elapsed;
-
-          if (remaining > 0) {
-            setTimeout(() => setIsLoading(false), remaining);
-          } else {
+          // Delay unsetting loading so spinner shows
+          setTimeout(() => {
             setIsLoading(false);
-          }
+          }, 500);
         }
       } catch (error) {
         console.error("Token verification failed:", error);
