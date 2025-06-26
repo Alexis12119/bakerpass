@@ -20,7 +20,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: express_backend
+    container_name: fastify_backend
     restart: always
     depends_on:
       - mysql
