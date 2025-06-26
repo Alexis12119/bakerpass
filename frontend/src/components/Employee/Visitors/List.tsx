@@ -1,21 +1,6 @@
 import React from "react";
 import VisitorCard from "@/components/Employee/Visitors/Cards";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  timeIn: string;
-  timeOut: string;
-  approval_status: string;
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { VisitorWithDropdown } from "@/types/Employee";
 
 interface VisitorsListProps {
   groupedVisitors: Record<string, VisitorWithDropdown[]>;

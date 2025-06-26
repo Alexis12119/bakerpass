@@ -5,24 +5,7 @@ import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import EmployeeProfile from "@/components/Employee/Visitors/Modals/EmployeeProfile";
 import VisitorProfileModal from "@/components/Employee/Visitors/Modals/VisitorProfile";
 import axios from "axios";
-
-interface Visitor {
-  id: string;
-  email: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  timeIn: string;
-  timeOut: string;
-  approval_status: string;
-  profileImageUrl: string;
-  employeeId: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { VisitorWithDropdown } from "@/types/Employee";
 
 interface VisitorCardProps {
   visitor: VisitorWithDropdown;
@@ -36,7 +19,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] =
     useState(false);
-  const [status, setStatus] = useState(visitor.approval_status);
+  const [_status, setStatus] = useState(visitor.approvalStatus);
   const handleStatusChange = async (newStatus: string) => {
     try {
       await axios.put(
@@ -111,7 +94,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         </div>
 
         {/* Status Badge */}
-        {visitor.approval_status === "Approved" && (
+        {visitor.approvalStatus === "Approved" && (
           <div className="flex items-center mt-4 bg-green-500 text-white rounded-full py-1 px-4 w-fit">
             <CheckIcon className="h-4 w-4 mr-1" />
             <span className="text-xs font-semibold">APPROVED</span>
@@ -124,7 +107,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         <div className="fixed inset-0 backdrop-blur-md z-10"></div>
       )}
       <EmployeeProfile
-        visitor={visitor}
+        Visitor={visitor}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         profileImageUrl={visitor.profileImageUrl}

@@ -1,20 +1,11 @@
- import React from "react";
-
-interface StatusFiltersProps {
-  selectedStatuses: string[];
-  toggleStatus: (status: string) => void;
-} 
+import React from "react";
+import { StatusFiltersProps } from "@/types/Employee";
 
 const StatusFilters: React.FC<StatusFiltersProps> = ({
   selectedStatuses,
   toggleStatus,
 }) => {
-  const statuses = [
-    "Approved",
-    "Disapproved",
-    "Canceled",
-    "Blocked",
-  ];
+  const statuses = ["Approved", "Disapproved", "Canceled", "Blocked"];
 
   return (
     <div className="p-4 flex space-x-2 bg-gray-100">

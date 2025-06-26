@@ -1,39 +1,7 @@
 import React from "react";
 import SearchFilters from "@/components/Employee/Visitors/SearchFilters";
 import VisitorsList from "@/components/Employee/Visitors/List";
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  timeIn: string;
-  timeOut: string;
-  approval_status: string;
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
-interface VisitorsSectionProps {
-  searchQuery: string;
-  selectedPurpose: string;
-  currentDate: string;
-  purposes: string[];
-  groupedVisitors: Record<string, VisitorWithDropdown[]>;
-  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFilterChange: (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    filterType: string,
-  ) => void;
-  selectedApprovalStatus: string;
-  approvalStatuses: string[];
-  fetchVisitors: () => void;
-  handlePreviousDate: () => void;
-  handleNextDate: () => void;
-  setCurrentDate: (date: string) => void;
-}
+import { VisitorsSectionProps } from "@/types/Employee";
 
 const VisitorsSection: React.FC<VisitorsSectionProps> = ({
   searchQuery,

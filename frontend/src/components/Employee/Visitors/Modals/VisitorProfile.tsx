@@ -1,15 +1,8 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-
-interface Visitor {
-  id: string;
-  name: string;
-  email: string;
-  contactNumber?: string | null;
-  address?: string | null;
-  otp?: string | null;
-}
+import { Visitor } from "@/types/Employee";
+import { User } from "lucide-react";
 
 interface VisitorProfileModalProps {
   visitor: Visitor;
@@ -38,7 +31,19 @@ const VisitorProfileModal: React.FC<VisitorProfileModalProps> = ({
         {/* Header */}
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
           <div className="w-20 h-20 relative overflow-hidden rounded-full">
-            <Image src="/images/jiro.jpg" fill alt="Visitor Profile" />
+            {visitor.profileImageUrl?.trim() ? (
+              <Image
+                src={visitor.profileImageUrl}
+                alt="Visitor"
+                width={60}
+                height={60}
+                className="rounded-full border-2 border-gray-300 shadow-sm object-cover"
+              />
+            ) : (
+              <div className="w-[80px] h-[80px] rounded-full border-2 border-gray-300 shadow-sm flex items-center justify-center bg-gray-100">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
 

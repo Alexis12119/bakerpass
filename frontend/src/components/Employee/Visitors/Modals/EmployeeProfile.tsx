@@ -9,12 +9,11 @@ import {
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 
-interface Employee {
+interface visitor {
   id: string;
   name: string;
   department: string;
   profileImageUrl: string;
-  employeeId: string;
 }
 
 interface TimeSlot {
@@ -25,15 +24,15 @@ interface TimeSlot {
 }
 
 interface EmployeeProfileModalProps {
-  visitor: Employee;
+  Visitor: visitor;
   isOpen: boolean;
   onClose: () => void;
-  profileImageUrl: string;
-  employeeId: string;
+  profileImageUrl?: string;
+  employeeId?: string;
 }
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
-  visitor,
+  Visitor: visitor,
   isOpen,
   onClose,
   profileImageUrl,
@@ -43,7 +42,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
   const [newSlot, setNewSlot] = useState({ startTime: "", endTime: "" });
   const isValidImage = profileImageUrl && profileImageUrl.trim() !== "";
-  console.log(isValidImage);
+  console.log("Employee ID:", employeeId);
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -113,7 +112,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   };
 
   useEffect(() => {
-    if (employeeId && isOpen) {
+    if (employeeId) {
       fetchTimeSlots();
     }
   }, [employeeId]);
@@ -159,7 +158,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             Your Time Availability
           </h3>
 
-          <ul className="space-y-2">
+          <ul className="space-y-2 max-h-48 overflow-y-auto pr-2">
             {timeSlots.length === 0 ? (
               <li className="text-black">No time slots available</li>
             ) : (
@@ -221,7 +220,6 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               ))
             )}
           </ul>
-
           <div className="mt-4 flex gap-2 items-center">
             <input
               type="time"

@@ -1,10 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-
-interface SidebarProps {
-  isSidebarOpen: boolean;
-}
+import { SidebarProps } from "@/types/Employee";
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen }) => {
   const router = useRouter();

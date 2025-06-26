@@ -7,24 +7,7 @@ import VisitorsSection from "@/components/Employee/Visitors/Section";
 import ErrorModal from "@/components/Modals/ErrorModal";
 import { format, addDays, subDays } from "date-fns";
 import { jwtDecode } from "jwt-decode";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  expected_time: string;
-  timeIn: string;
-  timeOut: string;
-  status: string;
-  approvalStatus: string;
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { VisitorWithDropdown } from "@/types/Employee";
 
 const EmployeeVisitorsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -59,6 +42,7 @@ const EmployeeVisitorsPage: React.FC = () => {
       approvalStatus: visitor.approval_status,
       isDropdownOpen: false,
       isHighCare: visitor.is_high_care ?? undefined,
+      employeeId: visitor.employee_id,
     }));
   };
   const fetchVisitorsByDate = async () => {
@@ -241,7 +225,7 @@ const EmployeeVisitorsPage: React.FC = () => {
   }, [visitors, searchQuery, selectedPurpose, selectedApprovalStatus]);
 
   // Group visitors by time ranges
-  const groupedVisitors = visitors.reduce(
+  const groupedVisitors = filteredVisitors.reduce(
     (acc, visitor) => {
       const timeRange = `${visitor.expected_time}`;
       if (!acc[timeRange]) {

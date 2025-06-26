@@ -5,26 +5,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
-import { format, addDays, subDays } from "date-fns";
+import { format } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-interface SearchFiltersProps {
-  searchQuery: string;
-  selectedPurpose: string;
-  currentDate: string;
-  purposes: string[];
-  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFilterChange: (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    filterType: string,
-  ) => void;
-  selectedApprovalStatus: string;
-  approvalStatuses: string[];
-  handlePreviousDate: () => void;
-  handleNextDate: () => void;
-  setCurrentDate: (date: string) => void;
-}
+import { SearchFiltersProps } from "@/types/Employee";
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   searchQuery,

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { BellIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import EmployeeProfileModal from "@/components/Employee/Visitors/Modals/EmployeeProfile";
@@ -27,8 +26,6 @@ const TopBar = () => {
     firstName: string;
     lastName: string;
     role: string;
-    email: string;
-    department: string;
     profileImage: string;
   } | null>(null);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
@@ -41,42 +38,6 @@ const TopBar = () => {
   const handleUploadClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent dropdown from opening when clicking profile image
     fileInputRef.current?.click();
-  };
-
-  // Helper function to update JWT token
-  const updateJWTToken = (newProfileImageUrl: string) => {
-    try {
-      const currentToken = sessionStorage.getItem("token");
-      if (!currentToken) return;
-
-      const decoded = jwtDecode(currentToken) as any;
-
-      // Create updated payload
-      const updatedPayload = {
-        ...decoded,
-        profileImage: newProfileImageUrl,
-        // Update the issued at time to current time
-        iat: Math.floor(Date.now() / 1000),
-      };
-
-      // Note: This creates a "fake" token that won't be validated by the backend
-      // But it will persist the profile image URL for frontend display
-      const updatedTokenString = btoa(
-        JSON.stringify({
-          header: { alg: "HS256", typ: "JWT" },
-          payload: updatedPayload,
-          signature: "frontend-updated", // Placeholder signature
-        }),
-      );
-
-      // Store the updated token
-      sessionStorage.setItem("token", updatedTokenString);
-
-      return true;
-    } catch (error) {
-      console.error("Error updating JWT token:", error);
-      return false;
-    }
   };
 
   // Alternative: Store profile image URL separately
@@ -138,10 +99,6 @@ const TopBar = () => {
         return { ...prev, profileImage: data.imageUrl };
       });
 
-      // Method 1: Update JWT token (not recommended for production)
-      // updateJWTToken(data.imageUrl);
-
-      // Method 2: Store profile image separately (recommended)
       updateProfileImageStorage(data.imageUrl, user.id.toString());
 
       alert("Profile image updated successfully!");
@@ -188,7 +145,7 @@ const TopBar = () => {
           firstName: decoded.firstName,
           lastName: decoded.lastName,
           role: decoded.role,
-          profileImage: profileImageUrl, // Use the updated URL if available
+          profileImage: profileImageUrl,
         });
       } catch (error) {
         console.error("Error decoding token:", error);
@@ -209,41 +166,11 @@ const TopBar = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = sessionStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded = jwtDecode(token) as {
-            id: number;
-            firstName: string;
-            lastName: string;
-            role: string;
-            profileImage: string;
-          };
-          setUser({
-            id: decoded.id,
-            firstName: decoded.firstName,
-            lastName: decoded.lastName,
-            role: decoded.role,
-            profileImage: decoded.profileImage,
-          });
-        } catch (error) {
-          console.error("Invalid token:", error);
-          setUser(null);
-          sessionStorage.removeItem("token");
-        }
-      } else {
-        setUser(null);
-      }
-    }
-  }, []);
-
   const visitor: EmployeeWithDropdown = {
     id: user?.id || "",
     name: user?.firstName + " " + user?.lastName || "Guest",
     department: "Employee",
-    profileImageUrl: user?.profileImage,
+    profileImageUrl: user?.profileImage || "/jiro.png",
     isDropdownOpen: false, // Required property from VisitorWithDropdown
   };
 
@@ -417,11 +344,11 @@ const TopBar = () => {
       )}
       {/* Profile Modal */}
       <EmployeeProfileModal
-        visitor={visitor}
+        Visitor={visitor}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         profileImageUrl={user?.profileImage}
-        employeeId={user?.id}
+        employeeId={user?.id || ""}
       />
     </div>
   );
