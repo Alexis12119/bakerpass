@@ -174,13 +174,15 @@ const TopBar = () => {
 
   return (
     <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">
-      <Image
-        src="/images/logo.jpg"
-        alt=""
-        width={150}
-        height={100}
-        className="rounded-full mr-3"
-      />
+      <div className="flex items-center space-x-2">
+        <Image
+          src="/images/logo.jpg"
+          alt="Company Logo"
+          width={100}
+          height={80}
+          className="rounded-full mr-3 h-auto w-auto"
+        />
+      </div>
       <div className="flex items-center space-x-4">
         <div className="relative">
           {isProfileModalOpen && (

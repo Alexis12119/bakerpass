@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { mockEmployees } from "@/data/mockEmployees";
 import EmployeeProfileModal from "@/components/HumanResources/Reports/Modals/EmployeeProfile";
 import { Briefcase } from "react-feather";
 import { User } from "lucide-react";
@@ -14,19 +13,10 @@ interface Employee {
   profileImageUrl: string;
 }
 
-interface ReportCardProps {
+const EmployeeCard: React.FC<{
   employee: Employee;
-}
-
-interface ReportCardsProps {
-  employees: Record<string, Employee[]>;
-  searchQuery: string;
-  selectedDepartment: string;
-}
-
-const EmployeeCard: React.FC<
-  ReportCardProps & { onOpen: (emp: Employee) => void }
-> = ({ employee, onOpen }) => {
+  onOpen: (emp: Employee) => void;
+}> = ({ employee, onOpen }) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onOpen(employee);
@@ -92,7 +82,7 @@ export const DepartmentSection: React.FC<{
   return (
     <div className="mb-8">
       <h2 className="text-xl font-bold mb-4 text-black">{department}</h2>
-      <div className="flex overflow-x-auto space-x-4 pb-4 max-w-[85vw]">
+      <div className="flex overflow-x-auto space-x-4 pb-4 max-w-[82vw]">
         {employees.map((employee) => (
           <EmployeeCard key={employee.id} employee={employee} onOpen={onOpen} />
         ))}
@@ -101,14 +91,15 @@ export const DepartmentSection: React.FC<{
   );
 };
 
-const EmployeeReportCards: React.FC<ReportCardsProps> = ({
-  employees = mockEmployees,
-  searchQuery = "",
-  selectedDepartment = "All",
-}) => {
+const EmployeeReportCards: React.FC<{
+  searchQuery?: string;
+  selectedDepartment?: string;
+}> = ({ searchQuery = "", selectedDepartment = "All" }) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
+  const [employees, setEmployees] = useState<Record<string, Employee[]>>({});
+  const [loading, setLoading] = useState(true);
 
   const openModal = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -120,26 +111,47 @@ const EmployeeReportCards: React.FC<ReportCardsProps> = ({
 
   const isModalOpen = !!selectedEmployee;
 
-  const filteredEmployees = useMemo(() => {
-    const result: Record<string, Employee[]> = {};
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchQuery) params.append("search", searchQuery);
+        if (selectedDepartment !== "All")
+          params.append("department", selectedDepartment);
 
-    Object.entries(employees).forEach(([department, departmentEmployees]) => {
-      if (selectedDepartment !== "All" && selectedDepartment !== department)
-        return;
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees?${params.toString()}`,
+        );
+        const data = await res.json();
 
-      const matchingEmployees = searchQuery
-        ? departmentEmployees.filter((employee: Employee) =>
-            employee.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : departmentEmployees;
-
-      if (matchingEmployees.length > 0) {
-        result[department] = matchingEmployees;
+        const grouped: Record<string, Employee[]> = {};
+        data.forEach((emp: any) => {
+          const dept = emp.department || "Unassigned";
+          if (!grouped[dept]) grouped[dept] = [];
+          grouped[dept].push({
+            ...emp,
+            profileImageUrl: emp.profileImage,
+          });
+        });
+        setEmployees(grouped);
+      } catch (error) {
+        console.error("Failed to fetch employees", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    return result;
-  }, [employees, searchQuery, selectedDepartment]);
+    fetchEmployees();
+  }, [searchQuery, selectedDepartment]);
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        Loading employee reports...
+      </div>
+    );
+  }
 
   return (
     <div className="relative bg-white p-4 overflow-y-auto">
@@ -157,12 +169,12 @@ const EmployeeReportCards: React.FC<ReportCardsProps> = ({
         </>
       )}
 
-      {Object.keys(filteredEmployees).length > 0 ? (
-        Object.entries(filteredEmployees).map(([department, employees]) => (
+      {Object.keys(employees).length > 0 ? (
+        Object.entries(employees).map(([department, emps]) => (
           <DepartmentSection
             key={department}
             department={department}
-            employees={employees}
+            employees={emps}
             onOpen={openModal}
           />
         ))

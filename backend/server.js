@@ -65,7 +65,6 @@ fastify.get(
     ],
   },
   async (request, reply) => {
-    console.log("Token verified:", request.user);
     return { user: request.user };
   },
 );
@@ -172,7 +171,6 @@ fastify.post("/register", async (request, reply) => {
 // Login Endpoint
 fastify.post("/login", async (request, reply) => {
   const { email, password } = request.body;
-  console.log(email, password);
 
   const userTables = [
     { table: "visitors", role: "Visitor" },
@@ -1065,13 +1063,11 @@ fastify.put("/nurse/:visitId/approval", async (request, reply) => {
 fastify.get("/employees/:id/timeslots", async (request, reply) => {
   const { id } = request.params;
   try {
-    console.log(`Fetching time slots for employee with ID: ${id}`);
     const [rows] = await pool.execute(
       "SELECT * FROM time_slots WHERE employee_id = ?",
       [id],
     );
 
-    console.log("Time slots fetched:", rows);
     // Ensure that the response is an array, even if no rows are found
     reply.send(rows || []);
   } catch (err) {
@@ -1156,7 +1152,6 @@ fastify.get("/hosts/:id/available-timeslots", async (request, reply) => {
       `SELECT time_slot_id FROM visits WHERE visited_employee_id = ? AND time_slot_id IS NOT NULL`,
       [hostId],
     );
-    console.log(takenSlots);
 
     const takenSlotIds = takenSlots.map((row) => row.time_slot_id);
 
@@ -1335,7 +1330,6 @@ fastify.get("/visitor-schedule", async (req, reply) => {
     `,
     [email],
   );
-  console.log(rows);
 
   if (rows.length === 0) {
     return reply.code(404).send({ message: "No visit found" });
