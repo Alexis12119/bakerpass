@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import axios from "axios";
-
-interface IDType {
-  id: number;
-  name: string;
-}
-
-interface VisitorIDModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (idTypeId: number) => void;
-}
+import { IDType, VisitorIDModalProps } from "@/types/Security";
 
 const VisitorIDModal: React.FC<VisitorIDModalProps> = ({
   isOpen,

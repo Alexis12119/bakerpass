@@ -7,6 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { User, LogOut } from "lucide-react";
 import { useRouter } from "next/router";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 interface Employee {
   id: string;
@@ -57,13 +58,15 @@ const TopBar = () => {
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 5MB");
+      showErrorToast("File size must be less than 5MB");
       return;
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      showErrorToast(
+        "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+      );
       return;
     }
 
@@ -91,14 +94,10 @@ const TopBar = () => {
         prev ? { ...prev, profileImage: data.imageUrl } : prev,
       );
       updateProfileImageStorage(data.imageUrl, user.id.toString());
-      alert("Profile image updated successfully!");
+      showSuccessToast("Profile image updated successfully!");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error: any) {
-      console.error("Upload error:", error);
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while uploading the image.",
-      );
+      showErrorToast("An error occurred while uploading the image.");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } finally {
       setIsUploading(false);
@@ -127,8 +126,8 @@ const TopBar = () => {
           role: decoded.role,
           profileImage: profileImageUrl,
         });
-      } catch (error) {
-        console.error("Error decoding token:", error);
+      } catch (error: any) {
+        showErrorToast(`Error decoding token: ${error.message}`);
       }
     }
   }, []);

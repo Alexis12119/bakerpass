@@ -6,36 +6,12 @@ import TopBar from "@/components/Nurse/TopBar";
 import Filters from "@/components/Nurse/Filters";
 import SecurityTable from "@/components/Nurse/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import ErrorModal from "@/components/Modals/ErrorModal";
 import { jwtDecode } from "jwt-decode";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import SuccessModal from "@/components/Modals/SuccessModal";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus:
-    | "Waiting For Approval"
-    | "Approved"
-    | "Blocked"
-    | "Cancelled"
-    | "Partial Approved"
-    | "Nurse Approved";
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { Visitor, VisitorWithDropdown } from "@/types/Nurse";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const NursePage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -60,8 +36,6 @@ const NursePage: React.FC = () => {
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [successMessge, setSuccessMessage] = useState<string>("");
 
   // For confirmation modal
   const [statusActionModalOpen, setStatusActionModalOpen] = useState(false);
@@ -89,7 +63,7 @@ const NursePage: React.FC = () => {
       const nurseId = decoded.id;
 
       if (!nurseId) {
-        setErrorMessage("Nurse ID not found.");
+        showErrorToast("Nurse ID not found.");
         return;
       }
 
@@ -125,10 +99,9 @@ const NursePage: React.FC = () => {
       );
 
       await fetchVisitors();
-      setSuccessMessage(`Successfully Submitted.`);
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Failed to update approval.");
+      showSuccessToast(`Successfully Submitted.`);
+    } catch (error: any) {
+      showErrorToast(`Failed to update approval: ${error.message}`);
     } finally {
       setStatusActionModalOpen(false);
       setSelectedVisitor(null);
@@ -385,19 +358,6 @@ const NursePage: React.FC = () => {
           handleVisitorApproval={handleVisitorApproval}
         />
       </div>
-
-      {errorMessage && (
-        <ErrorModal
-          message={errorMessage}
-          onClose={() => setErrorMessage("")}
-        />
-      )}
-      {successMessge && (
-        <SuccessModal
-          message={successMessge}
-          onClose={() => setSuccessMessage("")}
-        />
-      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import EmployeeProfile from "@/components/Employee/Visitors/Modals/EmployeeProfi
 import VisitorProfileModal from "@/components/Employee/Visitors/Modals/VisitorProfile";
 import axios from "axios";
 import { VisitorWithDropdown } from "@/types/Employee";
+import { showErrorToast } from "@/utils/customToasts";
 
 interface VisitorCardProps {
   visitor: VisitorWithDropdown;
@@ -28,9 +29,8 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
       );
       setStatus(newStatus);
       fetchVisitors();
-    } catch (error) {
-      console.error("Failed to update status", error);
-      alert("Failed to update status");
+    } catch (error: any) {
+      showErrorToast(`Failed to update status: ${error.message}`);
     }
   };
   return (

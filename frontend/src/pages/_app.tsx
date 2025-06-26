@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import { Toaster } from "react-hot-toast";
 
 const roleToRouteMap: Record<string, string> = {
   Visitor: "/visitor",
@@ -37,5 +38,10 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     };
   }, [router]);
 
-  return <Component {...pageProps} />;
+  return (
+    <>
+      <Component {...pageProps} />
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />{" "}
+    </>
+  );
 }

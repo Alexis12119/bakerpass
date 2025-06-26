@@ -1,22 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-interface Nurse {
-  id: number;
-  name: string;
-  profileImageUrl: string;
-}
-
-interface NurseWithDropdown extends Nurse {
-  isDropdownOpen: boolean;
-}
-
-interface NurseProfileModalProps {
-  visitor: NurseWithDropdown;
-  isOpen: boolean;
-  onClose: () => void;
-  profileImageUrl: string;
-}
+import { NurseProfileModalProps } from "@/types/Nurse";
 
 const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
   visitor,

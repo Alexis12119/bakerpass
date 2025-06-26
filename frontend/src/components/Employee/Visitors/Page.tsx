@@ -4,10 +4,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import TopBar from "@/components/Employee/Visitors/TopBar";
 import VisitorsSection from "@/components/Employee/Visitors/Section";
-import ErrorModal from "@/components/Modals/ErrorModal";
 import { format, addDays, subDays } from "date-fns";
 import { jwtDecode } from "jwt-decode";
 import { VisitorWithDropdown } from "@/types/Employee";
+import { showErrorToast } from "@/utils/customToasts";
 
 const EmployeeVisitorsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -25,7 +25,6 @@ const EmployeeVisitorsPage: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const mapVisitorsData = (visitors: any[]) => {
     return visitors.map((visitor) => ({
@@ -55,8 +54,8 @@ const EmployeeVisitorsPage: React.FC = () => {
 
       const mappedVisitors = mapVisitorsData(data);
       setVisitors(mappedVisitors);
-    } catch (error) {
-      console.error("Error fetching visitors by date:", error);
+    } catch (error: any) {
+      showErrorToast(`Error fetching visitors by date: ${error.message}`);
       setVisitors([]); // clear fallback
     }
   };
@@ -131,9 +130,8 @@ const EmployeeVisitorsPage: React.FC = () => {
       const data = await res.json();
       const names = data.map((p: { name: string }) => p.name);
       setPurposes(names);
-    } catch (error) {
-      // console.error("Failed to fetch purposes:", error);
-      setErrorMessage("Failed to fetch purposes");
+    } catch (error: any) {
+      showErrorToast(`Failed to fetch purposes: ${error.message}`);
     }
   };
 
@@ -145,8 +143,8 @@ const EmployeeVisitorsPage: React.FC = () => {
       const data = await res.json();
       const names = data.map((p: { name: string }) => p.name);
       setApprovalStatuses(names);
-    } catch (error) {
-      console.error("Failed to fetch approval statuses:", error);
+    } catch (error: any) {
+      showErrorToast(`Error fetching approval statuses: ${error.message}`);
     }
   };
   const fetchVisitors = async () => {
@@ -164,13 +162,11 @@ const EmployeeVisitorsPage: React.FC = () => {
         },
       );
 
-      console.log(response.data);
-
       const visitorsData = mapVisitorsData(response.data);
 
       setVisitors(visitorsData);
-    } catch (error) {
-      console.error("Error fetching visitors:", error);
+    } catch (error: any) {
+      showErrorToast(`Error fetching visitors: ${error.message}`);
     }
   };
 
@@ -265,13 +261,6 @@ const EmployeeVisitorsPage: React.FC = () => {
           />
         </div>
       </div>
-      {/* Error Modal */}
-      {errorMessage && (
-        <ErrorModal
-          message={errorMessage}
-          onClose={() => setErrorMessage("")}
-        />
-      )}
     </div>
   );
 };

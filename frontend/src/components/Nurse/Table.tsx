@@ -5,43 +5,7 @@ import Image from "next/image";
 import HighCareApprovalForm from "@/components/Nurse/Modals/HighCareApprovalForm";
 import HealthDeclarationModal from "@/components/Nurse/Modals/HealthDeclaration";
 import { User } from "lucide-react";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus:
-    | "Waiting For Approval"
-    | "Approved"
-    | "Blocked"
-    | "Cancelled"
-    | "Partial Approved"
-    | "Nurse Approved";
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
-
-interface NurseTableProps {
-  visitors: VisitorWithDropdown[];
-  statusActionModalOpen: boolean;
-  setStatusActionModalOpen: (open: boolean) => void;
-  selectedVisitor: Visitor | null;
-  setSelectedVisitor: (visitor: Visitor) => void;
-  handleVisitorApproval: (
-    action: "Yes" | "No",
-    formData?: any,
-    healthData?: any,
-  ) => void;
-}
+import { NurseTableProps } from "@/types/Nurse";
 
 function toTitleCase(str?: string) {
   if (!str) return ""; // Return empty string if str is undefined/null/empty
@@ -51,6 +15,7 @@ function toTitleCase(str?: string) {
     (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
   );
 }
+
 const NurseTable: React.FC<NurseTableProps> = ({
   visitors,
   statusActionModalOpen,

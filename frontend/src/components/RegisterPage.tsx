@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
-import ErrorModal from "@/components/Modals/ErrorModal";
-import SuccessModal from "./Modals/SuccessModal";
 import axios from "axios";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const RegisterPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -20,8 +19,6 @@ const RegisterPage = () => {
   const [role, setRole] = useState("");
   const router = useRouter();
   const [department, setDepartment] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [allDepartments, setAllDepartments] = useState<
     { id: number; name: string }[]
   >([]);
@@ -54,12 +51,12 @@ const RegisterPage = () => {
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
-      setErrorMessage("All fields are required!");
+      showErrorToast("All fields are required!");
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match!");
+      showErrorToast("Passwords do not match!");
       return;
     }
 
@@ -79,34 +76,15 @@ const RegisterPage = () => {
         data,
       );
 
-      setSuccessMessage(response.data.message);
+      showSuccessToast(response.data.message);
       router.push("/login");
     } catch (error) {
-      setErrorMessage("Registration failed");
+      showErrorToast("Registration failed");
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
-      {
-        /* Error Modal */
-        errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )
-      }
-      {
-        /* Success Modal */
-        successMessage && (
-          <SuccessModal
-            message={successMessage}
-            onClose={() => setSuccessMessage("")}
-          />
-        )
-      }
-
       <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"

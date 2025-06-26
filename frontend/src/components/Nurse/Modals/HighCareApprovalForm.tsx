@@ -4,16 +4,8 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { jwtDecode } from "jwt-decode";
-
-interface HighCareApprovalFormProps {
-  onClose: () => void;
-  onSubmit: (formData: {
-    selectedAreas: string[];
-    equipment: string[];
-    permissionType: string;
-    comments: string;
-  }) => void;
-}
+import { HighCareApprovalFormProps } from "@/types/Nurse";
+import { showErrorToast } from "@/utils/customToasts";
 
 const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
   onClose,
@@ -39,8 +31,8 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
         };
         setFirstName(decoded.firstName);
         setLastName(decoded.lastName);
-      } catch (error) {
-        console.error("Invalid token:", error);
+      } catch (error: any) {
+        showErrorToast(`Invalid token: ${error.message}`);
         setFirstName("");
         setLastName("");
         sessionStorage.removeItem("token");
@@ -84,7 +76,16 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
     const input = document.getElementById("printable-form");
     if (!input) return;
 
-    const canvas = await html2canvas(input);
+    const canvas = await html2canvas(input, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      ignoreElements: (element) => {
+        return element.classList.contains("no-pdf");
+      },
+    });
+
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
     const imgProps = pdf.getImageProperties(imgData);
@@ -93,10 +94,6 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
 
     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save("high-care-clearance.pdf");
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   return (
@@ -191,78 +188,149 @@ const HighCareApprovalForm: React.FC<HighCareApprovalFormProps> = ({
         onClose={() => setPreviewOpen(false)}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       >
-        <DialogPanel className="text-black bg-white p-6 rounded-lg max-w-2xl w-full shadow-xl overflow-y-auto max-h-[90vh]">
+        <DialogPanel className="text-black bg-white p-6 rounded-lg max-w-4xl w-full shadow-xl overflow-y-auto max-h-[90vh]">
           <h3 className="text-lg font-bold text-center mb-4">Print Preview</h3>
+
+          <style jsx>{`
+            @media print {
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
+              .print-background-dark {
+                background-color: #1c274c !important;
+                color: white !important;
+              }
+
+              .print-background-light {
+                background-color: white !important;
+                color: black !important;
+                border: 1px solid #d1d5db !important;
+              }
+            }
+          `}</style>
+
+          <style jsx>{`
+            @media print {
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
+              .print-background-dark {
+                background-color: #1c274c !important;
+                color: white !important;
+              }
+
+              .print-background-light {
+                background-color: white !important;
+                color: black !important;
+                border: 1px solid #d1d5db !important;
+              }
+            }
+          `}</style>
 
           <div
             id="printable-form"
-            className="p-4 bg-white text-black text-sm border border-black print-preview"
+            className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-2xl border border-gray-200"
+            style={{
+              colorAdjust: "exact",
+            }}
           >
-            <h2 className="text-center text-[#1C274C] font-bold text-sm uppercase">
+            <h2 className="text-center text-blue-900 font-bold text-sm uppercase mb-4">
               Clearance to Enter High Care Area
             </h2>
 
-            <p className="text-sm text-center">Selected high care area(s):</p>
-            <div className="grid grid-cols-3 gap-2">
-              {submittedData?.selectedAreas.map((area: string) => (
+            <p className="text-sm text-center text-black mb-6">
+              Selected high care area facility:
+            </p>
+
+            {/* Areas Display - matching original layout */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {areas.map((area) => (
                 <div
                   key={area}
-                  className="text-sm py-2 px-3 border bg-[#1C274C] text-white border-black rounded text-center"
+                  className={`py-2 rounded-lg font-semibold text-sm border text-center ${
+                    submittedData?.selectedAreas.includes(area)
+                      ? "bg-[#1C274C] text-white print-background-dark"
+                      : "bg-white text-black border-gray-300 print-background-light"
+                  }`}
+                  style={{
+                    colorAdjust: "exact",
+                    backgroundColor: submittedData?.selectedAreas.includes(area)
+                      ? "#1C274C"
+                      : "white",
+                    color: submittedData?.selectedAreas.includes(area)
+                      ? "white"
+                      : "black",
+                  }}
                 >
                   {area}
                 </div>
               ))}
             </div>
 
-            <div>
-              <h4 className="text-[#1C274C] font-semibold text-sm mt-4 mb-1">
-                Consultation Comments:
-              </h4>
-              <p className="border px-3 py-2 rounded text-sm bg-gray-50">
-                {submittedData?.comments || "N/A"}
-              </p>
+            <div className="text-start mb-4 text-[#1C274C] text-bold">
+              Consultation Information
             </div>
-
-            <div>
-              <h4 className="text-[#1C274C] font-semibold text-sm mt-4 mb-1">
-                Equipment Required:
-              </h4>
-              <div className="grid grid-cols-3 gap-2">
-                {submittedData?.equipment.map((item: string) => (
-                  <div
-                    key={item}
-                    className="text-sm py-2 px-3 border bg-[#1C274C] text-white border-black rounded text-center"
-                  >
-                    {item}
-                  </div>
-                ))}
+            <div className="mb-4 text-black">
+              <div className="w-full px-4 py-2 border rounded-lg text-sm bg-gray-50 min-h-[40px] flex items-center">
+                {submittedData?.comments || "No comments provided"}
               </div>
             </div>
 
-            <div>
-              <h4 className="text-[#1C274C] font-semibold text-sm mt-4 mb-1">
-                Permission Type:
-              </h4>
-              <p className="border px-3 py-2 rounded text-sm bg-gray-50">
+            <div className="text-start text-[#1C274C] text-bold">
+              Equipment required
+            </div>
+            <p className="text-sm font-medium mb-2">Equipment required</p>
+
+            {/* Equipment Display - matching original layout */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {gear.map((item) => (
+                <div
+                  key={item}
+                  className={`py-2 rounded-lg font-semibold text-sm border text-center ${
+                    submittedData?.equipment.includes(item)
+                      ? "bg-[#1C274C] text-white print-background-dark"
+                      : "bg-white text-black border-gray-300 print-background-light"
+                  }`}
+                  style={{
+                    colorAdjust: "exact",
+                    backgroundColor: submittedData?.equipment.includes(item)
+                      ? "#1C274C"
+                      : "white",
+                    color: submittedData?.equipment.includes(item)
+                      ? "white"
+                      : "black",
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+
+            {/* Permission Type Display - matching original layout */}
+            <div className="mb-6">
+              <div className="w-full px-4 py-2 border rounded-lg text-sm text-black bg-gray-50">
                 {submittedData?.permissionType}
-              </p>
+              </div>
+            </div>
+
+            {/* Approval section */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="text-sm text-black">
+                <strong>Approved by:</strong> {firstName} {lastName}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                <strong>Date:</strong> {new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 text-left text-sm">
-            Approved by:{" "}
-            <span className="font-semibold">
-              {typeof window !== "undefined" ? firstName + " " + lastName : ""}
-            </span>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-4">
-            <button
-              onClick={handlePrint}
-              className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Print
-            </button>
+          <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={handleDownloadPDF}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"

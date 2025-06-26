@@ -3,17 +3,7 @@ import {
   MagnifyingGlassIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-
-interface SearchFiltersProps {
-  searchQuery: string;
-  selectedDepartment: string;
-  departments: string[];
-  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFilterChange: (
-    event: React.ChangeEvent<HTMLSelectElement>,
-    filterType: string,
-  ) => void;
-}
+import { SearchFiltersProps } from "@/types/HumanResources/Reports";
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   searchQuery,

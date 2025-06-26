@@ -8,20 +8,8 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { User, LogOut } from "lucide-react";
 import { useRouter } from "next/router";
-
-interface Security {
-  id: string;
-  name: string;
-  profileImageUrl: string;
-}
-
-interface SecurityWithDropdown extends Security {
-  isDropdownOpen: boolean;
-}
-
-interface TopBarProps {
-  fetchVisitors: () => Promise<void>;
-}
+import { TopBarProps, SecurityWithDropdown } from "@/types/Security";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const TopBar = ({ fetchVisitors }: TopBarProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,13 +55,15 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
     // File validation
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("File size must be less than 5MB");
+      showErrorToast("File size must be less than 5MB");
       return;
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      showErrorToast(
+        "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+      );
       return;
     }
 
@@ -112,18 +102,17 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
       // Method 2: Store profile image separately (recommended)
       updateProfileImageStorage(data.imageUrl, user.id.toString());
 
-      alert("Profile image updated successfully!");
+      showSuccessToast("Profile image updated successfully!");
 
       // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     } catch (error: any) {
-      console.error("Upload error:", error);
       const message =
         error.response?.data?.message ||
         "An error occurred while uploading the image.";
-      alert(message);
+      showErrorToast(message);
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -215,8 +204,8 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
   };
 
   const handleLogout = () => {
-    setIsConfirmLogoutOpen(false); // Immediately close the modal
-    setIsLoggingOut(true); // Start showing spinner
+    setIsConfirmLogoutOpen(false);
+    setIsLoggingOut(true);
 
     setTimeout(() => {
       for (const key in sessionStorage) {

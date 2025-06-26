@@ -11,22 +11,11 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/router";
-
-interface TopBarProps {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
-}
-
-interface HumanResources {
-  id: number;
-  firstName: string;
-  lastName: string;
-  profileImageUrl: string;
-}
-
-interface HumanResourcesWithDropdown extends HumanResources {
-  isDropdownOpen: boolean;
-}
+import {
+  TopBarProps,
+  HumanResourcesWithDropdown,
+} from "@/types/HumanResources/Reports";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,13 +54,15 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 5MB");
+      showErrorToast("File size must be less than 5MB");
       return;
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+      showErrorToast(
+        "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+      );
       return;
     }
 
@@ -99,11 +90,10 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         prev ? { ...prev, profileImage: data.imageUrl } : prev,
       );
       updateProfileImageStorage(data.imageUrl, user.id.toString());
-      alert("Profile image updated successfully!");
+      showSuccessToast("Profile image updated successfully!");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error: any) {
-      console.error("Upload error:", error);
-      alert(
+      showErrorToast(
         error.response?.data?.message ||
           "An error occurred while uploading the image.",
       );

@@ -2,21 +2,9 @@ import axios from "axios";
 import { X, Check } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import ErrorModal from "@/components/Modals/ErrorModal";
-import SuccessModal from "@/components/Modals/SuccessModal";
 import { Laptop, Smartphone, Tablet, Package, User } from "lucide-react";
-
-interface HostDetailsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  host: {
-    id: string;
-    name: string;
-    department: string;
-    profileImage: string;
-  };
-  fetchVisitors: () => Promise<void>;
-}
+import { HostDetailsModalProps } from "@/types/Security";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const iconMap: { [key: string]: React.ReactNode } = {
   Laptop: <Laptop className="w-8 h-8 text-gray-700 mb-2" />,
@@ -35,12 +23,13 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   const [lastName, setLastName] = useState("");
   const [visitPurposeId, setVisitPurposeId] = useState<number | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
-  const [visitPurposes, setVisitPurposes] = useState<{ id: number; name: string }[]>([]);
-  const [timeSlots, setTimeSlots] = useState<{ id: number; start_time: string; end_time: string }[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [visitPurposes, setVisitPurposes] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [timeSlots, setTimeSlots] = useState<
+    { id: number; start_time: string; end_time: string }[]
+  >([]);
 
-  // Only step 1 (visitor info) and step 2 (device)
   const [step, setStep] = useState<1 | 2>(1);
 
   // Device info
@@ -55,9 +44,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`,
         );
         setVisitPurposes(response.data);
-      } catch (error) {
-        console.error("Error fetching visit purposes:", error);
-      }
+      } catch (error) {}
     };
 
     const fetchAvailableTimeSlots = async () => {
@@ -66,8 +53,8 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hosts/${host.id}/available-timeslots`,
         );
         setTimeSlots(response.data);
-      } catch (error) {
-        console.error("Error fetching time slots:", error);
+      } catch (error: any) {
+        showErrorToast(`Error fetching time slots: ${error.message}`);
       }
     };
 
@@ -83,8 +70,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       setDeviceTypes([]);
       setOtherDevice("");
       setDeviceBrand("");
-      setErrorMessage("");
-      setSuccessMessage("");
     }
   }, [isOpen, host.id]);
 
@@ -104,12 +89,12 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       !deviceBrand ||
       (deviceTypes.includes("Others") && !otherDevice)
     ) {
-      setErrorMessage("Please fill in all fields before submitting.");
+      showErrorToast("Please fill in all fields before submitting.");
       return;
     }
 
     if (!firstName || !lastName) {
-      setErrorMessage("Please enter both first and last name.");
+      showErrorToast("Please Enter Both First And Last Name.");
       return;
     }
 
@@ -135,11 +120,11 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visits`,
         payload,
       );
-      setSuccessMessage("Visit created successfully");
+      showSuccessToast("Visit created successfully.");
       await fetchVisitors();
-    } catch (error) {
-      console.error("Submit error:", error);
-      setErrorMessage("Error creating visit");
+      onClose();
+    } catch (error: any) {
+      showErrorToast(`Error creating visit: ${error.message}`);
     }
   };
 
@@ -338,7 +323,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   visitPurposeId === null ||
                   !selectedTimeSlot
                 ) {
-                  setErrorMessage(
+                  showErrorToast(
                     "Please fill visitor info, purpose, and select a time slot.",
                   );
                   return;
@@ -358,7 +343,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
                   !deviceBrand ||
                   (deviceTypes.includes("Others") && !otherDevice)
                 ) {
-                  setErrorMessage("Please select device and enter brand.");
+                  showErrorToast("Please select device and enter brand.");
                   return;
                 }
                 handleSubmit();
@@ -369,23 +354,6 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
             </button>
           )}
         </div>
-
-        {/* Show error or success */}
-        {errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )}
-        {successMessage && (
-          <SuccessModal
-            message={successMessage}
-            onClose={() => {
-              setSuccessMessage("");
-              onClose();
-            }}
-          />
-        )}
       </div>
     </div>
   );

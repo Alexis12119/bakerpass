@@ -1,28 +1,8 @@
 import React from "react";
 import Image from "next/image";
 import { User } from "lucide-react";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
-
-interface DashboardTableProps {
-  visitors: VisitorWithDropdown[];
-}
+import { DashboardTableProps } from "@/types/HumanResources/Dashboard";
+import { showErrorToast } from "@/utils/customToasts";
 
 function toTitleCase(str?: string) {
   if (!str) return ""; // Return empty string if str is undefined/null/empty
@@ -83,9 +63,7 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                   }
                 `}
                 onClick={() => {
-                  // if (visitor.approvalStatus === "Approved") {
-                  //   toggleVisitorStatus(visitor.id);
-                  // }
+                  showErrorToast("Only Security can approve visitors.");
                 }}
               >
                 <span

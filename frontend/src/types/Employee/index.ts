@@ -64,3 +64,14 @@ export interface VisitorsSectionProps {
   handleNextDate: () => void;
   setCurrentDate: (date: string) => void;
 }
+
+export interface VisitorProfileModalProps {
+  visitor: Visitor;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export interface VisitorsListProps {
+  groupedVisitors: Record<string, VisitorWithDropdown[]>;
+  fetchVisitors: () => void;
+}

@@ -11,31 +11,8 @@ import SuccessModal from "@/components/Modals/SuccessModal";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  host: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus:
-    | "Waiting For Approval"
-    | "Approved"
-    | "Blocked"
-    | "Cancelled"
-    | "Partial Approved"
-    | "Nurse Approved";
-
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { Visitor, VisitorWithDropdown } from "@/types/Security";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const SecurityGuardPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -60,8 +37,6 @@ const SecurityGuardPage: React.FC = () => {
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [successMessage, setSuccessMessage] = useState<string>("");
   const [validIdModalOpen, setValidIdModalOpen] = useState(false);
 
   // For confirmation modal
@@ -125,7 +100,7 @@ const SecurityGuardPage: React.FC = () => {
       if (!currentVisitor) return;
 
       if (currentVisitor.status === "Checked Out") {
-        setErrorMessage("Visitor has already checked out.");
+        showErrorToast("Visitor has already checked out.");
         return;
       }
 
@@ -174,10 +149,9 @@ const SecurityGuardPage: React.FC = () => {
         { statusName: action },
       );
       await fetchVisitors();
-      setSuccessMessage(`Visitor successfully ${action}.`);
-    } catch (error) {
-      setErrorMessage("Failed to update visitor approval status.");
-      console.error(error);
+      showSuccessToast(`Visitor successfully ${action}.`);
+    } catch (error: any) {
+      showErrorToast(`Failed to update visitor approval status: ${error.message}`);
     } finally {
       setStatusActionModalOpen(false);
       setSelectedVisitor(null);
@@ -398,19 +372,6 @@ const SecurityGuardPage: React.FC = () => {
           handleVisitorApproval={handleVisitorApproval}
         />
       </div>
-
-      {errorMessage && (
-        <ErrorModal
-          message={errorMessage}
-          onClose={() => setErrorMessage("")}
-        />
-      )}
-      {successMessage && (
-        <SuccessModal
-          message={successMessage}
-          onClose={() => setSuccessMessage("")}
-        />
-      )}
     </div>
   );
 };

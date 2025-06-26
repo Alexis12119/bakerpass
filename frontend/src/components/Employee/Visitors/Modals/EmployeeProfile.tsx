@@ -8,28 +8,8 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/solid";
 import axios from "axios";
-
-interface visitor {
-  id: string;
-  name: string;
-  department: string;
-  profileImageUrl: string;
-}
-
-interface TimeSlot {
-  id: number;
-  employeeId: string;
-  start_time: string;
-  end_time: string;
-}
-
-interface EmployeeProfileModalProps {
-  Visitor: visitor;
-  isOpen: boolean;
-  onClose: () => void;
-  profileImageUrl?: string;
-  employeeId?: string;
-}
+import { TimeSlot, EmployeeProfileModalProps } from "@/types/Employee/Profile";
+import { showErrorToast } from "@/utils/customToasts";
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   Visitor: visitor,
@@ -42,7 +22,6 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
   const [newSlot, setNewSlot] = useState({ startTime: "", endTime: "" });
   const isValidImage = profileImageUrl && profileImageUrl.trim() !== "";
-  console.log("Employee ID:", employeeId);
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -57,10 +36,9 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/${employeeId}/timeslots`,
       );
-      console.log("Fetched time slots:", response.data); // Log the response to check its structure
       setTimeSlots(response.data);
-    } catch (err) {
-      console.error("Error fetching time slots:", err);
+    } catch (err: any) {
+      showErrorToast(`Error fetching time slots: ${err.message}`);
     }
   };
 
@@ -74,8 +52,8 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
       });
       setNewSlot({ startTime: "", endTime: "" });
       fetchTimeSlots();
-    } catch (err) {
-      console.error("Error adding time slot:", err);
+    } catch (err: any) {
+      showErrorToast(`Error adding time slot: ${err.message}`);
     }
   };
   const updateTimeSlot = async (id: number) => {
@@ -95,8 +73,8 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
       setEditingSlotId(null);
       setNewSlot({ startTime: "", endTime: "" });
       fetchTimeSlots();
-    } catch (err) {
-      console.error("Error updating time slot:", err);
+    } catch (err: any) {
+      showErrorToast(`Error updating time slot: ${err.message}`);
     }
   };
 
@@ -106,8 +84,8 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots/${id}`,
       );
       fetchTimeSlots();
-    } catch (err) {
-      console.error("Error deleting time slot:", err);
+    } catch (err: any) {
+      showErrorToast(`Error deleting time slot: ${err.message}`);
     }
   };
 

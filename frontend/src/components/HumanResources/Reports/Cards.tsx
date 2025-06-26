@@ -1,27 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import EmployeeProfileModal from "@/components/HumanResources/Reports/Modals/EmployeeProfile";
 import { Briefcase } from "react-feather";
 import { User } from "lucide-react";
-
-interface Employee {
-  id: string;
-  name: string;
-  department: string;
-  total_visitors: number;
-  avg_visitors: number;
-  profileImageUrl: string;
-}
+import { Employee } from "@/types/HumanResources/Reports";
 
 const EmployeeCard: React.FC<{
   employee: Employee;
   onOpen: (emp: Employee) => void;
 }> = ({ employee, onOpen }) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onOpen(employee);
-  };
-
   return (
     <div className="bg-white rounded-2xl shadow-md p-6 flex items-center space-x-6 w-96 border-2">
       <div className="w-24 h-24 relative rounded-full overflow-hidden bg-gray-100">
@@ -64,7 +51,7 @@ const EmployeeCard: React.FC<{
           </div>
         </div>
         <button
-          onClick={handleClick}
+          onClick={() => onOpen(employee)}
           className="text-blue-600 text-sm font-medium mt-3 hover:underline"
         >
           View Profile &raquo;
@@ -74,108 +61,52 @@ const EmployeeCard: React.FC<{
   );
 };
 
-export const DepartmentSection: React.FC<{
+const DepartmentSection: React.FC<{
   department: string;
   employees: Employee[];
   onOpen: (emp: Employee) => void;
-}> = ({ department, employees, onOpen }) => {
-  return (
-    <div className="mb-8">
-      <h2 className="text-xl font-bold mb-4 text-black">{department}</h2>
-      <div className="flex overflow-x-auto space-x-4 pb-4 max-w-[82vw]">
-        {employees.map((employee) => (
-          <EmployeeCard key={employee.id} employee={employee} onOpen={onOpen} />
-        ))}
-      </div>
+}> = ({ department, employees, onOpen }) => (
+  <div className="mb-8">
+    <h2 className="text-xl font-bold mb-4 text-black">{department}</h2>
+    <div className="flex overflow-x-auto space-x-4 pb-4 max-w-[82vw]">
+      {employees.map((employee) => (
+        <EmployeeCard key={employee.id} employee={employee} onOpen={onOpen} />
+      ))}
     </div>
-  );
-};
+  </div>
+);
 
 const EmployeeReportCards: React.FC<{
-  searchQuery?: string;
-  selectedDepartment?: string;
-}> = ({ searchQuery = "", selectedDepartment = "All" }) => {
+  employees: Record<string, Employee[]>;
+}> = ({ employees }) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
-  const [employees, setEmployees] = useState<Record<string, Employee[]>>({});
-  const [loading, setLoading] = useState(true);
 
-  const openModal = (employee: Employee) => {
-    setSelectedEmployee(employee);
-  };
-
-  const closeModal = () => {
-    setSelectedEmployee(null);
-  };
-
-  const isModalOpen = !!selectedEmployee;
-
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        setLoading(true);
-        const params = new URLSearchParams();
-        if (searchQuery) params.append("search", searchQuery);
-        if (selectedDepartment !== "All")
-          params.append("department", selectedDepartment);
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees?${params.toString()}`,
-        );
-        const data = await res.json();
-
-        const grouped: Record<string, Employee[]> = {};
-        data.forEach((emp: any) => {
-          const dept = emp.department || "Unassigned";
-          if (!grouped[dept]) grouped[dept] = [];
-          grouped[dept].push({
-            ...emp,
-            profileImageUrl: emp.profileImage,
-          });
-        });
-        setEmployees(grouped);
-      } catch (error) {
-        console.error("Failed to fetch employees", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEmployees();
-  }, [searchQuery, selectedDepartment]);
-
-  if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        Loading employee reports...
-      </div>
-    );
-  }
+  const closeModal = () => setSelectedEmployee(null);
 
   return (
     <div className="relative bg-white p-4 overflow-y-auto">
-      {isModalOpen && (
+      {selectedEmployee && (
         <>
           <div
             className="fixed inset-0 backdrop-blur-md z-10"
             onClick={closeModal}
           />
           <EmployeeProfileModal
-            employee={selectedEmployee!}
-            isOpen={isModalOpen}
+            employee={selectedEmployee}
+            isOpen={!!selectedEmployee}
             onClose={closeModal}
           />
         </>
       )}
-
       {Object.keys(employees).length > 0 ? (
         Object.entries(employees).map(([department, emps]) => (
           <DepartmentSection
             key={department}
             department={department}
             employees={emps}
-            onOpen={openModal}
+            onOpen={setSelectedEmployee}
           />
         ))
       ) : (

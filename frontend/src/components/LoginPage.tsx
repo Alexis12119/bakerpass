@@ -5,16 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
-import ErrorModal from "@/components/Modals/ErrorModal";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { showErrorToast } from "@/utils/customToasts";
 
 const LoginPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const roleToBasePath = (role: string): string => {
     switch (role) {
@@ -35,7 +34,7 @@ const LoginPage = () => {
 
   const handleSignIn = async (email: string, password: string) => {
     if (!email || !password) {
-      setErrorMessage("All fields are required!");
+      showErrorToast("All fields are required!");
       return;
     }
 
@@ -74,24 +73,24 @@ const LoginPage = () => {
           setIsSigningIn(false);
 
           if (error?.response?.status === 502) {
-            setErrorMessage(
+            showErrorToast(
               "Server temporarily unavailable. Please try again later.",
             );
           } else if (error?.response?.status === 429) {
-            setErrorMessage(
+            showErrorToast(
               error.response.data.message ||
                 "Too many login attempts. Please try again later.",
             );
           } else if (error?.response?.status === 401) {
-            setErrorMessage(
+            showErrorToast(
               error.response.data.message || "Invalid credentials",
             );
           } else if (error?.response?.data?.message) {
-            setErrorMessage(error.response.data.message);
+            showErrorToast(error.response.data.message);
           } else if (error?.message) {
-            setErrorMessage(`Connection error: ${error.message}`);
+            showErrorToast(`Connection error: ${error.message}`);
           } else {
-            setErrorMessage("Login failed. Please try again.");
+            showErrorToast("Login failed. Please try again.");
           }
         },
         remaining > 0 ? remaining : 0,
@@ -101,14 +100,6 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
-      {/* Background Overlay for Blur Effect */}
-      {errorMessage && (
-        <ErrorModal
-          message={errorMessage}
-          onClose={() => setErrorMessage("")}
-        />
-      )}
-
       <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"

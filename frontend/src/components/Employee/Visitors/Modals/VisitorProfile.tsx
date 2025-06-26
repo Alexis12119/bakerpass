@@ -1,14 +1,8 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { Visitor } from "@/types/Employee";
 import { User } from "lucide-react";
-
-interface VisitorProfileModalProps {
-  visitor: Visitor;
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { VisitorProfileModalProps } from "@/types/Employee";
 
 const VisitorProfileModal: React.FC<VisitorProfileModalProps> = ({
   visitor,

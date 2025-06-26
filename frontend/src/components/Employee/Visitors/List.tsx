@@ -1,11 +1,7 @@
 import React from "react";
 import VisitorCard from "@/components/Employee/Visitors/Cards";
-import { VisitorWithDropdown } from "@/types/Employee";
+import { VisitorsListProps } from "@/types/Employee";
 
-interface VisitorsListProps {
-  groupedVisitors: Record<string, VisitorWithDropdown[]>;
-  fetchVisitors: () => void;
-}
 const VisitorsList: React.FC<VisitorsListProps> = ({
   groupedVisitors,
   fetchVisitors,

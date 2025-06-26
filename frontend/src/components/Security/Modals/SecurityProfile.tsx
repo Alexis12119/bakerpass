@@ -1,22 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-interface Security {
-  id: string;
-  name: string;
-  profileImageUrl: string;
-}
-
-interface SecurityWithDropdown extends Security {
-  isDropdownOpen: boolean;
-}
-
-interface SecurityProfileModalProps {
-  visitor: SecurityWithDropdown;
-  isOpen: boolean;
-  onClose: () => void;
-  profileImageUrl: string;
-}
+import { SecurityProfileModalProps } from "@/types/Security";
 
 const SecurityProfileModal: React.FC<SecurityProfileModalProps> = ({
   visitor,

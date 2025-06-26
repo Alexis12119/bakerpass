@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import ErrorModal from "@/components/Modals/ErrorModal";
+import { showErrorToast } from "@/utils/customToasts";
 
 const VerifyOtpPage = () => {
   const [otp, setOtp] = useState("");
@@ -11,11 +11,10 @@ const VerifyOtpPage = () => {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const role = searchParams.get("role");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const handleVerifyOtp = async () => {
     if (!otp) {
-      setErrorMessage("Please enter the OTP.");
+      showErrorToast("Please enter the OTP.");
       return;
     }
 
@@ -28,21 +27,12 @@ const VerifyOtpPage = () => {
 
       router.push(`/reset?email=${email}&role=${role}`);
     } catch (error: any) {
-      setErrorMessage(error.response?.data?.message || "Invalid OTP.");
+      showErrorToast(error.response?.data?.message || "Invalid OTP.");
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
-      {
-        /* Error Modal */
-        errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )
-      }
       <div className="w-[400px] bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold text-[#1C274C]">Verify OTP</h2>
         <p className="mt-1 text-sm text-[#1C274C]">

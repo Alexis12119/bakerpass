@@ -2,13 +2,7 @@
 
 import { FC } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-
-interface StatusActionModalProps {
-  title: string;
-  message: string;
-  onConfirm: (action: "Yes" | "No") => void;
-  onClose: () => void;
-}
+import { StatusActionModalProps } from "@/types/Nurse";
 
 const StatusActionModal: FC<StatusActionModalProps> = ({
   title = "Update Visitor Status",

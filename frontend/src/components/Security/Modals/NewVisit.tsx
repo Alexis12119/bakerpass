@@ -2,16 +2,10 @@ import React, { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import axios from "axios";
 import HostDetailsModal from "@/components/Security/Modals/HostDetails";
-import ErrorModal from "@/components/Modals/ErrorModal";
 import Image from "next/image";
 import { User } from "lucide-react";
-
-interface Host {
-  id: string;
-  name: string;
-  department: string;
-  profileImage: string;
-}
+import { Host } from "@/types/Security";
+import { showErrorToast } from "@/utils/customToasts";
 
 const NewVisitModal: React.FC<{
   isOpen: boolean;
@@ -22,7 +16,6 @@ const NewVisitModal: React.FC<{
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
   const [showHostDetails, setShowHostDetails] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -34,7 +27,7 @@ const NewVisitModal: React.FC<{
         );
         setAvailableHosts(response.data);
       } catch (err) {
-        setErrorMessage("Failed to fetch hosts.");
+        showErrorToast("Failed to fetch hosts.");
       }
     };
 
@@ -56,15 +49,6 @@ const NewVisitModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4">
-      {
-        /* Error Modal */
-        errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )
-      }
       <div className="relative bg-white rounded-lg shadow-xl w-[90%] max-w-sm sm:max-w-md p-4 border border-black overflow-y-auto max-h-[90vh]">
         <div className="p-4 flex justify-between items-center">
           <h2 className="text-lg text-black font-semibold">

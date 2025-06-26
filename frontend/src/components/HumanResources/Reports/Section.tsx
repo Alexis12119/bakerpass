@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import SearchFilters from "@/components/HumanResources/Reports/SearchFilters";
 import EmployeeReportCards from "@/components/HumanResources/Reports/Cards";
-
-interface Employee {
-  id: string;
-  name: string;
-  department: string;
-  total_visitors: number;
-  avg_visitors: number;
-  profileImageUrl: string;
-}
+import { Employee } from "@/types/HumanResources/Reports";
+import { showErrorToast } from "@/utils/customToasts";
 
 const HumanResourcesReportSection: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,23 +13,37 @@ const HumanResourcesReportSection: React.FC = () => {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch(
+      const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`,
       );
-      const data = await res.json();
       const names = data.map((dept: { name: string }) => dept.name);
       setDepartments(names);
-    } catch (error) {
-      console.error("Failed to fetch departments:", error);
+    } catch (error: any) {
+      showErrorToast(
+        `Failed to fetch departments: ${
+          error?.response?.data?.message || error.message
+        }`,
+      );
     }
   };
   const fetchEmployees = async () => {
     try {
-      let url = `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees?search=${searchQuery}&department=${selectedDepartment}`;
-      const response = await fetch(url);
-      const rawData = await response.json();
+      const params = new URLSearchParams();
+      if (searchQuery) params.append("search", searchQuery);
+      if (selectedDepartment !== "All") {
+        params.append("department", selectedDepartment);
+      }
 
-      // Transform backend response into Employee format expected by frontend
+      const { data: rawData } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees?${params.toString()}`,
+      );
+
+      if (!Array.isArray(rawData)) {
+        showErrorToast("Unexpected employee data format.");
+        setEmployees({});
+        return;
+      }
+
       const formattedData: Employee[] = rawData.map((emp: any) => ({
         id: emp.id.toString(),
         name: emp.name,
@@ -45,18 +53,18 @@ const HumanResourcesReportSection: React.FC = () => {
         profileImageUrl: emp.profileImage,
       }));
 
-      // Transform into Record<string, Employee[]>
-      const groupedEmployees: Record<string, Employee[]> = {};
-      formattedData.forEach((employee) => {
-        if (!groupedEmployees[employee.department]) {
-          groupedEmployees[employee.department] = [];
-        }
-        groupedEmployees[employee.department].push(employee);
+      const grouped: Record<string, Employee[]> = {};
+      formattedData.forEach((emp) => {
+        const dept = emp.department || "Unassigned";
+        if (!grouped[dept]) grouped[dept] = [];
+        grouped[dept].push(emp);
       });
 
-      setEmployees(groupedEmployees);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
+      setEmployees(grouped);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Error fetching employees.";
+      showErrorToast(message);
       setEmployees({});
     }
   };
@@ -66,7 +74,6 @@ const HumanResourcesReportSection: React.FC = () => {
     fetchEmployees();
   }, [searchQuery, selectedDepartment]);
 
-  // Handle search input changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -79,6 +86,7 @@ const HumanResourcesReportSection: React.FC = () => {
       setSelectedDepartment(e.target.value);
     }
   };
+
   useEffect(() => {
     let socket: WebSocket;
     let reconnectTimer: NodeJS.Timeout;
@@ -100,13 +108,12 @@ const HumanResourcesReportSection: React.FC = () => {
 
       socket.onerror = (e) => {
         console.error("❗WebSocket error", e);
-        socket.close(); // triggers onclose
+        socket.close();
       };
 
       socket.onclose = () => {
-        console.log("❌ WebSocket connection closed");
+        console.log("❌ WebSocket closed. Reconnecting in 5s...");
         if (!isUnmounted) {
-          console.log("🔄 Attempting to reconnect in 5s...");
           reconnectTimer = setTimeout(connect, 5000);
         }
       };
@@ -131,13 +138,12 @@ const HumanResourcesReportSection: React.FC = () => {
         handleFilterChange={handleFilterChange}
       />
       <div className="bg-white p-4">
-        <div className="w-full">
-          <EmployeeReportCards
-            employees={employees}
-            searchQuery={searchQuery}
-            selectedDepartment={selectedDepartment}
-          />
-        </div>
+        <EmployeeReportCards
+          employees={employees}
+          searchQuery={searchQuery}
+          selectedDepartment={selectedDepartment}
+          fetchEmployees={fetchEmployees}
+        />
       </div>
     </div>
   );

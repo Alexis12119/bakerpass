@@ -3,23 +3,7 @@ import {
   MagnifyingGlassIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-
-interface SearchFiltersProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  selectedHost: string;
-  setSelectedHost: (host: string) => void;
-  selectedPurpose: string;
-  setSelectedPurpose: (purpose: string) => void;
-  selectedDepartment: string;
-  setSelectedDepartment: (department: string) => void;
-  hosts: any[];
-  purposes: any[];
-  departments: any[];
-  approvalStatuses: any[];
-  selectedApprovalStatus: string;
-  setSelectedApprovalStatus: (status: string) => void;
-}
+import { SearchFiltersProps } from "@/types/HumanResources/Dashboard";
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   searchQuery,

@@ -4,17 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ErrorModal from "@/components/Modals/ErrorModal";
 import axios from "axios";
+import { showErrorToast } from "@/utils/customToasts";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
   const handleForgotPasswordSend = async () => {
     if (!email) {
-      setErrorMessage("Please enter your email.");
+      showErrorToast("Please enter your email.");
       return;
     }
 
@@ -32,22 +31,12 @@ const ForgotPasswordPage = () => {
 
       router.push(`/verify-otp?email=${email}&role=${role}`);
     } catch (error: any) {
-      console.error(error);
-      setErrorMessage(error.response?.data?.message || "Something went wrong.");
+      showErrorToast(error.response?.data?.message || "Something went wrong.");
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
-      {
-        /* Error Modal */
-        errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )
-      }
       <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"

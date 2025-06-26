@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Users, Calendar, BarChart, Pencil } from "lucide-react";
 import axios from "axios";
+import { showErrorToast } from "@/utils/customToasts";
 
 const DashboardCards: React.FC = () => {
   const [stats, setStats] = useState<{
@@ -20,8 +21,8 @@ const DashboardCards: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/visit-stats`,
       );
       setStats(response.data);
-    } catch (error) {
-      console.error("Failed to fetch visit stats", error);
+    } catch (error: any) {
+      showErrorToast(`Failed to fetch visit stats: ${error.message}`);
     } finally {
       setLoading(false);
     }

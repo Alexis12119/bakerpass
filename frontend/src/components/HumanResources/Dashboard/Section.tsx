@@ -6,6 +6,7 @@ import axios from "axios";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { showErrorToast } from "@/utils/customToasts";
 
 interface Visitor {
   id: string;
@@ -67,8 +68,8 @@ const VisitorsSection: React.FC = () => {
       setPurposes(purposesResponse.data);
       setDepartments(departmentsResponse.data);
       setApprovalStatuses(approvalStatusesResponse.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    } catch (error: any) {
+      showErrorToast(`Failed to fetch data: ${error.message}`);
     }
   };
 
@@ -112,7 +113,7 @@ const VisitorsSection: React.FC = () => {
     });
   };
 
-  const fetchVisitors = async (forNurse = false) => {
+  const fetchVisitors = async (forNurse = true) => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
@@ -124,8 +125,8 @@ const VisitorsSection: React.FC = () => {
       const visitorsData = mapVisitorsData(response.data);
 
       setVisitors(visitorsData);
-    } catch (error) {
-      console.error("Error fetching visitors:", error);
+    } catch (error: any) {
+      showErrorToast(`Failed to fetch visitors: ${error.message}`);
     }
   };
 

@@ -1,37 +1,9 @@
 import { X } from "lucide-react";
 import React, { useState } from "react";
-
-interface HealthDeclarationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (healthData: HealthDeclarationData) => void;
-}
-
-// Updated interface to match backend expectations
-interface HealthDeclarationData {
-  // Flat structure to match backend
-  fever: boolean;
-  cough: boolean;
-  openWound: boolean;
-  nausea: boolean;
-  skinBoils: boolean;
-  skinAllergies: boolean;
-  diarrhea: boolean;
-  openSores: boolean;
-  otherAllergies: string;
-  recentPlaces: string;
-  mobilePhone: boolean;
-  camera: boolean;
-  medicines: boolean;
-  notebook: boolean;
-  earrings: boolean;
-  necklace: boolean;
-  ring: boolean;
-  id_card: boolean;
-  ballpen: boolean;
-  wristwatch: boolean;
-  otherProhibited: string;
-}
+import {
+  HealthDeclarationData,
+  HealthDeclarationModalProps,
+} from "@/types/Nurse";
 
 const HealthDeclarationModal: React.FC<HealthDeclarationModalProps> = ({
   isOpen,

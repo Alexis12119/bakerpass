@@ -2,10 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { LayoutDashboard, BarChart2 } from "lucide-react";
-
-interface SidebarProps {
-  isSidebarOpen: boolean;
-}
+import { SidebarProps } from "@/types/HumanResources/Reports";
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen }) => {
   const router = useRouter();

@@ -4,19 +4,8 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
 import axios from "axios";
-
-interface FiltersProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  selectedHost: string;
-  setSelectedHost: (host: string) => void;
-  selectedPurpose: string;
-  setSelectedPurpose: (purpose: string) => void;
-  selectedDepartment: string;
-  setSelectedDepartment: (department: string) => void;
-  selectedApprovalStatus: string;
-  setSelectedApprovalStatus: (status: string) => void;
-}
+import { FiltersProps } from "@/types/Security";
+import { showErrorToast } from "@/utils/customToasts";
 
 const Filters: React.FC<FiltersProps> = ({
   searchQuery,
@@ -58,9 +47,8 @@ const Filters: React.FC<FiltersProps> = ({
         setPurposes(purposesResponse.data);
         setDepartments(departmentsResponse.data);
         setApprovalStatuses(approvalStatuses.data);
-        console.log("Approval statuses:", approvalStatuses.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (error: any) {
+        showErrorToast(`Error fetching data: ${error.message}`);
       }
     };
 
@@ -76,7 +64,6 @@ const Filters: React.FC<FiltersProps> = ({
     filterType: string,
   ) => {
     const value = event.target.value;
-    console.log("Value:", value);
     if (filterType === "host") setSelectedHost(value);
     if (filterType === "purpose") setSelectedPurpose(value);
     if (filterType === "department") setSelectedDepartment(value);

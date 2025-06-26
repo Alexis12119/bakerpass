@@ -1,22 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-interface HumanResources {
-  id: number;
-  firstName: string;
-  lastName: string;
-}
-
-interface HumanResourcesWithDropdown extends HumanResources {
-  isDropdownOpen: boolean;
-}
-
-interface HumanResourcesProfileModalProps {
-  visitor: HumanResourcesWithDropdown;
-  isOpen: boolean;
-  onClose: () => void;
-  profileImageUrl: string;
-}
+import { HumanResourcesProfileModalProps } from "@/types/HumanResources";
 
 const HumanResourcesProfileModal: React.FC<HumanResourcesProfileModalProps> = ({
   visitor,

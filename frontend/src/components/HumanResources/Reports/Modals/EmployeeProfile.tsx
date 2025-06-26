@@ -1,19 +1,6 @@
 import React from "react";
 import Image from "next/image";
-
-interface Employee {
-  id: string;
-  name: string;
-  department: string;
-  total_visitors: number;
-  avg_visitors: number;
-}
-
-interface EmployeeProfileModalProps {
-  employee: Employee;
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { EmployeeProfileModalProps } from "@/types/HumanResources/Reports";
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   employee,

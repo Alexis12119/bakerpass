@@ -5,9 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
-import ErrorModal from "@/components/Modals/ErrorModal";
-import SuccessModal from "@/components/Modals/SuccessModal";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const ResetPasswordPage = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -19,8 +18,6 @@ const ResetPasswordPage = () => {
   const [role, setRole] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -32,11 +29,11 @@ const ResetPasswordPage = () => {
   }, [searchParams]);
   const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
-      setErrorMessage("Please fill in both password fields.");
+      showErrorToast("Please fill in both password fields.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
+      showErrorToast("Passwords do not match.");
       return;
     }
 
@@ -49,34 +46,15 @@ const ResetPasswordPage = () => {
           newPassword,
         },
       );
-      setSuccessMessage(response.data.message);
+      showSuccessToast(response.data.message);
       router.push("/login");
     } catch (error: any) {
-      setErrorMessage(error.response?.data?.message || "Something went wrong.");
+      showErrorToast(error.response?.data?.message || "Something went wrong.");
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
-      {
-        /* Error Modal */
-        errorMessage && (
-          <ErrorModal
-            message={errorMessage}
-            onClose={() => setErrorMessage("")}
-          />
-        )
-      }
-      {
-        /* Success Modal */
-        successMessage && (
-          <SuccessModal
-            message={successMessage}
-            onClose={() => setSuccessMessage("")}
-          />
-        )
-      }
-
       <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"
