@@ -51,13 +51,13 @@ const ResetPasswordPage = () => {
       );
       setSuccessMessage(response.data.message);
       router.push("/login");
-    } catch (error) {
-      setErrorMessage(error.response.data.message);
+    } catch (error: any) {
+      setErrorMessage(error.response?.data?.message || "Something went wrong.");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB]">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
       {
         /* Error Modal */
         errorMessage && (
@@ -76,14 +76,15 @@ const ResetPasswordPage = () => {
           />
         )
       }
-      <div className="absolute top-10 left-10">
+
+      <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"
-          alt=""
-          width={150}
+          alt="Franklin Baker Logo"
+          priority
+          width={160}
           height={100}
-          className="rounded-full mr-3 !bg-transparent"
-          // alt={`${visitor.name} profile`}
+          className="w-28 sm:w-40 h-auto"
         />
       </div>
       <div className="w-[400px] bg-white p-8 rounded-lg shadow-lg">

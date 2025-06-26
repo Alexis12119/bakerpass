@@ -20,7 +20,6 @@ const RegisterPage = () => {
   const [role, setRole] = useState("");
   const router = useRouter();
   const [department, setDepartment] = useState("");
-  const [filteredDepartments, setFilteredDepartments] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [allDepartments, setAllDepartments] = useState<
@@ -88,7 +87,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB]">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
       {
         /* Error Modal */
         errorMessage && (
@@ -107,13 +106,15 @@ const RegisterPage = () => {
           />
         )
       }
-      <div className="absolute top-10 left-10">
+
+      <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
           src="/images/franklin-logo.png"
-          alt=""
-          width={150}
+          alt="Franklin Baker Logo"
+          priority
+          width={160}
           height={100}
-          className="rounded-full mr-3 !bg-transparent"
+          className="w-28 sm:w-40 h-auto"
         />
       </div>
       <div className="w-[400px] bg-white p-8 rounded-lg shadow-lg">

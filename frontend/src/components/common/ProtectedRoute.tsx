@@ -10,6 +10,14 @@ const roleToRouteMap: Record<string, string> = {
   Nurse: "/nurse",
 };
 
+const roleSpinnerColors: Record<string, string> = {
+  Visitor: "border-green-500",
+  Employee: "border-yellow-500",
+  Security: "border-red-500",
+  "Human Resources": "border-blue-600",
+  Nurse: "border-purple-500",
+};
+
 type ProtectedRouteProps = {
   allowedRole: string;
   children: React.ReactNode;
@@ -20,41 +28,63 @@ export default function ProtectedRoute({
   children,
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [spinnerColor, setSpinnerColor] = useState("border-gray-400");
+
+  const redirectToFallback = (roleOverride?: string) => {
+    const storedRole = sessionStorage.getItem("role");
+    const fallback =
+      sessionStorage.getItem("lastValidRoute") ||
+      roleToRouteMap[roleOverride || storedRole || ""] ||
+      "/login";
+    router.replace(fallback);
+  };
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
-    const role = sessionStorage.getItem("role");
-    const baseRoute = window.location.pathname.split("/")[1];
+    const storedRole = sessionStorage.getItem("role");
+    const currentBasePath = window.location.pathname.split("/")[1];
 
-    if (!token || !role || role !== baseRoute) {
-      const fallback = sessionStorage.getItem("lastValidRoute") || "/login";
-      router.replace(fallback);
+    if (storedRole && roleSpinnerColors[storedRole]) {
+      setSpinnerColor(roleSpinnerColors[storedRole]);
+    }
+
+    if (!token || !storedRole || storedRole !== currentBasePath) {
+      redirectToFallback();
       return;
     }
 
     const verifyToken = async () => {
+      const startTime = Date.now(); // record start
+
       try {
-        const res = await axios.get(
+        const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/verify`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
 
-        const user = res.data.user;
+        const user = response.data.user;
+
+        if (roleSpinnerColors[user.role]) {
+          setSpinnerColor(roleSpinnerColors[user.role]);
+        }
 
         if (user.role !== allowedRole) {
-          const fallback =
-            sessionStorage.getItem("lastValidRoute") ||
-            roleToRouteMap[user.role] ||
-            "/login";
-          router.replace(fallback);
+          redirectToFallback(user.role);
         } else {
-          setAuthorized(true);
+          const elapsed = Date.now() - startTime;
+          const remaining = 500 - elapsed;
+
+          if (remaining > 0) {
+            setTimeout(() => setIsLoading(false), remaining);
+          } else {
+            setIsLoading(false);
+          }
         }
-      } catch (err) {
-        console.error("Token verification failed", err);
+      } catch (error) {
+        console.error("Token verification failed:", error);
         sessionStorage.clear();
         router.replace("/login");
       }
@@ -63,16 +93,20 @@ export default function ProtectedRoute({
     verifyToken();
   }, [router, allowedRole]);
 
-  if (authorized === null) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white backdrop-blur-sm transition-opacity">
+        <div className="relative w-14 h-14">
+          <div
+            className={`absolute w-full h-full border-[5px] ${spinnerColor} border-t-transparent rounded-full animate-spin`}
+          />
+          <div className="absolute w-full h-full border-[5px] border-dashed border-[#1C274C] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
+        </div>
+        <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
+          Verifying access...
+        </span>
       </div>
     );
-  }
-
-  if (!authorized) {
-    return <div>Access Denied</div>;
   }
 
   return <>{children}</>;

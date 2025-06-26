@@ -139,3 +139,19 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@utilities {
+  .spinner-fancy {
+    border-width: 4px;
+    border-style: solid;
+    border-color: transparent;
+    border-top-color: oklch(60% 0.15 240); /* blue-ish */
+    border-radius: 9999px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react"; // React hook for managing component state
-import { useRouter, useSearchParams } from "next/navigation"; // Next.js hooks for routing and accessing URL search parameters
-import axios from "axios"; // Library for making HTTP requests
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 import ErrorModal from "@/components/Modals/ErrorModal";
 
 const VerifyOtpPage = () => {
@@ -33,7 +33,7 @@ const VerifyOtpPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB]">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
       {
         /* Error Modal */
         errorMessage && (

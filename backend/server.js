@@ -52,8 +52,20 @@ fastify.decorate("authenticate", async (request, reply) => {
 
 fastify.get(
   "/auth/verify",
-  { preHandler: [fastify.authenticate] },
+  {
+    preHandler: [
+      async (request, reply) => {
+        try {
+          await request.jwtVerify();
+        } catch (err) {
+          console.error("JWT Verification failed:", err);
+          return reply.status(401).send({ message: "Unauthorized" });
+        }
+      },
+    ],
+  },
   async (request, reply) => {
+    console.log("Token verified:", request.user);
     return { user: request.user };
   },
 );

@@ -15,7 +15,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const roleToBasePath = (role: string): string => {
     switch (role) {
       case "Human Resources":
@@ -38,7 +38,7 @@ const LoginPage = () => {
       setErrorMessage("All fields are required!");
       return;
     }
-
+    setIsSigningIn(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/login`,
@@ -76,7 +76,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] px-4 relative pt-28 sm:pt-0">
       {/* Background Overlay for Blur Effect */}
       {errorMessage && (
         <ErrorModal
@@ -85,16 +85,14 @@ const LoginPage = () => {
         />
       )}
 
-      <div className="absolute top-6 left-6 sm:top-10 sm:left-10">
+      <div className="absolute top-4 left-4 sm:top-10 sm:left-10 z-10">
         <Image
-          rel="icon"
           src="/images/franklin-logo.png"
-          priority={true}
-          alt=""
-          width={150}
+          alt="Franklin Baker Logo"
+          priority
+          width={160}
           height={100}
-          className="rounded-full mr-3 !bg-transparent"
-          // alt={`${visitor.name} profile`}
+          className="w-28 sm:w-40 h-auto"
         />
       </div>
       <div className="w-[400px] bg-white p-8 rounded-lg shadow-lg">
@@ -179,6 +177,18 @@ const LoginPage = () => {
           </Link>
         </div>
       </div>
+
+      {isSigningIn && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
+          <div className="relative w-14 h-14">
+            <div className="absolute w-full h-full border-[5px] border-[#1C274C] border-t-transparent rounded-full animate-spin" />
+            <div className="absolute w-full h-full border-[5px] border-dashed border-[#374151] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
+          </div>
+          <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
+            Signing in...
+          </span>
+        </div>
+      )}
     </div>
   );
 };
