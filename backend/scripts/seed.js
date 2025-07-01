@@ -112,7 +112,6 @@ async function seed() {
           password: passwordHash,
         };
 
-        // Only include department_id if it's an employee
         if (table !== "employees") {
           delete data.department_id;
         }
@@ -125,21 +124,10 @@ async function seed() {
       }
     };
 
-    await insertUsers("employees", defaultUsers.employees, true);
-    for (const empId of employeeIds) {
-      await insert("time_slots", {
-        employee_id: empId,
-        start_time: "08:00:00",
-        end_time: "10:00:00",
-      });
-    }
-    await insertUsers("human_resources", defaultUsers.human_resources);
-    await insertUsers("nurses", defaultUsers.nurses);
-    await insertUsers("security_guards", defaultUsers.security_guards);
-    await insertUsers("visitors", defaultUsers.visitors);
+    await insertUsers("employees", defaultUsers.employees);
 
-    const employeeTimeSlotsMap = new Map(); // Map of employeeId -> array of slot objects
-    const usedSlotsPerDay = new Map(); // Map of "employeeId|date|slotId" -> true
+    const employeeTimeSlotsMap = new Map();
+    const usedSlotsPerDay = new Map();
 
     for (let i = 0; i < NUM_RECORDS; i++) {
       const departmentId = faker.number.int({ min: 1, max: 5 });
@@ -153,43 +141,47 @@ async function seed() {
       });
       employeeIds.push(emp);
 
-      // Generate random non-overlapping time slots (e.g. 4–8 slots)
-      const numSlots = faker.number.int({ min: 4, max: 8 });
-      const startHourBase = 7;
-      const maxHour = 17;
-
-      const availableHours = Array.from(
-        { length: maxHour - startHourBase },
-        (_, i) => startHourBase + i,
-      );
-      faker.helpers.shuffle(availableHours); // shuffle to randomize selection
-
       const employeeSlots = [];
+      const numDates = faker.number.int({ min: 3, max: 5 });
+      const datePool = [];
 
-      for (let j = 0; j < numSlots && availableHours.length > 0; j++) {
-        const startHour = availableHours.shift();
-        const endHour = startHour + 1;
-
-        if (endHour > maxHour) break;
-
-        const pad = (n) => String(n).padStart(2, "0");
-        const start = `${pad(startHour)}:00:00`;
-        const end = `${pad(endHour)}:00:00`;
-
-        const slotId = await insert("time_slots", {
-          employee_id: emp,
-          start_time: start,
-          end_time: end,
-        });
-
-        employeeSlots.push({ id: slotId, start, end });
+      for (let d = 0; d < numDates; d++) {
+        const date = faker.date.soon({ days: 14 }).toISOString().split("T")[0];
+        datePool.push(date);
       }
+
+      for (const date of datePool) {
+        const availableHours = Array.from({ length: 10 }, (_, i) => i + 7); // 07–16
+        faker.helpers.shuffle(availableHours);
+
+        const numSlots = faker.number.int({ min: 3, max: 6 });
+
+        for (let s = 0; s < numSlots && availableHours.length > 0; s++) {
+          const startHour = availableHours.shift();
+          const endHour = startHour + 1;
+          if (endHour > 17) break;
+
+          const pad = (n) => String(n).padStart(2, "0");
+          const start = `${pad(startHour)}:00:00`;
+          const end = `${pad(endHour)}:00:00`;
+
+          const slotId = await insert("time_slots", {
+            employee_id: emp,
+            date,
+            start_time: start,
+            end_time: end,
+          });
+
+          employeeSlots.push({ id: slotId, start, end, date });
+        }
+      }
+
       employeeTimeSlotsMap.set(emp, employeeSlots);
 
       const nurse = await insert("nurses", {
         first_name: faker.person.firstName(),
         last_name: faker.person.lastName(),
-        email: faker.internet.email(),
+        email: `${faker.internet.username().toLowerCase()}${i}@gmail.com`,
         password: passwordHash,
       });
       nurseIds.push(nurse);
@@ -197,7 +189,7 @@ async function seed() {
       const visitor = await insert("visitors", {
         first_name: faker.person.firstName(),
         last_name: faker.person.lastName(),
-        email: faker.internet.email(),
+        email: `${faker.internet.username().toLowerCase()}${i}@gmail.com`,
         contact_number: faker.helpers.replaceSymbols("09#########"),
         address: faker.location.streetAddress(),
         password: passwordHash,
@@ -208,17 +200,14 @@ async function seed() {
         content: faker.lorem.sentence(),
       });
 
-      // Generate a visit date
       const visitDate = faker.date
         .recent({ days: 14 })
         .toISOString()
-        .slice(0, 10);
-
-      // Get a reusable, unused time slot for this employee on this day
+        .split("T")[0];
       const employeeSlotsToday = employeeTimeSlotsMap.get(emp);
       let selectedSlot;
       for (const slot of employeeSlotsToday) {
-        const slotKey = `${emp}|${visitDate}|${slot.id}`;
+        const slotKey = `${emp}|${slot.date}|${slot.id}`;
         if (!usedSlotsPerDay.has(slotKey)) {
           usedSlotsPerDay.set(slotKey, true);
           selectedSlot = slot;
@@ -226,10 +215,17 @@ async function seed() {
         }
       }
 
-      // If no available slot, skip visit to avoid conflict
       if (!selectedSlot) continue;
 
-      const expectedTime = `${selectedSlot.start.slice(0, 5)} - ${selectedSlot.end.slice(0, 5)}`;
+      function to12HourFormat(timeStr) {
+        const [hourStr, minute] = timeStr.split(":");
+        let hour = parseInt(hourStr, 10);
+        const suffix = hour >= 12 ? "P.M." : "A.M.";
+        hour = hour % 12 || 12;
+        return `${hour}:${minute} ${suffix}`;
+      }
+
+      const expectedTime = `${to12HourFormat(selectedSlot.start)} - ${to12HourFormat(selectedSlot.end)}`;
 
       const visitId = await insert("visits", {
         visitor_id: visitor,
@@ -286,6 +282,11 @@ async function seed() {
         open_sores: 0,
       });
     }
+
+    await insertUsers("human_resources", defaultUsers.human_resources);
+    await insertUsers("nurses", defaultUsers.nurses);
+    await insertUsers("security_guards", defaultUsers.security_guards);
+    await insertUsers("visitors", defaultUsers.visitors);
 
     console.log(`✅ Seeding ${dryRun ? "previewed" : "complete"}.`);
     process.exit(0);

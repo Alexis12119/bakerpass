@@ -344,17 +344,20 @@ UNLOCK TABLES;
 --
 
 DROP TABLE IF EXISTS `time_slots`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+
 CREATE TABLE `time_slots` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `employee_id` INT NOT NULL,
+  `date` DATE NOT NULL,              -- New: specifies the date for the slot
+  `start_time` TIME NOT NULL,
+  `end_time` TIME NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_employee` (`employee_id`),
-  CONSTRAINT `fk_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_employee`
+    FOREIGN KEY (`employee_id`)
+    REFERENCES `employees` (`id`)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

@@ -1,10 +1,11 @@
 import axios from "axios";
-import { X, Check } from "lucide-react";
+import { X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Laptop, Smartphone, Tablet, Package, User } from "lucide-react";
 import { HostDetailsModalProps } from "@/types/Security";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import TimeSlotModal from "@/components/Security/Modals/TimeSlot";
 
 const iconMap: { [key: string]: React.ReactNode } = {
   Laptop: <Laptop className="w-8 h-8 text-gray-700 mb-2" />,
@@ -23,11 +24,12 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   const [lastName, setLastName] = useState("");
   const [visitPurposeId, setVisitPurposeId] = useState<number | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [visitPurposes, setVisitPurposes] = useState<
     { id: number; name: string }[]
   >([]);
   const [timeSlots, setTimeSlots] = useState<
-    { id: number; start_time: string; end_time: string }[]
+    { id: number; start_time: string; end_time: string; date: string }[]
   >([]);
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -36,6 +38,15 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   const [deviceTypes, setDeviceTypes] = useState<string[]>([]);
   const [otherDevice, setOtherDevice] = useState<string>("");
   const [deviceBrand, setDeviceBrand] = useState<string>("");
+
+  const groupedSlotsByDate = timeSlots.reduce<Record<string, typeof timeSlots>>(
+    (acc, slot) => {
+      if (!acc[slot.date]) acc[slot.date] = [];
+      acc[slot.date].push(slot);
+      return acc;
+    },
+    {},
+  );
 
   useEffect(() => {
     const fetchVisitPurposes = async () => {
@@ -73,13 +84,15 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
     }
   }, [isOpen, host.id]);
 
-  const handleTimeSlotSelect = (id: number) => {
-    setSelectedTimeSlot(id);
-  };
-
   const handleSubmit = async () => {
     const selectedTime = timeSlots.find((slot) => slot.id === selectedTimeSlot);
 
+    if (!selectedTime) {
+      showErrorToast("Selected time slot is invalid.");
+      return;
+    }
+
+    const { date, start_time, end_time } = selectedTime;
     if (
       !selectedTime ||
       !firstName ||
@@ -108,7 +121,10 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       address: "",
       visitedEmployeeId: host.id,
       visitPurposeId,
-      selectedTimeSlot,
+      selectedTimeSlot, // still useful if your backend uses it
+      selectedDate: date, // explicit date
+      startTime: start_time,
+      endTime: end_time,
       deviceType: deviceTypes.includes("Others")
         ? [...deviceTypes.filter((d) => d !== "Others"), otherDevice].join(", ")
         : deviceTypes.join(", "),
@@ -130,20 +146,19 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const formatTime = (timeStr: string): string => {
-    const [hours, minutes] = timeStr.split(":");
-    const date = new Date();
-    date.setHours(Number(hours));
-    date.setMinutes(Number(minutes));
-    return date.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 ">
+      {selectedDate && (
+        <TimeSlotModal
+          timeSlots={groupedSlotsByDate[selectedDate]}
+          selectedTimeSlotId={selectedTimeSlot}
+          onSelect={(id) => {
+            setSelectedTimeSlot(id);
+            setSelectedDate(null); // close modal
+          }}
+          onClose={() => setSelectedDate(null)}
+        />
+      )}
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md border border-black max-h-[90vh] overflow-auto">
         <button
           onClick={onClose}
@@ -219,33 +234,23 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
             </div>
 
             {/* Time slots */}
+            {/* Date Selector */}
             <div className="p-4">
               <h4 className="text-black text-sm font-medium mb-3">
-                Host's Time Availability
+                Choose Date of Visit
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                {timeSlots.map((slot) => (
+                {Object.keys(groupedSlotsByDate).map((date) => (
                   <button
-                    key={slot.id}
-                    className={`flex items-center p-3 rounded-md border ${
-                      selectedTimeSlot === slot.id
-                        ? "bg-[#1C274C] text-white border-[#1C274C]"
-                        : "bg-gray-100 text-gray-800 border-gray-200"
-                    }`}
-                    onClick={() => handleTimeSlotSelect(slot.id)}
+                    key={date}
+                    onClick={() => setSelectedDate(date)}
+                    className="bg-gray-100 border border-gray-300 rounded-md p-2 text-black hover:bg-gray-200"
                   >
-                    <div className="flex items-center">
-                      {selectedTimeSlot === slot.id && (
-                        <div className="w-4 h-4 mr-2">
-                          <Check size={16} />
-                        </div>
-                      )}
-                      <span>
-                        {`${formatTime(slot.start_time)} - ${formatTime(
-                          slot.end_time,
-                        )}`}
-                      </span>
-                    </div>
+                    {new Date(date).toLocaleDateString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </button>
                 ))}
               </div>

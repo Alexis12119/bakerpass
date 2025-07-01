@@ -70,6 +70,7 @@ async function visitors(fastify) {
         deviceBrand,
       } = request.body;
 
+      console.log(request.body);
       if (
         !firstName ||
         !lastName ||
@@ -81,11 +82,9 @@ async function visitors(fastify) {
         return reply.status(400).send({ message: "Missing required fields" });
       }
 
-      const visitDate = new Date().toISOString().split("T")[0];
-
       // Ensure time slot is valid for this employee
       const [slotCheck] = await pool.execute(
-        `SELECT start_time, end_time FROM time_slots WHERE id = ? AND employee_id = ?`,
+        `SELECT start_time, end_time, date FROM time_slots WHERE id = ? AND employee_id = ?`,
         [selectedTimeSlot, visitedEmployeeId],
       );
 
@@ -94,7 +93,6 @@ async function visitors(fastify) {
           .status(400)
           .send({ message: "Invalid or mismatched time slot" });
       }
-
       const formatTime = (timeStr) => {
         const [hours, minutes] = timeStr.split(":");
         const date = new Date();
@@ -107,7 +105,8 @@ async function visitors(fastify) {
         });
       };
 
-      const { start_time, end_time } = slotCheck[0];
+      const { start_time, end_time, date: slotDate } = slotCheck[0];
+      const visitDate = slotDate;
       const expectedTime = `${formatTime(start_time)} - ${formatTime(end_time)}`;
 
       // Check if visitor exists

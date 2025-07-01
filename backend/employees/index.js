@@ -118,7 +118,7 @@ async function employees(fastify) {
     }
 
     try {
-      // Get all time slot IDs already used by this host (via visits)
+      // Get all time slot IDs already used by this host
       const [takenSlots] = await pool.execute(
         `SELECT time_slot_id FROM visits WHERE visited_employee_id = ? AND time_slot_id IS NOT NULL`,
         [hostId],
@@ -128,8 +128,8 @@ async function employees(fastify) {
 
       // Get all available time slots not already booked
       const query = takenSlotIds.length
-        ? `SELECT id, start_time, end_time FROM time_slots WHERE employee_id = ? AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
-        : `SELECT id, start_time, end_time FROM time_slots WHERE employee_id = ?`;
+        ? `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
+        : `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ?`;
 
       const [availableSlots] = await pool.execute(
         query,
@@ -143,16 +143,14 @@ async function employees(fastify) {
     }
   });
 
-  // Get all time slots for an employee
+  // GET all time slots for an employee (with date)
   fastify.get("/employees/:id/timeslots", async (request, reply) => {
     const { id } = request.params;
     try {
       const [rows] = await pool.execute(
-        "SELECT * FROM time_slots WHERE employee_id = ?",
+        "SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? ORDER BY date ASC, start_time ASC",
         [id],
       );
-
-      // Ensure that the response is an array, even if no rows are found
       reply.send(rows || []);
     } catch (err) {
       console.error("Error fetching time slots:", err);
@@ -160,13 +158,18 @@ async function employees(fastify) {
     }
   });
 
-  // Add a new time slot
+  // Add a new time slot (with date)
   fastify.post("/timeslots", async (request, reply) => {
-    const { employeeId, startTime, endTime } = request.body;
+    const { employeeId, date, startTime, endTime } = request.body;
+
+    if (!employeeId || !date || !startTime || !endTime) {
+      return reply.code(400).send({ error: "Missing required fields" });
+    }
+
     try {
       await pool.execute(
-        "INSERT INTO time_slots (employee_id, start_time, end_time) VALUES (?, ?, ?)",
-        [employeeId, startTime, endTime],
+        "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
+        [employeeId, date, startTime, endTime],
       );
       reply.code(201).send({ message: "Time slot added" });
     } catch (err) {
@@ -175,20 +178,19 @@ async function employees(fastify) {
     }
   });
 
-  // Update a time slot
+  // Update a time slot (with date)
   fastify.put("/timeslots/:id", async (request, reply) => {
-    const { id } = request.params; // Time slot ID from URL parameter
-    const { startTime, endTime, employeeId } = request.body; // Receive parameters from request body
+    const { id } = request.params;
+    const { employeeId, date, startTime, endTime } = request.body;
 
-    // Check if any required fields are missing
-    if (!startTime || !endTime || !employeeId) {
+    if (!employeeId || !date || !startTime || !endTime) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
     try {
       const [result] = await pool.execute(
-        "UPDATE time_slots SET start_time = ?, end_time = ?, employee_id = ? WHERE id = ?",
-        [startTime, endTime, employeeId, id], // Pass the parameters to the SQL query
+        "UPDATE time_slots SET employee_id = ?, date = ?, start_time = ?, end_time = ? WHERE id = ?",
+        [employeeId, date, startTime, endTime, id],
       );
 
       if (result.affectedRows === 0) {

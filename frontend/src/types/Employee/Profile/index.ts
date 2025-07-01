@@ -10,6 +10,7 @@ export interface TimeSlot {
   employeeId: string;
   start_time: string;
   end_time: string;
+  date: string;
 }
 
 export interface EmployeeProfileModalProps {
