@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { NurseProfileModalProps } from "@/types/Nurse";
+import { User } from "lucide-react";
 
 const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
   visitor,
@@ -27,13 +28,19 @@ const NurseProfileModal: React.FC<NurseProfileModalProps> = ({
 
         {/* Visitor image with blue background */}
         <div className="bg-[#0D1F73] h-40 flex justify-center items-center">
-          <div className="w-20 h-20 relative overflow-hidden">
-            <Image
-              src={profileImageUrl}
-              fill={true}
-              alt=""
-              className="w-full rounded-full"
-            />{" "}
+          <div className="w-24 h-24 relative rounded-full overflow-hidden border-4 border-white">
+            {profileImageUrl?.trim() ? (
+              <Image
+                src={profileImageUrl}
+                alt="Profile Image"
+                fill
+                className="object-cover rounded-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center rounded-full bg-gray-100 border-gray-300">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
 

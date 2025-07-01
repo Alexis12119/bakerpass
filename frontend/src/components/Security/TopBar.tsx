@@ -26,26 +26,21 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
-  // ref for hidden file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Trigger the hidden file input click
   const handleUploadClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent dropdown from opening when clicking profile image
     fileInputRef.current?.click();
   };
 
-  // Alternative: Store profile image URL separately
   const updateProfileImageStorage = (
     newProfileImageUrl: string,
     userId: string,
   ) => {
-    // Store profile image URL in a separate storage key
     const profileImageKey = `profileImage_${userId}`;
     sessionStorage.setItem(profileImageKey, newProfileImageUrl);
   };
 
-  // Updated handleFileChange function
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -96,10 +91,6 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
         return { ...prev, profileImage: data.imageUrl };
       });
 
-      // Method 1: Update JWT token (not recommended for production)
-      // updateJWTToken(data.imageUrl);
-
-      // Method 2: Store profile image separately (recommended)
       updateProfileImageStorage(data.imageUrl, user.id.toString());
 
       showSuccessToast("Profile image updated successfully!");
@@ -121,37 +112,6 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
       setIsUploading(false);
     }
   };
-
-  // Function to get profile image URL (use this when loading user data)
-  const getProfileImageUrl = (userId: string, defaultFromToken?: string) => {
-    const profileImageKey = `profileImage_${userId}`;
-    const storedProfileImage = sessionStorage.getItem(profileImageKey);
-    return storedProfileImage || defaultFromToken || "";
-  };
-
-  // Use this in your user initialization code
-  useEffect(() => {
-    const token = sessionStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token) as any;
-        const profileImageUrl = getProfileImageUrl(
-          decoded.id.toString(),
-          decoded.profileImage,
-        );
-
-        setUser({
-          id: decoded.id,
-          firstName: decoded.firstName,
-          lastName: decoded.lastName,
-          role: decoded.role,
-          profileImage: profileImageUrl, // Use the updated URL if available
-        });
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -225,7 +185,6 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
   };
   return (
     <>
-      {/* 🔹 Top Bar (Full width) */}
       <div className="sticky top-0 z-50 bg-white w-full shadow-md">
         <div className="flex flex-wrap items-center justify-between px-4 md:px-6 py-4 border-b border-black">
           <div className="flex items-center space-x-2">
