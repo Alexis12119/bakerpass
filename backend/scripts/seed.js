@@ -138,15 +138,53 @@ async function seed() {
     await insertUsers("security_guards", defaultUsers.security_guards);
     await insertUsers("visitors", defaultUsers.visitors);
 
+    const employeeTimeSlotsMap = new Map(); // Map of employeeId -> array of slot objects
+    const usedSlotsPerDay = new Map(); // Map of "employeeId|date|slotId" -> true
+
     for (let i = 0; i < NUM_RECORDS; i++) {
+      const departmentId = faker.number.int({ min: 1, max: 5 });
+
       const emp = await insert("employees", {
         first_name: faker.person.firstName(),
         last_name: faker.person.lastName(),
         email: `${faker.internet.username().toLowerCase()}_${i}@gmail.com`,
-        department_id: faker.number.int({ min: 1, max: 5 }),
+        department_id: departmentId,
         password: passwordHash,
       });
       employeeIds.push(emp);
+
+      // Generate random non-overlapping time slots (e.g. 4–8 slots)
+      const numSlots = faker.number.int({ min: 4, max: 8 });
+      const startHourBase = 7;
+      const maxHour = 17;
+
+      const availableHours = Array.from(
+        { length: maxHour - startHourBase },
+        (_, i) => startHourBase + i,
+      );
+      faker.helpers.shuffle(availableHours); // shuffle to randomize selection
+
+      const employeeSlots = [];
+
+      for (let j = 0; j < numSlots && availableHours.length > 0; j++) {
+        const startHour = availableHours.shift();
+        const endHour = startHour + 1;
+
+        if (endHour > maxHour) break;
+
+        const pad = (n) => String(n).padStart(2, "0");
+        const start = `${pad(startHour)}:00:00`;
+        const end = `${pad(endHour)}:00:00`;
+
+        const slotId = await insert("time_slots", {
+          employee_id: emp,
+          start_time: start,
+          end_time: end,
+        });
+
+        employeeSlots.push({ id: slotId, start, end });
+      }
+      employeeTimeSlotsMap.set(emp, employeeSlots);
 
       const nurse = await insert("nurses", {
         first_name: faker.person.firstName(),
@@ -170,39 +208,35 @@ async function seed() {
         content: faker.lorem.sentence(),
       });
 
-      // Generate a random hour between 8 AM and 5 PM
-      const startHour = faker.number.int({ min: 8, max: 17 });
-      const endHour = startHour + 1;
+      // Generate a visit date
+      const visitDate = faker.date
+        .recent({ days: 14 })
+        .toISOString()
+        .slice(0, 10);
 
-      const pad = (num) => String(num).padStart(2, "0");
+      // Get a reusable, unused time slot for this employee on this day
+      const employeeSlotsToday = employeeTimeSlotsMap.get(emp);
+      let selectedSlot;
+      for (const slot of employeeSlotsToday) {
+        const slotKey = `${emp}|${visitDate}|${slot.id}`;
+        if (!usedSlotsPerDay.has(slotKey)) {
+          usedSlotsPerDay.set(slotKey, true);
+          selectedSlot = slot;
+          break;
+        }
+      }
 
-      const rawStart = `${pad(startHour)}:00:00`;
-      const rawEnd = `${pad(endHour)}:00:00`;
+      // If no available slot, skip visit to avoid conflict
+      if (!selectedSlot) continue;
 
-      const formatTime = (timeStr) => {
-        const [hour, minute] = timeStr.split(":").map(Number);
-        const date = new Date();
-        date.setHours(hour, minute);
-        return date.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-      };
+      const expectedTime = `${selectedSlot.start.slice(0, 5)} - ${selectedSlot.end.slice(0, 5)}`;
 
-      const expectedTime = `${formatTime(rawStart)} - ${formatTime(rawEnd)}`;
-
-      const timeSlotId = await insert("time_slots", {
-        employee_id: emp,
-        start_time: rawStart,
-        end_time: rawEnd,
-      });
       const visitId = await insert("visits", {
         visitor_id: visitor,
         visited_employee_id: emp,
-        visit_date: faker.date.recent({ days: 14 }).toISOString().slice(0, 10),
+        visit_date: visitDate,
         approval_status_id: faker.helpers.arrayElement([1, 2, 3, 4, 6, 7]),
-        time_slot_id: timeSlotId,
+        time_slot_id: selectedSlot.id,
         expected_time: expectedTime,
         status_id: 1,
         valid_id_type_id: 1,
@@ -211,6 +245,7 @@ async function seed() {
         device_type: faker.commerce.product(),
         device_brand: faker.company.name(),
       });
+
       const highCareId = await insert("high_care_requests", {
         visit_id: visitId,
         approved_by_nurse_id: nurse,
