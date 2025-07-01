@@ -6,8 +6,6 @@ import TopBar from "@/components/Security/TopBar";
 import Filters from "@/components/Security/Filters";
 import SecurityTable from "@/components/Security/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import ErrorModal from "@/components/Modals/ErrorModal";
-import SuccessModal from "@/components/Modals/SuccessModal";
 import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -151,7 +149,9 @@ const SecurityGuardPage: React.FC = () => {
       await fetchVisitors();
       showSuccessToast(`Visitor successfully ${action}.`);
     } catch (error: any) {
-      showErrorToast(`Failed to update visitor approval status: ${error.message}`);
+      showErrorToast(
+        `Failed to update visitor approval status: ${error.message}`,
+      );
     } finally {
       setStatusActionModalOpen(false);
       setSelectedVisitor(null);
@@ -233,9 +233,27 @@ const SecurityGuardPage: React.FC = () => {
         console.log("✅ WebSocket connected");
       };
 
-      socket.onmessage = () => {
-        console.log("📡 Update received: refreshing visitors...");
-        fetchVisitors();
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📡 WebSocket data received:", data);
+
+          if (data.type === "update") {
+            fetchVisitors();
+
+            if (data.notify) {
+              const { status, message } = data.notify;
+              if (status === "success") showSuccessToast(message);
+              else if (status === "error") showErrorToast(message);
+            }
+          } else if (data.type === "notification") {
+            const { status, message } = data;
+            if (status === "success") showSuccessToast(message);
+            else if (status === "error") showErrorToast(message);
+          }
+        } catch (err) {
+          console.error("❗ Failed to parse WebSocket message:", err);
+        }
       };
 
       socket.onerror = (e) => {

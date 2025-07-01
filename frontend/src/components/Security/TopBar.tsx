@@ -221,7 +221,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
 
       setUser(null);
       router.replace("/login");
-    }, 3000); // Optional delay for animation
+    }, 1000); // Optional delay for animation
   };
   return (
     <>

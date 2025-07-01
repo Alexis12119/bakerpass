@@ -76,15 +76,16 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     restart: always
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok_tunnel
-    depends_on:
-      - nginx
-    volumes:
-      - ~/.config/ngrok/ngrok.yml:/etc/ngrok.yml
-    command: ["start", "--all", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=json"]
-    restart: always
+
+  # ngrok:
+  #   image: ngrok/ngrok:latest
+  #   container_name: ngrok_tunnel
+  #   depends_on:
+  #     - nginx
+  #   volumes:
+  #     - ~/.config/ngrok/ngrok.yml:/etc/ngrok.yml
+  #   command: ["start", "--all", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=json"]
+  #   restart: always
 
 volumes:
   mysql_data:

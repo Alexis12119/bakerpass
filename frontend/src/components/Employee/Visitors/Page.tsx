@@ -7,7 +7,7 @@ import VisitorsSection from "@/components/Employee/Visitors/Section";
 import { format, addDays, subDays } from "date-fns";
 import { jwtDecode } from "jwt-decode";
 import { VisitorWithDropdown } from "@/types/Employee";
-import { showErrorToast } from "@/utils/customToasts";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 
 const EmployeeVisitorsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -94,9 +94,28 @@ const EmployeeVisitorsPage: React.FC = () => {
         console.log("✅ WebSocket connected");
       };
 
-      socket.onmessage = () => {
-        console.log("📡 Update received: refreshing visitors...");
-        fetchVisitorsByDate();
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📡 WebSocket data received:", data);
+
+          if (data.type === "update") {
+            fetchVisitors();
+            fetchVisitorsByDate();
+
+            if (data.notify) {
+              const { status, message } = data.notify;
+              if (status === "success") showSuccessToast(message);
+              else if (status === "error") showErrorToast(message);
+            }
+          } else if (data.type === "notification") {
+            const { status, message } = data;
+            if (status === "success") showSuccessToast(message);
+            else if (status === "error") showErrorToast(message);
+          }
+        } catch (err) {
+          console.error("❗ Failed to parse WebSocket message:", err);
+        }
       };
 
       socket.onerror = (e) => {

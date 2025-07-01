@@ -203,9 +203,27 @@ const NursePage: React.FC = () => {
         console.log("✅ WebSocket connected");
       };
 
-      socket.onmessage = () => {
-        console.log("📡 Update received: refreshing visitors...");
-        fetchVisitors();
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📡 WebSocket data received:", data);
+
+          if (data.type === "update") {
+            fetchVisitors();
+
+            if (data.notify) {
+              const { status, message } = data.notify;
+              if (status === "success") showSuccessToast(message);
+              else if (status === "error") showErrorToast(message);
+            }
+          } else if (data.type === "notification") {
+            const { status, message } = data;
+            if (status === "success") showSuccessToast(message);
+            else if (status === "error") showErrorToast(message);
+          }
+        } catch (err) {
+          console.error("❗ Failed to parse WebSocket message:", err);
+        }
       };
 
       socket.onerror = (e) => {

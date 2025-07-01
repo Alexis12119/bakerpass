@@ -165,7 +165,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       sessionStorage.removeItem("visitor_filter_date");
       setUser(null);
       router.replace("/login");
-    }, 3000);
+    }, 1000);
   };
 
   return (

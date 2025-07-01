@@ -17,7 +17,7 @@
     "@fastify/jwt": "^9.1.0",
     "@fastify/multipart": "^9.0.3",
     "@fastify/rate-limit": "^10.3.0",
-    "@fastify/websocket": "^11.0.2",
+    "@fastify/websocket": "^11.1.0",
     "@headlessui/react": "^2.2.3",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.6.1",
