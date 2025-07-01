@@ -133,6 +133,7 @@ async function seed() {
         end_time: "10:00:00",
       });
     }
+    await insertUsers("human_resources", defaultUsers.human_resources);
     await insertUsers("nurses", defaultUsers.nurses);
     await insertUsers("security_guards", defaultUsers.security_guards);
     await insertUsers("visitors", defaultUsers.visitors);
@@ -141,7 +142,7 @@ async function seed() {
       const emp = await insert("employees", {
         first_name: faker.person.firstName(),
         last_name: faker.person.lastName(),
-        email: faker.internet.email(),
+        email: `${faker.internet.username().toLowerCase()}_${i}@gmail.com`,
         department_id: faker.number.int({ min: 1, max: 5 }),
         password: passwordHash,
       });
