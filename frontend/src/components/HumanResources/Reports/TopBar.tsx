@@ -108,7 +108,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const getProfileImageUrl = (userId: string, defaultFromToken?: string) => {
     const profileImageKey = `profileImage_${userId}`;
     const storedProfileImage = sessionStorage.getItem(profileImageKey);
-    return storedProfileImage || defaultFromToken || "/default-profile.png";
+    return storedProfileImage || defaultFromToken || "";
   };
 
   useEffect(() => {
@@ -148,7 +148,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     id: user?.id || 0,
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
-    profileImageUrl: user?.profileImage || "/default-profile.png",
+    profileImageUrl: user?.profileImage || "",
     isDropdownOpen: false,
   };
 

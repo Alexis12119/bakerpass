@@ -126,7 +126,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
   const getProfileImageUrl = (userId: string, defaultFromToken?: string) => {
     const profileImageKey = `profileImage_${userId}`;
     const storedProfileImage = sessionStorage.getItem(profileImageKey);
-    return storedProfileImage || defaultFromToken || "/default-profile.png";
+    return storedProfileImage || defaultFromToken || "";
   };
 
   // Use this in your user initialization code

@@ -107,7 +107,7 @@ const TopBar = () => {
   const getProfileImageUrl = (userId: string, defaultFromToken?: string) => {
     const profileImageKey = `profileImage_${userId}`;
     const storedProfileImage = sessionStorage.getItem(profileImageKey);
-    return storedProfileImage || defaultFromToken || "/default-profile.png";
+    return storedProfileImage || defaultFromToken || "";
   };
 
   useEffect(() => {
@@ -171,6 +171,7 @@ const TopBar = () => {
     }, 1000); // Optional delay for animation
   };
 
+  console.log(user);
   return (
     <div className="sticky top-0 bg-white z-10 p-4 shadow-sm flex justify-between items-center mb-8">
       <div className="flex items-center space-x-2">
@@ -194,7 +195,7 @@ const TopBar = () => {
             {user?.profileImage?.trim() ? (
               <Image
                 src={user.profileImage}
-                alt="Profile Image"
+                alt=""
                 width={42}
                 height={42}
                 className={`rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all duration-200 ${

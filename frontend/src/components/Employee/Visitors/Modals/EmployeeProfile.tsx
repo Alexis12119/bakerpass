@@ -114,7 +114,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             {isValidImage ? (
               <Image
                 src={profileImageUrl}
-                alt="Profile"
+                alt=""
                 fill
                 className="object-cover"
               />
