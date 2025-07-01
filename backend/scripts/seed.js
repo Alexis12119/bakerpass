@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const { faker } = require("@faker-js/faker");
 const { pool } = require("../lib/database");
 
-const PASSWORD = process.env.PASSWORD;
+const PASSWORD = process.env.DB_PASSWORD;
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 const shouldReset = process.argv.includes("--reset");
 const dryRun = process.argv.includes("--dry-run");
