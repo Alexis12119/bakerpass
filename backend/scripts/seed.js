@@ -6,7 +6,7 @@ const PASSWORD = process.env.DB_PASSWORD;
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 const shouldReset = process.argv.includes("--reset");
 const dryRun = process.argv.includes("--dry-run");
-const NUM_RECORDS = 100;
+const NUM_RECORDS = 1000;
 
 const areas = ["DC", "VCO", "PPI", "CWC", "FSP", "WAREHOUSE"];
 const gear = ["Gloves", "Facemask", "Coat"];

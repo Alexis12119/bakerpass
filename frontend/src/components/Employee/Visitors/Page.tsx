@@ -101,7 +101,6 @@ const EmployeeVisitorsPage: React.FC = () => {
           console.log("WebSocket data received:", data);
 
           if (data.type === "update") {
-            fetchVisitors();
             fetchVisitorsByDate();
 
             if (data.notify) {

@@ -21,6 +21,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
   const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] =
     useState(false);
   const [_status, setStatus] = useState(visitor.approvalStatus);
+
   const handleStatusChange = async (newStatus: string) => {
     try {
       await axios.put(
@@ -28,14 +29,14 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         { statusName: newStatus },
       );
       setStatus(newStatus);
-      fetchVisitors();
     } catch (error: any) {
       showErrorToast(`Failed to update status: ${error.message}`);
     }
   };
+
   return (
     <>
-      <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-5 w-full max-w-xs sm:max-w-sm">
+      <div className="bg-white border border-gray-300 rounded-2xl shadow-lg p-5 w-full max-w-xs sm:max-w-sm h-[220px] flex flex-col justify-between">
         {/* Profile Section */}
         <div className="flex items-start">
           {visitor.profileImageUrl?.trim() ? (
@@ -61,45 +62,69 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         </div>
 
         {/* Buttons */}
-        <div className="mt-4 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              className="bg-[#1C274C] text-white px-4 py-2 rounded-lg text-sm font-semibold"
-              onClick={() => setIsVisitorProfileModalOpen(true)}
-            >
-              View Profile
-            </button>
-            <button
-              onClick={() => handleStatusChange("Blocked")}
-              className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold"
-            >
-              Block
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => handleStatusChange("Approved")}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg flex justify-center items-center"
-            >
-              <CheckIcon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => handleStatusChange("Cancelled")}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg flex justify-center items-center"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
+        <div className="pt-4">
+          {_status === "Approved" ||
+          _status === "Blocked" ||
+          _status === "Cancelled" ? (
+            // Centered 2-button layout
+            <div className="flex flex-col justify-center items-center h-full pt-6 pb-[42px]">
+              <div className="flex justify-between gap-3">
+                <button
+                  className="bg-[#1C274C] text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  onClick={() => setIsVisitorProfileModalOpen(true)}
+                >
+                  View Profile
+                </button>
+                <div
+                  className={`
+            px-4 py-2 rounded-lg text-sm font-semibold flex justify-center items-center
+            ${
+              _status === "Approved"
+                ? "bg-green-100 text-green-700"
+                : _status === "Blocked"
+                  ? "bg-gray-200 text-gray-700"
+                  : "bg-red-100 text-red-700"
+            }
+          `}
+                >
+                  {_status}
+                </div>
+              </div>
+            </div>
+          ) : (
+            // 4-button layout
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="bg-[#1C274C] text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                  onClick={() => setIsVisitorProfileModalOpen(true)}
+                >
+                  View Profile
+                </button>
+                <button
+                  onClick={() => handleStatusChange("Blocked")}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+                >
+                  Block
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleStatusChange("Approved")}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg flex justify-center items-center"
+                >
+                  <CheckIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleStatusChange("Cancelled")}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg flex justify-center items-center"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Status Badge */}
-        {visitor.approvalStatus === "Approved" && (
-          <div className="flex items-center mt-4 bg-green-500 text-white rounded-full py-1 px-4 w-fit">
-            <CheckIcon className="h-4 w-4 mr-1" />
-            <span className="text-xs font-semibold">APPROVED</span>
-          </div>
-        )}
       </div>
 
       {/* Visitor Profile Modal */}
