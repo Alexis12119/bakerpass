@@ -93,19 +93,19 @@ const NurseTable: React.FC<NurseTableProps> = ({
                     <User className="w-6 h-6 text-gray-500" />
                   )}
                 </div>
-                <span className="text-sm font-medium truncate">
-                  {visitor.name}
-                </span>
+                <span className="text-sm font-medium">{visitor.name}</span>
               </div>
 
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
                 {visitor.purpose || "Not specified"}
               </div>
-              <div className="flex items-center text-sm">{visitor.host}</div>
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
+                {visitor.host}
+              </div>
+              <div className="flex items-center justify-center text-sm">
                 {visitor.department}
               </div>
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
                 {visitor.expectedTime}
               </div>
             </div>

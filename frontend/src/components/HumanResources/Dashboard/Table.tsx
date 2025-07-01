@@ -98,26 +98,26 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                     <User className="w-6 h-6 text-gray-500" />
                   )}
                 </div>
-                <span className="text-sm font-medium truncate">
-                  {visitor.name}
-                </span>
+                <span className="text-sm font-medium">{visitor.name}</span>
               </div>
 
               {/* Purpose */}
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
                 {visitor.purpose || "Not specified"}
               </div>
 
               {/* Host Name */}
-              <div className="flex items-center text-sm">{visitor.host}</div>
+              <div className="flex items-center justify-center text-sm">
+                {visitor.host}
+              </div>
 
               {/* Department */}
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
                 {visitor.department}
               </div>
 
               {/* Expected Time */}
-              <div className="flex items-center text-sm">
+              <div className="flex items-center justify-center text-sm">
                 {visitor.expectedTime}
               </div>
 
