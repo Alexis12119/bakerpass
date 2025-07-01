@@ -69,22 +69,22 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
               {/* STATUS BOX */}
               <div className="flex items-center justify-center">
                 <div
-                  className={`text-center rounded-full px-4 py-2 text-xs font-bold w-full md:w-auto transition-colors cursor-pointer
-                    ${
-                      visitor.approvalStatus === "Approved"
-                        ? "bg-[#1C274C] text-white"
-                        : visitor.approvalStatus === "Waiting For Approval"
-                          ? "bg-yellow-400 text-black"
-                          : visitor.approvalStatus === "Blocked"
-                            ? "bg-red-600 text-white"
-                            : visitor.approvalStatus === "Partial Approved"
-                              ? "bg-blue-500 text-white"
-                              : visitor.approvalStatus === "Nurse Approved"
-                                ? "bg-green-800 text-white"
-                                : visitor.approvalStatus === "Cancelled"
-                                  ? "bg-gray-400 text-white"
-                                  : "bg-white text-black"
-                    }`}
+                  className={`text-center rounded-full px-4 py-2 text-xs font-bold min-w-[140px] max-w-[160px] text-pretty transition-colors cursor-pointer
+                  ${
+                    visitor.approvalStatus === "Approved"
+                      ? "bg-[#1C274C] text-white"
+                      : visitor.approvalStatus === "Waiting For Approval"
+                        ? "bg-yellow-400 text-black"
+                        : visitor.approvalStatus === "Blocked"
+                          ? "bg-red-600 text-white"
+                          : visitor.approvalStatus === "Partial Approved"
+                            ? "bg-blue-500 text-white"
+                            : visitor.approvalStatus === "Nurse Approved"
+                              ? "bg-green-800 text-white"
+                              : visitor.approvalStatus === "Cancelled"
+                                ? "bg-gray-400 text-white"
+                                : "bg-white text-black"
+                  }`}
                   onClick={() => {
                     const approvedStatuses = ["Approved", "Nurse Approved"];
                     const isApproved = approvedStatuses.includes(
