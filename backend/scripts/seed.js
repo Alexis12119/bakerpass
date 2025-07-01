@@ -2,11 +2,11 @@ const bcrypt = require("bcrypt");
 const { faker } = require("@faker-js/faker");
 const { pool } = require("../lib/database");
 
-const PASSWORD = "123";
-const SALT_ROUNDS = 10;
+const PASSWORD = process.env.PASSWORD;
+const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 const shouldReset = process.argv.includes("--reset");
 const dryRun = process.argv.includes("--dry-run");
-const NUM_RECORDS = 10;
+const NUM_RECORDS = 100;
 
 const areas = ["DC", "VCO", "PPI", "CWC", "FSP", "WAREHOUSE"];
 const gear = ["Gloves", "Facemask", "Coat"];
@@ -54,7 +54,7 @@ const defaultUsers = {
 };
 
 async function hashPassword() {
-  return await bcrypt.hash(PASSWORD, SALT_ROUNDS);
+  return bcrypt.hash(PASSWORD, SALT_ROUNDS);
 }
 
 async function resetTables() {
