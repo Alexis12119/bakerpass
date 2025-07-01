@@ -8,8 +8,7 @@ import { User } from "lucide-react";
 import { NurseTableProps } from "@/types/Nurse";
 
 function toTitleCase(str?: string) {
-  if (!str) return ""; // Return empty string if str is undefined/null/empty
-
+  if (!str) return "";
   return str.replace(
     /\w\S*/g,
     (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
@@ -39,88 +38,107 @@ const NurseTable: React.FC<NurseTableProps> = ({
       </div>
 
       {visitors.length > 0 ? (
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] min-h-[340px] overflow-y-auto">
           {visitors.map((visitor) => (
             <div
               key={visitor.id}
-              className="grid grid-cols-1 md:grid-cols-6 py-3 px-6 border-b border-gray-300 !text-black gap-4"
+              className="grid grid-cols-1 md:grid-cols-6 px-6 py-4 border-b border-gray-300 text-black gap-4 items-center hover:bg-gray-100 transition-colors duration-200"
             >
-              <div
-                className={`relative inline-block text-center border rounded-lg px-3 py-1 cursor-pointer ${
-                  visitor.approvalStatus === "Approved"
-                    ? "bg-[#1C274C]"
-                    : visitor.approvalStatus === "Waiting For Approval"
-                      ? "bg-yellow-400"
-                      : visitor.approvalStatus === "Blocked"
-                        ? "bg-red-600"
-                        : visitor.approvalStatus === "Partial Approved"
-                          ? "bg-blue-500"
-                          : visitor.approvalStatus === "Nurse Approved"
-                            ? "bg-green-800"
-                            : visitor.approvalStatus === "Cancelled"
-                              ? "bg-gray-400"
-                              : "bg-white"
-                }`}
-                onClick={() => {
-                  if (visitor.approvalStatus === "Partial Approved") {
-                    setSelectedVisitor(visitor);
-                    setHealthModalOpen(true);
-                  }
-                }}
-              >
-                <span
-                  className={`text-xs font-bold text-center block ${
-                    visitor.approvalStatus === "Approved"
-                      ? "text-white"
-                      : visitor.approvalStatus === "Waiting For Approval"
-                        ? "text-black"
-                        : "text-white"
-                  }`}
+              {/* STATUS */}
+              <div className="flex items-center justify-center">
+                <div
+                  className={`text-center rounded-full px-4 py-2 text-xs font-bold w-full md:w-auto transition-colors cursor-pointer
+                    ${
+                      visitor.approvalStatus === "Approved"
+                        ? "bg-[#1C274C] text-white"
+                        : visitor.approvalStatus === "Waiting For Approval"
+                          ? "bg-yellow-400 text-black"
+                          : visitor.approvalStatus === "Blocked"
+                            ? "bg-red-600 text-white"
+                            : visitor.approvalStatus === "Partial Approved"
+                              ? "bg-blue-500 text-white"
+                              : visitor.approvalStatus === "Nurse Approved"
+                                ? "bg-green-800 text-white"
+                                : visitor.approvalStatus === "Cancelled"
+                                  ? "bg-gray-400 text-white"
+                                  : "bg-white text-black"
+                    }`}
+                  onClick={() => {
+                    if (visitor.approvalStatus === "Partial Approved") {
+                      setSelectedVisitor(visitor);
+                      setHealthModalOpen(true);
+                    }
+                  }}
                 >
                   {["Approved", "Nurse Approved"].includes(
                     visitor.approvalStatus,
                   )
                     ? toTitleCase(visitor.status)
                     : toTitleCase(visitor.approvalStatus)}
+                </div>
+              </div>
+
+              {/* Visitor Info */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {visitor.profileImageUrl?.trim() ? (
+                    <Image
+                      src={visitor.profileImageUrl}
+                      alt="Visitor"
+                      width={48}
+                      height={48}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-gray-500" />
+                  )}
+                </div>
+                <span className="text-sm font-medium truncate">
+                  {visitor.name}
                 </span>
               </div>
 
-              <div className="flex items-center">
-                {visitor.profileImageUrl?.trim() ? (
-                  <Image
-                    src={visitor.profileImageUrl}
-                    alt="Visitor"
-                    width={32}
-                    height={32}
-                    className="rounded-full mr-3 object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                    <User className="w-6 h-6 text-gray-500" />
-                  </div>
-                )}
-                <span className="text-sm font-medium">{visitor.name}</span>
+              <div className="flex items-center text-sm">
+                {visitor.purpose || "Not specified"}
               </div>
-              <div className="text-sm pt-2">{visitor.purpose}</div>
-              <div className="text-sm pt-2">{visitor.host}</div>
-              <div className="text-sm pt-2">{visitor.department}</div>
-              <div className="text-sm pt-2">{visitor.expectedTime}</div>
+              <div className="flex items-center text-sm">{visitor.host}</div>
+              <div className="flex items-center text-sm">
+                {visitor.department}
+              </div>
+              <div className="flex items-center text-sm">
+                {visitor.expectedTime}
+              </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="py-10 text-center text-gray-500">
-          No visitors found matching your search criteria.
+        <div className="min-h-[340px] flex flex-col items-center justify-center border-t border-gray-300 px-4 py-6">
+          <div className="w-full max-w-5xl space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-1 md:grid-cols-8 gap-4 bg-white py-4 px-6 border-b border-gray-200"
+              >
+                {Array.from({ length: 8 }).map((_, j) => (
+                  <div
+                    key={j}
+                    className={`h-4 rounded bg-gray-100 ${j % 2 === 0 ? "w-3/4" : "w-2/3"}`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 text-sm text-gray-500">
+            No visitors found matching your search criteria.
+          </div>
         </div>
       )}
 
-      {/* Health Declaration First */}
+      {/* Modals */}
       {healthModalOpen && selectedVisitor && (
         <HealthDeclarationModal
           isOpen={true}
-          onClose={() => {
-            setHealthModalOpen(false);
-          }}
+          onClose={() => setHealthModalOpen(false)}
           onSubmit={(healthData) => {
             setTempHealthData(healthData);
             setHealthModalOpen(false);
@@ -129,14 +147,11 @@ const NurseTable: React.FC<NurseTableProps> = ({
         />
       )}
 
-      {/* High Care Approval Modal */}
       {statusActionModalOpen && selectedVisitor && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50">
           <div className="max-w-xl w-full p-6">
             <HighCareApprovalForm
-              onClose={() => {
-                setStatusActionModalOpen(false);
-              }}
+              onClose={() => setStatusActionModalOpen(false)}
               onSubmit={(formData) => {
                 handleVisitorApproval("Yes", formData, tempHealthData);
               }}

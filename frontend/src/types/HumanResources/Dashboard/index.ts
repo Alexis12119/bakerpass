@@ -30,7 +30,13 @@ export interface Visitor {
   timeIn: string | null;
   timeOut: string | null;
   status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
+  approvalStatus:
+    | "Waiting For Approval"
+    | "Approved"
+    | "Blocked"
+    | "Cancelled"
+    | "Partial Approved"
+    | "Nurse Approved";
   profileImageUrl: string;
 }
 

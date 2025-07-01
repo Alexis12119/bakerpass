@@ -78,43 +78,50 @@ const DashboardCards: React.FC = () => {
     {
       label: "No. of Occupants",
       value: stats?.totalOccupants ?? (loading ? "..." : "N/A"),
-      icon: <Users size={54} />,
-      gradient: "bg-gradient-to-r from-[#221371] to-[#4124D7]",
+      icon: Users,
+      gradient: "from-[#221371] to-[#4124D7]",
     },
     {
       label: "This Month's Visitors",
       value: stats?.thisMonthVisitors ?? (loading ? "..." : "N/A"),
-      icon: <Calendar size={54} />,
-      gradient: "bg-gradient-to-r from-[#EEAC33] to-[#88621D]",
+      icon: Calendar,
+      gradient: "from-[#EEAC33] to-[#88621D]",
     },
     {
       label: "Daily Avg. Visitor",
       value: stats?.dailyAvgVisitors ?? (loading ? "..." : "N/A"),
-      icon: <BarChart size={54} />,
-      gradient: "bg-gradient-to-r from-[#1EA83C] to-[#0C4218]",
+      icon: BarChart,
+      gradient: "from-[#1EA83C] to-[#0C4218]",
     },
     {
       label: "Last Month's Visitor",
       value: stats?.lastMonthVisitors ?? (loading ? "..." : "N/A"),
-      icon: <Pencil size={54} />,
-      gradient: "bg-gradient-to-r from-[#C82020] to-[#621010]",
+      icon: Pencil,
+      gradient: "from-[#C82020] to-[#621010]",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {cardConfig.map((card, index) => (
-        <div
-          key={index}
-          className={`${card.gradient} p-5 rounded-lg text-white shadow-md flex items-center gap-4`}
-        >
-          <div className="text-white text-lg">{card.icon}</div>
-          <div>
-            <div className="text-3xl font-bold">{card.value}</div>
-            <div className="text-sm">{card.label}</div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {cardConfig.map((card, index) => {
+        const Icon = card.icon;
+        return (
+          <div
+            key={index}
+            className={`bg-gradient-to-r ${card.gradient} p-6 rounded-2xl text-white shadow-lg flex items-center gap-5 hover:scale-[1.02] transition-transform`}
+          >
+            <div className="bg-white/10 p-4 rounded-full">
+              <Icon size={32} className="text-white" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold leading-tight">
+                {card.value}
+              </div>
+              <div className="text-sm opacity-90">{card.label}</div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

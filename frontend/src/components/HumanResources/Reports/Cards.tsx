@@ -10,8 +10,9 @@ const EmployeeCard: React.FC<{
   onOpen: (emp: Employee) => void;
 }> = ({ employee, onOpen }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 flex items-center space-x-6 w-96 border-2">
-      <div className="w-24 h-24 relative rounded-full overflow-hidden bg-gray-100">
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 flex items-center space-x-6 w-[360px] border border-gray-200 shrink-0">
+      {/* Profile Image */}
+      <div className="w-20 h-20 relative rounded-full overflow-hidden bg-gray-100">
         {employee.profileImageUrl &&
         employee.profileImageUrl !== "undefined" ? (
           <Image
@@ -28,26 +29,28 @@ const EmployeeCard: React.FC<{
                 const fallbackDiv = document.createElement("div");
                 fallbackDiv.className =
                   "absolute inset-0 flex items-center justify-center";
-                fallbackDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.965 9.965 0 0112 15c2.485 0 4.736.908 6.879 2.404M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
+                fallbackDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.965 9.965 0 0112 15c2.485 0 4.736.908 6.879 2.404M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`;
                 parent.appendChild(fallbackDiv);
               }
             }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <User className="h-12 w-12 text-gray-400" />
+            <User className="h-10 w-10 text-gray-400" />
           </div>
         )}
       </div>
+
+      {/* Info */}
       <div className="flex-1">
-        <h3 className="text-xl font-semibold text-gray-900">{employee.name}</h3>
+        <h3 className="text-lg font-semibold text-[#1C274C]">
+          {employee.name}
+        </h3>
         <div className="flex items-center gap-2 mt-2">
-          <div className="flex items-center bg-[#1C274C] px-3 py-1 rounded-md text-xs text-black">
-            <Briefcase size={18} className="mr-2 text-white" />
-            <div className="text-white mr-2">
-              {employee.avg_visitors} visitor
-              {employee.avg_visitors !== 1 ? "s" : ""}/day
-            </div>
+          <div className="flex items-center bg-[#1C274C] px-3 py-1 rounded-full text-xs text-white">
+            <Briefcase size={16} className="mr-2" />
+            {employee.avg_visitors} visitor
+            {employee.avg_visitors !== 1 ? "s" : ""}/day
           </div>
         </div>
         <button
@@ -66,9 +69,9 @@ const DepartmentSection: React.FC<{
   employees: Employee[];
   onOpen: (emp: Employee) => void;
 }> = ({ department, employees, onOpen }) => (
-  <div className="mb-8">
-    <h2 className="text-xl font-bold mb-4 text-black">{department}</h2>
-    <div className="flex overflow-x-auto space-x-4 pb-4 max-w-[82vw]">
+  <div className="mb-10">
+    <h2 className="text-xl font-bold mb-4 text-[#1C274C]">{department}</h2>
+    <div className="flex overflow-x-auto space-x-5 pb-2 max-w-full">
       {employees.map((employee) => (
         <EmployeeCard key={employee.id} employee={employee} onOpen={onOpen} />
       ))}
@@ -86,11 +89,11 @@ const EmployeeReportCards: React.FC<{
   const closeModal = () => setSelectedEmployee(null);
 
   return (
-    <div className="relative bg-white p-4 overflow-y-auto">
+    <div className="relative bg-white p-6 overflow-y-auto">
       {selectedEmployee && (
         <>
           <div
-            className="fixed inset-0 backdrop-blur-md z-10"
+            className="fixed inset-0 backdrop-blur-sm bg-black/10 z-10"
             onClick={closeModal}
           />
           <EmployeeProfileModal
@@ -100,6 +103,7 @@ const EmployeeReportCards: React.FC<{
           />
         </>
       )}
+
       {Object.keys(employees).length > 0 ? (
         Object.entries(employees).map(([department, emps]) => (
           <DepartmentSection
@@ -110,7 +114,7 @@ const EmployeeReportCards: React.FC<{
           />
         ))
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-10 text-gray-500 text-sm">
           No employees found matching your search criteria.
         </div>
       )}

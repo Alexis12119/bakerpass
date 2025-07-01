@@ -148,15 +148,18 @@ const NursePage: React.FC = () => {
         : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
 
       const response = await axios.get(endpoint);
-
       const visitorsData = mapVisitorsData(response.data);
 
-      setVisitors(visitorsData);
+      // Deduplicate by ID
+      const uniqueVisitors = Array.from(
+        new Map(visitorsData.map((v) => [v.id, v])).values(),
+      );
+
+      setVisitors(uniqueVisitors);
     } catch (error) {
       console.error("Error fetching visitors:", error);
     }
   };
-
   const fetchPurposes = async () => {
     try {
       const response = await axios.get(
@@ -310,6 +313,7 @@ const NursePage: React.FC = () => {
       );
     }
 
+    console.log(filtered);
     return filtered;
   }, [
     visitors,

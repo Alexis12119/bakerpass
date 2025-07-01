@@ -63,15 +63,11 @@ const SecurityGuardPage: React.FC = () => {
       timeOut: visitor.time_out || null,
       status: visitor.status,
       approvalStatus: visitor.approval_status,
-      profileImageUrl: visitor.profile_image_url, // ⬅️ Add this
+      profileImageUrl: visitor.profile_image_url,
       isDropdownOpen: false,
       isHighCare: visitor.is_high_care ?? undefined,
     }));
   };
-
-  useEffect(() => {
-    fetchVisitors();
-  }, [currentDate]);
 
   const handlePreviousDate = () => {
     setCurrentDate((prev: string) => {
@@ -285,6 +281,10 @@ const SecurityGuardPage: React.FC = () => {
     fetchDepartments();
     fetchApprovalStatuses();
   }, []);
+
+  useEffect(() => {
+    fetchVisitors();
+  }, [currentDate]);
 
   const filteredVisitors = useMemo(() => {
     let filtered = visitors.filter((visitor) => {
