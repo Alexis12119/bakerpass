@@ -17,6 +17,7 @@ export interface SearchFiltersProps {
 
 export interface SidebarProps {
   isSidebarOpen: boolean;
+  toggleSidebar: () => void;
 }
 
 export interface Visitor {
