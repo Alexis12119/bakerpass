@@ -71,7 +71,7 @@ const DepartmentSection: React.FC<{
 }> = ({ department, employees, onOpen }) => (
   <div className="mb-10">
     <h2 className="text-xl font-bold mb-4 text-[#1C274C]">{department}</h2>
-    <div className="flex overflow-x-auto space-x-5 pb-2 max-w-full">
+    <div className="flex overflow-x-auto space-x-5 pb-8 max-w-full">
       {employees.map((employee) => (
         <EmployeeCard key={employee.id} employee={employee} onOpen={onOpen} />
       ))}

@@ -410,6 +410,8 @@ async function visitors(fastify) {
         vs.name AS status,
         vi.first_name AS visitorFirstName, 
         vi.last_name AS visitorLastName,
+        vi.contact_number,
+        vi.address,
         vi.email, 
         e.first_name AS employeeFirstName, 
         e.last_name AS employeeLastName,

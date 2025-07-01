@@ -30,6 +30,8 @@ const EmployeeVisitorsPage: React.FC = () => {
     return visitors.map((visitor) => ({
       id: visitor.visit_id,
       name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      contactNumber: visitor.contact_number,
+      address: visitor.address,
       purpose: visitor.purpose,
       host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
       department: visitor.employeeDepartment,
@@ -40,7 +42,6 @@ const EmployeeVisitorsPage: React.FC = () => {
       profileImageUrl: visitor.profile_image_url,
       approvalStatus: visitor.approval_status,
       isDropdownOpen: false,
-      isHighCare: visitor.is_high_care ?? undefined,
       employeeId: visitor.employee_id,
     }));
   };
@@ -91,13 +92,13 @@ const EmployeeVisitorsPage: React.FC = () => {
       );
 
       socket.onopen = () => {
-        console.log("✅ WebSocket connected");
+        console.log("WebSocket connected");
       };
 
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("📡 WebSocket data received:", data);
+          console.log("WebSocket data received:", data);
 
           if (data.type === "update") {
             fetchVisitors();
@@ -114,19 +115,19 @@ const EmployeeVisitorsPage: React.FC = () => {
             else if (status === "error") showErrorToast(message);
           }
         } catch (err) {
-          console.error("❗ Failed to parse WebSocket message:", err);
+          console.error("Failed to parse WebSocket message:", err);
         }
       };
 
       socket.onerror = (e) => {
-        console.error("❗WebSocket error", e);
+        console.error("WebSocket error", e);
         socket.close(); // triggers `onclose`
       };
 
       socket.onclose = () => {
-        console.log("❌ WebSocket connection closed");
+        console.log("WebSocket connection closed");
         if (!isUnmounted) {
-          console.log("🔄 Attempting to reconnect in 5s...");
+          console.log("Attempting to reconnect in 5s...");
           reconnectTimer = setTimeout(connect, 5000);
         }
       };

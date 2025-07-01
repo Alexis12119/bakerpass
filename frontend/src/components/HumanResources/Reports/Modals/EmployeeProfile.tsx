@@ -40,7 +40,7 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         <div className="bg-[#0D1F72] h-36 flex justify-center items-center">
           <div className="w-24 h-24 relative overflow-hidden">
             <Image
-              src="/images/jiro.jpg"
+              src={employee.profileImageUrl}
               fill={true}
               alt=""
               className="w-full rounded-full"

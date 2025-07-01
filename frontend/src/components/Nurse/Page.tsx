@@ -203,13 +203,13 @@ const NursePage: React.FC = () => {
       );
 
       socket.onopen = () => {
-        console.log("✅ WebSocket connected");
+        console.log("WebSocket connected");
       };
 
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("📡 WebSocket data received:", data);
+          console.log("WebSocket data received:", data);
 
           if (data.type === "update") {
             fetchVisitors();
@@ -225,19 +225,19 @@ const NursePage: React.FC = () => {
             else if (status === "error") showErrorToast(message);
           }
         } catch (err) {
-          console.error("❗ Failed to parse WebSocket message:", err);
+          console.error("Failed to parse WebSocket message:", err);
         }
       };
 
       socket.onerror = (e) => {
-        console.error("❗WebSocket error", e);
+        console.error("WebSocket error", e);
         socket.close(); // triggers `onclose`
       };
 
       socket.onclose = () => {
-        console.log("❌ WebSocket connection closed");
+        console.log("WebSocket connection closed");
         if (!isUnmounted) {
-          console.log("🔄 Attempting to reconnect in 5s...");
+          console.log("Attempting to reconnect in 5s...");
           reconnectTimer = setTimeout(connect, 5000);
         }
       };

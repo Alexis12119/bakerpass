@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
+import { showErrorToast } from "@/utils/customToasts";
 
 const roleToRouteMap: Record<string, string> = {
   Visitor: "/visitor",
@@ -77,15 +78,39 @@ export default function ProtectedRoute({
             setIsLoading(false);
           }, 500);
         }
-      } catch (error) {
-        console.error("Token verification failed:", error);
+      } catch (error: any) {
         sessionStorage.clear();
-        router.replace("/login");
+        showErrorToast("Session expired. Please login again.");
+        setTimeout(() => {
+          router.replace("/login");
+        }, 1500);
       }
     };
 
     verifyToken();
   }, [router, allowedRole]);
+
+  useEffect(() => {
+    const checkInterval = setInterval(async () => {
+      const token = sessionStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/verify`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        sessionStorage.clear();
+        showErrorToast("Session expired. Please login again.");
+        clearInterval(checkInterval);
+        setTimeout(() => {
+          router.replace("/login");
+        }, 1500);
+      }
+    }, 10000); // every 10 seconds
+
+    return () => clearInterval(checkInterval);
+  }, []);
 
   if (isLoading) {
     return (

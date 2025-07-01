@@ -44,11 +44,11 @@ const VisitorProfileModal: React.FC<VisitorProfileModalProps> = ({
         {/* Content */}
         <div className="p-5 text-center text-black">
           <h2 className="text-xl font-bold">{visitor.name}</h2>
+          <p>
+            <strong>Email:</strong> {visitor.email}
+          </p>
 
           <div className="mt-3 space-y-2 text-sm text-left">
-            <p>
-              <strong>Email:</strong> {visitor.email}
-            </p>
             {visitor.contactNumber && (
               <p>
                 <strong>Contact Number:</strong> {visitor.contactNumber}
@@ -57,11 +57,6 @@ const VisitorProfileModal: React.FC<VisitorProfileModalProps> = ({
             {visitor.address && (
               <p>
                 <strong>Address:</strong> {visitor.address}
-              </p>
-            )}
-            {visitor.otp && (
-              <p>
-                <strong>OTP:</strong> {visitor.otp}
               </p>
             )}
           </div>

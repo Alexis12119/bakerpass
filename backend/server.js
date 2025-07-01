@@ -57,7 +57,6 @@ fastify.get(
         try {
           await request.jwtVerify();
         } catch (err) {
-          console.error("JWT Verification failed:", err);
           return reply.status(401).send({ message: "Unauthorized" });
         }
       },

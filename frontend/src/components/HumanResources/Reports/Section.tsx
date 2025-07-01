@@ -98,21 +98,21 @@ const HumanResourcesReportSection: React.FC = () => {
       );
 
       socket.onopen = () => {
-        console.log("✅ WebSocket connected");
+        console.log("WebSocket connected");
       };
 
       socket.onmessage = () => {
-        console.log("📡 Update received: refreshing employee stats...");
+        console.log("Update received: refreshing employee stats...");
         fetchEmployees();
       };
 
       socket.onerror = (e) => {
-        console.error("❗WebSocket error", e);
+        console.error("WebSocket error", e);
         socket.close();
       };
 
       socket.onclose = () => {
-        console.log("❌ WebSocket closed. Reconnecting in 5s...");
+        console.log("WebSocket closed. Reconnecting in 5s...");
         if (!isUnmounted) {
           reconnectTimer = setTimeout(connect, 5000);
         }
@@ -138,12 +138,7 @@ const HumanResourcesReportSection: React.FC = () => {
         handleFilterChange={handleFilterChange}
       />
       <div className="bg-white p-4">
-        <EmployeeReportCards
-          employees={employees}
-          searchQuery={searchQuery}
-          selectedDepartment={selectedDepartment}
-          fetchEmployees={fetchEmployees}
-        />
+        <EmployeeReportCards employees={employees} />
       </div>
     </div>
   );
