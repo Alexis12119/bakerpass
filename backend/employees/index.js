@@ -177,7 +177,7 @@ async function employees(fastify) {
   });
 
   // GET available time slots for a specific host
-  fastify.get("/hosts/:id/available-timeslots", async (request, reply) => {
+  fastify.get("/employees/:id/available-timeslots", async (request, reply) => {
     const { id } = request.params;
     const hostId = Number(id);
 

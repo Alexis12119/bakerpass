@@ -61,7 +61,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     const fetchAvailableTimeSlots = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hosts/${employee.id}/available-timeslots`,
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/${employee.id}/available-timeslots`,
         );
         setTimeSlots(response.data);
       } catch (error: any) {
