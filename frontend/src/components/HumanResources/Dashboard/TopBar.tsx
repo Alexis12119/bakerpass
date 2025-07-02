@@ -7,7 +7,7 @@ import {
   Bars3Icon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-import HumanResourcesProfile from "@/components/HumanResources/Modals/HumanResourcesProfile";
+import HumanResourcesProfile from "@/components/HumanResources/Shared/HumanResourcesProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
@@ -18,6 +18,7 @@ import {
   HumanResourcesWithDropdown,
 } from "@/types/HumanResources/Reports";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -301,13 +302,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
-          <div className="relative w-14 h-14">
-            <div className="absolute w-full h-full border-[5px] border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <div className="absolute w-full h-full border-[5px] border-dashed border-[#1C274C] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
-          </div>
-          <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
-            Logging out...
-          </span>
+          <DualRingSpinner message="Logging out..." />
         </div>
       )}
     </div>

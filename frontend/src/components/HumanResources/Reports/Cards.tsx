@@ -4,6 +4,7 @@ import EmployeeProfileModal from "@/components/HumanResources/Reports/Modals/Emp
 import { Briefcase } from "react-feather";
 import { User } from "lucide-react";
 import { Employee } from "@/types/HumanResources/Reports";
+import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 const EmployeeCard: React.FC<{
   employee: Employee;
@@ -81,7 +82,8 @@ const DepartmentSection: React.FC<{
 
 const EmployeeReportCards: React.FC<{
   employees: Record<string, Employee[]>;
-}> = ({ employees }) => {
+  loading: boolean;
+}> = ({ employees, loading }) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
@@ -104,7 +106,11 @@ const EmployeeReportCards: React.FC<{
         </>
       )}
 
-      {Object.keys(employees).length > 0 ? (
+      {loading ? (
+        <div className="py-20">
+          <DualRingSpinner message="Loading employees..." />
+        </div>
+      ) : Object.keys(employees).length > 0 ? (
         Object.entries(employees).map(([department, emps]) => (
           <DepartmentSection
             key={department}
@@ -121,5 +127,4 @@ const EmployeeReportCards: React.FC<{
     </div>
   );
 };
-
 export default EmployeeReportCards;

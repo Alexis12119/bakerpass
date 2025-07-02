@@ -10,6 +10,7 @@ const HumanResourcesReportSection: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [employees, setEmployees] = useState<Record<string, Employee[]>>({});
   const [departments, setDepartments] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchDepartments = async () => {
     try {
@@ -27,6 +28,7 @@ const HumanResourcesReportSection: React.FC = () => {
     }
   };
   const fetchEmployees = async () => {
+    setIsLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
@@ -66,6 +68,8 @@ const HumanResourcesReportSection: React.FC = () => {
         error?.response?.data?.message || "Error fetching employees.";
       showErrorToast(message);
       setEmployees({});
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,7 +142,7 @@ const HumanResourcesReportSection: React.FC = () => {
         handleFilterChange={handleFilterChange}
       />
       <div className="bg-white p-4">
-        <EmployeeReportCards employees={employees} />
+        <EmployeeReportCards employees={employees} loading={isLoading} />
       </div>
     </div>
   );

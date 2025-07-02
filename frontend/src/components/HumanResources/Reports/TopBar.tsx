@@ -7,7 +7,7 @@ import {
   Bars3Icon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-import HumanResourcesProfile from "@/components/HumanResources/Modals/HumanResourcesProfile";
+import HumanResourcesProfile from "@/components/HumanResources/Shared/HumanResourcesProfile";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
@@ -18,6 +18,7 @@ import {
   HumanResourcesWithDropdown,
 } from "@/types/HumanResources/Reports";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +70,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     }
 
     setIsUploading(true);
+    document.body.style.overflow = "hidden";
     const formData = new FormData();
     formData.append("file", file);
 
@@ -102,6 +104,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       if (fileInputRef.current) fileInputRef.current.value = "";
     } finally {
       setIsUploading(false);
+      document.body.style.overflow = "";
     }
   };
 
@@ -148,7 +151,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     id: user?.id || 0,
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
-    profileImageUrl: user?.profileImage || "",
+    profileImageUrl: user?.profileImage || "/default-profile.png",
     isDropdownOpen: false,
   };
 
@@ -182,30 +185,64 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
       <div className="relative min-w-max">
         <div
-          className="flex items-center space-x-2 cursor-pointer"
-          onClick={() => setIsOpen((prev) => !prev)}
+          className="flex items-center space-x-2"
+          onClick={(e) => {
+            // Only toggle dropdown if not clicking on profile image
+            const target = e.target as HTMLElement;
+            if (!target.closest("[data-profile-image]")) {
+              setIsOpen((prev) => !prev);
+            }
+          }}
         >
-          {user?.profileImage?.trim() ? (
-            <Image
-              src={user.profileImage}
-              alt="Profile"
-              width={42}
-              height={42}
-              className={`rounded-full border-2 border-transparent hover:border-blue-500 transition-all duration-200 ${
-                isUploading ? "opacity-50 animate-pulse" : ""
-              }`}
-              onClick={handleUploadClick}
-              title="Click to change profile image"
-            />
-          ) : (
-            <div
-              className="w-[42px] h-[42px] rounded-full border-2 border-gray-300 flex items-center justify-center bg-gray-100"
-              onClick={handleUploadClick}
-              title="Click to change profile image"
-            >
-              <User className="w-5 h-5 text-gray-400" />
-            </div>
-          )}
+          {/* Wrap profile image in its own relative container */}
+          <div className="relative" data-profile-image>
+            {user?.profileImage?.trim() ? (
+              <Image
+                src={user.profileImage}
+                alt="Profile"
+                width={42}
+                height={42}
+                className={`rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all duration-200 ${
+                  isUploading ? "opacity-50 animate-pulse" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleUploadClick(e);
+                }}
+                title="Click to change profile image"
+              />
+            ) : (
+              <div
+                className="w-[42px] h-[42px] rounded-full border-2 border-gray-300 flex items-center justify-center bg-gray-100 cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleUploadClick(e);
+                }}
+                title="Click to change profile image"
+              >
+                <User className="w-5 h-5 text-gray-400" />
+              </div>
+            )}
+
+            {/* Loading spinner positioned relative to profile image */}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Hidden file input - positioned to prevent scrolling */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
 
           <div className="text-left">
             <div className="text-sm font-bold text-[#1C274C]">
@@ -265,13 +302,7 @@ const TopBar: React.FC<TopBarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
-          <div className="relative w-14 h-14">
-            <div className="absolute w-full h-full border-[5px] border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <div className="absolute w-full h-full border-[5px] border-dashed border-[#1C274C] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
-          </div>
-          <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
-            Logging out...
-          </span>
+          <DualRingSpinner message="Logging out..." />
         </div>
       )}
     </div>

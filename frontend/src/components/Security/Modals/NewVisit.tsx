@@ -6,6 +6,7 @@ import Image from "next/image";
 import { User } from "lucide-react";
 import { Host } from "@/types/Security";
 import { showErrorToast } from "@/utils/customToasts";
+import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 const NewVisitModal: React.FC<{
   isOpen: boolean;
@@ -16,21 +17,24 @@ const NewVisitModal: React.FC<{
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
   const [showHostDetails, setShowHostDetails] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchHosts = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`,
+      );
+      setAvailableHosts(response.data);
+    } catch (err) {
+      showErrorToast("Failed to fetch hosts.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
-
-    const fetchHosts = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`,
-        );
-        setAvailableHosts(response.data);
-      } catch (err) {
-        showErrorToast("Failed to fetch hosts.");
-      }
-    };
-
     fetchHosts();
   }, [isOpen]);
 
@@ -78,7 +82,11 @@ const NewVisitModal: React.FC<{
 
         <div className="px-4 pb-4 overflow-y-auto max-h-80">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2">
-            {filteredHosts.length > 0 ? (
+            {loading ? (
+              <div className="col-span-2 flex justify-center py-20">
+                <DualRingSpinner message="Loading hosts..." />
+              </div>
+            ) : filteredHosts.length > 0 ? (
               filteredHosts.map((host, index) => (
                 <div
                   key={index}

@@ -8,6 +8,7 @@ import axios from "axios";
 import { User, LogOut } from "lucide-react";
 import { useRouter } from "next/router";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 interface Employee {
   id: string;
@@ -288,13 +289,7 @@ const TopBar = () => {
 
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
-          <div className="relative w-14 h-14">
-            <div className="absolute w-full h-full border-[5px] border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <div className="absolute w-full h-full border-[5px] border-dashed border-[#1C274C] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
-          </div>
-          <span className="mt-4 text-[#1C274C] font-medium text-lg animate-pulse">
-            Logging out...
-          </span>
+          <DualRingSpinner message="Logging out..." />
         </div>
       )}
     </div>
