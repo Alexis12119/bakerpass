@@ -220,11 +220,22 @@ async function employees(fastify) {
     }
 
     try {
-      // Optionally, insert a dummy timeslot with null times, or insert into a new `available_dates` table
+      // Check if time slot(s) already exist for this employee and date
+      const [existing] = await pool.execute(
+        "SELECT id FROM time_slots WHERE employee_id = ? AND date = ? LIMIT 1",
+        [employeeId, date],
+      );
+
+      if (existing.length > 0) {
+        return reply.code(409).send({ error: "Date already exists" }); // Conflict
+      }
+
+      // Insert dummy row with empty times
       await pool.execute(
         "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, '', '')",
         [employeeId, date],
       );
+
       reply.code(201).send({ message: "Date added" });
     } catch (err) {
       console.error("Error adding date:", err);
@@ -255,9 +266,26 @@ async function employees(fastify) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
-    try {
-      const formattedDate = new Date(date).toISOString().split("T")[0];
+    const formattedDate = new Date(date).toISOString().split("T")[0];
 
+    try {
+      // Check for exact match only
+      const [conflicts] = await pool.execute(
+        `
+        SELECT id FROM time_slots
+        WHERE employee_id = ?
+          AND date = ?
+          AND start_time = ?
+          AND end_time = ?
+        `,
+        [employeeId, formattedDate, startTime, endTime],
+      );
+
+      if (conflicts.length > 0) {
+        return reply.code(409).send({ error: "The Date was already Taken" });
+      }
+
+      // Insert slot
       await pool.execute(
         "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
         [employeeId, formattedDate, startTime, endTime],
@@ -279,8 +307,28 @@ async function employees(fastify) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
+    const formattedDate = new Date(date).toISOString().split("T")[0];
     try {
-      const formattedDate = new Date(date).toISOString().split("T")[0];
+      // Prevent overlaps excluding self
+      const [conflicts] = await pool.execute(
+        `
+        SELECT id FROM time_slots
+        WHERE employee_id = ?
+          AND date = ?
+          AND id != ?
+          AND start_time = ?
+          AND end_time = ?
+        `,
+        [employeeId, formattedDate, id, startTime, endTime],
+      );
+
+      console.log("Found conflicts:", conflicts);
+      if (conflicts.length > 0) {
+        return reply.code(409).send({
+          error:
+            "This time slot overlaps with another one. Please choose a different time.",
+        });
+      }
 
       const [result] = await pool.execute(
         "UPDATE time_slots SET employee_id = ?, date = ?, start_time = ?, end_time = ? WHERE id = ?",

@@ -62,7 +62,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
 
   const addNewDate = async () => {
     if (!selectedDate) return;
-    const formatted = selectedDate.toLocaleDateString("en-CA"); 
+    const formatted = selectedDate.toLocaleDateString("en-CA");
     if (groupedTimeSlots[formatted]) return;
 
     try {
@@ -77,7 +77,9 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
       setSelectedDate(null);
       setIsAddDateModalOpen(false);
     } catch (err: any) {
-      showErrorToast(`Error adding date: ${err.message}`);
+      showErrorToast(
+        `Failed to add Date: ${err.response?.data?.error || err.message}`,
+      );
     }
   };
 

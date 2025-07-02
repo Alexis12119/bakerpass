@@ -9,7 +9,8 @@ import {
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { TimeSlot } from "@/types/Employee/Profile";
-import { showErrorToast } from "@/utils/customToasts";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 interface TimeSlotModalProps {
   date: string;
@@ -51,8 +52,18 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
     }
   };
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState<number | null>(null);
+
   const handleUpdateSlot = async (id: number) => {
-    if (!editValues.startTime || !editValues.endTime) return;
+    if (
+      !editValues.startTime ||
+      !editValues.endTime ||
+      editValues.startTime >= editValues.endTime
+    ) {
+      showErrorToast("Start time must be before end time");
+      return;
+    }
 
     try {
       await axios.put(
@@ -68,7 +79,9 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       fetchSlots();
       onUpdate();
     } catch (err: any) {
-      showErrorToast(`Failed to update: ${err.message}`);
+      showErrorToast(
+        `Failed to update: ${err.response?.data?.error || err.message}`,
+      );
     }
   };
 
@@ -78,15 +91,20 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots/${id}`,
       );
       fetchSlots();
+      showSuccessToast("Time slot deleted successfully.");
       onUpdate();
     } catch (err: any) {
-      showErrorToast(`Failed to delete: ${err.message}`);
+      showErrorToast(err.response.data.message);
     }
   };
 
   const handleAddSlot = async () => {
     const { startTime, endTime } = newSlot;
-    if (!startTime || !endTime) return;
+
+    if (!startTime || !endTime || startTime >= endTime) {
+      showErrorToast("Start time must be before end time");
+      return;
+    }
 
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots`, {
@@ -99,7 +117,9 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       fetchSlots();
       onUpdate();
     } catch (err: any) {
-      showErrorToast(`Failed to add: ${err.message}`);
+      showErrorToast(
+        `Failed to add slot: ${err.response?.data?.error || err.message}`,
+      );
     }
   };
 
@@ -186,7 +206,12 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
                       >
                         <PencilIcon className="w-4 h-4 text-blue-600" />
                       </button>
-                      <button onClick={() => handleDeleteSlot(slot.id)}>
+                      <button
+                        onClick={() => {
+                          setSlotToDelete(slot.id);
+                          setShowDeleteConfirm(true);
+                        }}
+                      >
                         <TrashIcon className="w-4 h-4 text-red-600" />
                       </button>
                     </div>
@@ -258,6 +283,22 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
           </div>
         )}
       </div>
+
+      {showDeleteConfirm && slotToDelete !== null && (
+        <ConfirmationModal
+          title="Confirm Deletion"
+          message="Are you sure you want to delete this time slot? This action cannot be undone."
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setSlotToDelete(null);
+          }}
+          onConfirm={async () => {
+            await handleDeleteSlot(slotToDelete);
+            setShowDeleteConfirm(false);
+            setSlotToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 };
