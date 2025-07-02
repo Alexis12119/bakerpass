@@ -13,7 +13,6 @@ const VisitorsSection: React.FC<VisitorsSectionProps> = ({
   handleFilterChange,
   selectedApprovalStatus,
   approvalStatuses,
-  fetchVisitors,
   handlePreviousDate,
   handleNextDate,
   setCurrentDate,
@@ -36,10 +35,7 @@ const VisitorsSection: React.FC<VisitorsSectionProps> = ({
 
       <div className="bg-white p-8">
         <div className="w-full">
-          <VisitorsList
-            groupedVisitors={groupedVisitors}
-            fetchVisitors={fetchVisitors}
-          />
+          <VisitorsList groupedVisitors={groupedVisitors} />
         </div>
       </div>
     </div>

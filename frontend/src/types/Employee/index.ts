@@ -59,7 +59,6 @@ export interface VisitorsSectionProps {
   ) => void;
   selectedApprovalStatus: string;
   approvalStatuses: string[];
-  fetchVisitors: () => void;
   handlePreviousDate: () => void;
   handleNextDate: () => void;
   setCurrentDate: (date: string) => void;

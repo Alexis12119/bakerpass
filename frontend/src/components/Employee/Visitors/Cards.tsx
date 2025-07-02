@@ -10,13 +10,9 @@ import { showErrorToast } from "@/utils/customToasts";
 
 interface VisitorCardProps {
   visitor: VisitorWithDropdown;
-  fetchVisitors: () => void;
 }
 
-const VisitorCard: React.FC<VisitorCardProps> = ({
-  visitor,
-  fetchVisitors,
-}) => {
+const VisitorCard: React.FC<VisitorCardProps> = ({ visitor }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] =
     useState(false);

@@ -5,9 +5,9 @@ import axios from "axios";
 import TopBar from "@/components/Employee/Visitors/TopBar";
 import VisitorsSection from "@/components/Employee/Visitors/Section";
 import { format, addDays, subDays } from "date-fns";
-import { jwtDecode } from "jwt-decode";
 import { VisitorWithDropdown } from "@/types/Employee";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { jwtDecode } from "jwt-decode";
 
 const EmployeeVisitorsPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -46,15 +46,38 @@ const EmployeeVisitorsPage: React.FC = () => {
       employeeId: visitor.employee_id,
     }));
   };
+
+  const getEmployeeId = () => {
+    const token = sessionStorage.getItem("token"); // or sessionStorage
+    if (!token) return null;
+
+    try {
+      const decoded = jwtDecode(token) as { id: string };
+      return decoded.id;
+    } catch (err) {
+      console.error("Invalid token:", err);
+      return null;
+    }
+  };
+
   const fetchVisitorsByDate = async () => {
     const date = sessionStorage.getItem("visitor_filter_date");
+    const employeeId = getEmployeeId();
+
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`,
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date`,
+        {
+          params: {
+            date,
+            employeeId,
+          },
+        },
       );
-      const data = await res.json();
+      const data = res.data;
 
       const mappedVisitors = mapVisitorsData(data);
+
       setVisitors(mappedVisitors);
     } catch (error: any) {
       showErrorToast(`Error fetching visitors by date: ${error.message}`);
@@ -167,28 +190,6 @@ const EmployeeVisitorsPage: React.FC = () => {
       showErrorToast(`Error fetching approval statuses: ${error.message}`);
     }
   };
-  const fetchVisitors = async () => {
-    try {
-      const token = sessionStorage.getItem("token") as string;
-      const decoded = jwtDecode(token) as {
-        id: number;
-      };
-      const employeeId = decoded.id;
-
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors`,
-        {
-          params: { employeeId }, // only filters if logged in as employee
-        },
-      );
-
-      const visitorsData = mapVisitorsData(response.data);
-
-      setVisitors(visitorsData);
-    } catch (error: any) {
-      showErrorToast(`Error fetching visitors: ${error.message}`);
-    }
-  };
 
   useEffect(() => {
     fetchPurposes();
@@ -274,7 +275,6 @@ const EmployeeVisitorsPage: React.FC = () => {
             handleFilterChange={handleFilterChange}
             selectedApprovalStatus={selectedApprovalStatus}
             approvalStatuses={approvalStatuses}
-            fetchVisitors={fetchVisitors}
             handlePreviousDate={handlePreviousDate}
             handleNextDate={handleNextDate}
             setCurrentDate={setCurrentDate}
