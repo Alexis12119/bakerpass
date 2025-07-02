@@ -62,7 +62,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
 
   const addNewDate = async () => {
     if (!selectedDate) return;
-    const formatted = selectedDate.toISOString().split("T")[0];
+    const formatted = selectedDate.toLocaleDateString("en-CA"); 
     if (groupedTimeSlots[formatted]) return;
 
     try {
