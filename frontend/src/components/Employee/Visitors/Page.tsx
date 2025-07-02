@@ -30,6 +30,7 @@ const EmployeeVisitorsPage: React.FC = () => {
     return visitors.map((visitor) => ({
       id: visitor.visit_id,
       name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
+      email: visitor.email,
       contactNumber: visitor.contact_number,
       address: visitor.address,
       purpose: visitor.purpose,
