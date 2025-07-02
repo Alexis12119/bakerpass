@@ -131,10 +131,37 @@ async function seed() {
       }
     };
 
-    await insertUsers("employees", defaultUsers.employees);
-
     const employeeTimeSlotsMap = new Map();
     const usedSlotsPerDay = new Map();
+
+    await insertUsers("employees", defaultUsers.employees);
+
+    // Create time slots for default employee(s)
+    for (const emp of employeeIds.slice(0, defaultUsers.employees.length)) {
+      const defaultEmployeeSlots = [];
+      const defaultDates = [new Date(), new Date(Date.now() + 86400000)]; // today and tomorrow
+
+      for (const dateObj of defaultDates) {
+        const date = dateObj.toISOString().split("T")[0];
+
+        const availableHours = Array.from({ length: 5 }, (_, i) => i + 9); // 09–13
+        for (const hour of availableHours) {
+          const start = `${String(hour).padStart(2, "0")}:00:00`;
+          const end = `${String(hour + 1).padStart(2, "0")}:00:00`;
+
+          const slotId = await insert("time_slots", {
+            employee_id: emp,
+            date,
+            start_time: start,
+            end_time: end,
+          });
+
+          defaultEmployeeSlots.push({ id: slotId, start, end, date });
+        }
+      }
+
+      employeeTimeSlotsMap.set(emp, defaultEmployeeSlots);
+    }
 
     for (let i = 0; i < NUM_RECORDS; i++) {
       const departmentId = faker.number.int({ min: 1, max: 5 });
@@ -294,6 +321,113 @@ async function seed() {
     await insertUsers("nurses", defaultUsers.nurses);
     await insertUsers("security_guards", defaultUsers.security_guards);
     await insertUsers("visitors", defaultUsers.visitors);
+    // Extend Default Users With Data Like Faker Accounts
+    const defaultEmployeeId = employeeIds[0]; // First employee is Alexis Corporal
+    const defaultNurseId = nurseIds[0]; // First nurse is Sarah Cruz
+    const defaultVisitorId = visitorIds[0]; // First visitor is Alex Corporal
+
+    // Generate time slots for default employee
+    const defaultTimeSlots = [];
+    const defaultDates = [new Date(), new Date(Date.now() + 86400000)]; // today + tomorrow
+
+    for (const dateObj of defaultDates) {
+      const date = dateObj.toISOString().split("T")[0];
+      const hours = [9, 10, 11, 13, 14]; // 9AM–3PM, skipping lunch
+
+      for (const hour of hours) {
+        const pad = (n) => String(n).padStart(2, "0");
+        const start = `${pad(hour)}:00:00`;
+        const end = `${pad(hour + 1)}:00:00`;
+
+        const slotId = await insert("time_slots", {
+          employee_id: defaultEmployeeId,
+          date,
+          start_time: start,
+          end_time: end,
+        });
+
+        defaultTimeSlots.push({ id: slotId, start, end, date });
+      }
+    }
+
+    // Pick a time slot for a default visit
+    const selectedSlot = defaultTimeSlots[0]; // First available
+
+    // Format to 12-hour format
+    function to12HourFormat(timeStr) {
+      const [hourStr, minute] = timeStr.split(":");
+      let hour = parseInt(hourStr, 10);
+      const suffix = hour >= 12 ? "P.M." : "A.M.";
+      hour = hour % 12 || 12;
+      return `${hour}:${minute} ${suffix}`;
+    }
+
+    const expectedTime = `${to12HourFormat(selectedSlot.start)} - ${to12HourFormat(selectedSlot.end)}`;
+    const visitDate = selectedSlot.date;
+
+    // Create a comment
+    const defaultCommentId = await insert("comments", {
+      content: "Excited to meet with the employee.",
+    });
+
+    // Create a visit
+    const defaultVisitId = await insert("visits", {
+      visitor_id: defaultVisitorId,
+      visited_employee_id: defaultEmployeeId,
+      visit_date: visitDate,
+      approval_status_id: 1,
+      time_slot_id: selectedSlot.id,
+      expected_time: expectedTime,
+      status_id: 1,
+      valid_id_type_id: 1,
+      purpose_id: 1,
+      comment_id: defaultCommentId,
+      device_type: "Laptop",
+      device_brand: "Apple",
+    });
+
+    // Add high care request
+    const defaultHighCareId = await insert("high_care_requests", {
+      visit_id: defaultVisitId,
+      approved_by_nurse_id: defaultNurseId,
+      is_approved: 1,
+      approved_at: new Date(),
+      areas: "DC, PPI",
+      equipment: "Gloves, Facemask",
+      permission_type: "CLEAR WITHOUT RECTAL",
+      comments: "No issues reported.",
+    });
+
+    // Add prohibited items
+    await insert("high_care_prohibited_items", {
+      high_care_request_id: defaultHighCareId,
+      mobile_phone: 1,
+      camera: 0,
+      medicines: 0,
+      notebook: 1,
+      earrings: 0,
+      other_prohibited_items: "USB Stick",
+      ring: 1,
+      id_card: 1,
+      ballpen: 0,
+      wristwatch: 1,
+      necklace: 0,
+    });
+
+    //  Add symptoms
+    await insert("high_care_symptoms", {
+      high_care_request_id: defaultHighCareId,
+      fever: 0,
+      cough: 0,
+      open_wound: 0,
+      nausea: 0,
+      other_allergies: "None",
+      recent_places: "Makati",
+      skin_boils: 0,
+      skin_allergies: 0,
+      diarrhea: 0,
+      open_sores: 0,
+    });
 
     console.log(`✅ Seeding ${dryRun ? "previewed" : "complete"}.`);
     process.exit(0);

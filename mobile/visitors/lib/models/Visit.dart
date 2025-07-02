@@ -19,13 +19,13 @@ class Visit {
 
   factory Visit.fromJson(Map<String, dynamic> json) {
     return Visit(
-      hostName: json['host_name'],
+      hostName: json['hostName'],
       department: json['department'],
       purpose: json['purpose'],
-      timeIn: json['time_in'],
-      timeOut: json['time_out'],
-      qrCodeData: json['qr_code_data'] as int,
-      approvalStatus: json['approval_status'],
+      timeIn: json['timeIn'],
+      timeOut: json['timeOut'],
+      qrCodeData: json['qrCodeData'],
+      approvalStatus: json['approvalStatus'],
     );
   }
 }

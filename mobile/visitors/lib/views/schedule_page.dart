@@ -23,7 +23,7 @@ class SchedulePage extends StatefulWidget {
 class _SchedulePageState extends State<SchedulePage> {
   Visit? visit;
   bool isLoading = true;
-  String? userEmail;
+  String? userId;
   WebSocketChannel? channel;
   final String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
@@ -38,25 +38,22 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   void initState() {
     super.initState();
-    loadUserEmailAndFetchVisit().then((_) {
-      if (userEmail != null) {
+    loadUserIdAndFetchVisit().then((_) {
+      if (userId != null) {
         connectWebSocket();
       }
     });
   }
 
   void connectWebSocket() {
-    // Remove trailing `/api` if present
     final base = baseUrl.replaceFirst('/api', '');
     final wsUrl = '${base.replaceFirst('http', 'ws')}/ws/updates';
-    print(wsUrl);
 
     channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
     channel!.stream.listen((message) {
-      print('WebSocket message: $message');
-      if (message == 'update' && userEmail != null) {
-        fetchVisit(userEmail!);
+      if (message == 'update' && userId != null) {
+        fetchVisit(userId!);
       }
     }, onError: (error) {
       print('WebSocket error: $error');
@@ -71,31 +68,54 @@ class _SchedulePageState extends State<SchedulePage> {
     super.dispose();
   }
 
-  Future<void> fetchVisit(String email) async {
+  Future<void> fetchVisit(String userId) async {
     try {
-      final response =
-          await http.get(Uri.parse('$baseUrl/visitor-schedule?email=$email'));
+      print('Fetching visit for userId: $userId');
+      final url = '$baseUrl/visitor-schedule?id=$userId';
+
+      final response = await http.get(Uri.parse(url));
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          visit = Visit.fromJson(data);
-          isLoading = false;
-        });
+
+        // Check if data is not empty and contains required fields
+        if (data != null && data is Map<String, dynamic>) {
+          try {
+            final visitData = Visit.fromJson(data);
+            setState(() {
+              visit = visitData;
+              isLoading = false;
+            });
+          } catch (parseError) {
+            setState(() {
+              visit = null;
+              isLoading = false;
+            });
+          }
+        } else {
+          print('Data is null, empty, or not a Map');
+          setState(() {
+            visit = null;
+            isLoading = false;
+          });
+        }
       } else if (response.statusCode == 404) {
+        print('No visit found (404)');
         setState(() {
           visit = null;
           isLoading = false;
         });
       } else {
-        print('Unexpected error: ${response.statusCode}');
+        print('Unexpected error: ${response.statusCode} - ${response.body}');
         setState(() {
           visit = null;
           isLoading = false;
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Network/Exception error: $e');
       setState(() {
         visit = null;
         isLoading = false;
@@ -103,12 +123,12 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
-  Future<void> loadUserEmailAndFetchVisit() async {
+  Future<void> loadUserIdAndFetchVisit() async {
     final prefs = await SharedPreferences.getInstance();
-    userEmail = prefs.getString('email');
+    userId = prefs.getInt('userId')?.toString();
 
-    if (userEmail != null && userEmail!.isNotEmpty) {
-      await fetchVisit(userEmail!);
+    if (userId != null) {
+      await fetchVisit(userId!);
     } else {
       // Handle the case when email is not found
       setState(() {
@@ -131,7 +151,7 @@ class _SchedulePageState extends State<SchedulePage> {
         backgroundColor: const Color(0xFFF3F6FB),
         body: SafeArea(
           child: RefreshIndicator(
-            onRefresh: () => fetchVisit(userEmail ?? ''),
+            onRefresh: () => fetchVisit(userId ?? ''),
             child: ListView(
               padding: const EdgeInsets.only(bottom: 100),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -151,81 +171,40 @@ class _SchedulePageState extends State<SchedulePage> {
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding:
-                      const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                      const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1C274C),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
-                      QrImageView(
-                        data: visit!.qrCodeData.toString(),
-                        version: QrVersions.auto,
-                        size: 120.0,
-                        backgroundColor: Colors.white,
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        color: Colors.white,
+                        size: 60,
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
+                      const Text(
+                        'No Schedule Found',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            infoRow('Host Name', visit!.hostName),
-                            infoRow('Departments', visit!.department),
-                            infoRow('Purpose', visit!.purpose),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                ScheduleTimeBox(
-                                  label: 'Expected Time In',
-                                  time: formatTimeToAmPm(visit!.timeIn),
-                                  color: Colors.green,
-                                ),
-                                ScheduleTimeBox(
-                                  label: 'Expected Time Out',
-                                  time: formatTimeToAmPm(visit!.timeOut),
-                                  color: Colors.red,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Center(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    visit!.approvalStatus,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1C274C),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  if (visit!.approvalStatus == "Approved")
-                                    const Icon(Icons.check_circle,
-                                        color: Color(0xFF1C274C), size: 48),
-                                ],
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'You don\'t have any scheduled visits at the moment.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => const SchedulePage(),
-                              transitionDuration: Duration.zero,
-                            ),
-                          );
+                          fetchVisit(userId ?? '');
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text("Refresh"),
@@ -236,7 +215,7 @@ class _SchedulePageState extends State<SchedulePage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -252,7 +231,7 @@ class _SchedulePageState extends State<SchedulePage> {
       backgroundColor: const Color(0xFFF3F6FB),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => fetchVisit(userEmail ?? ''),
+          onRefresh: () => fetchVisit(userId ?? ''),
           child: ListView(
             padding: const EdgeInsets.only(bottom: 100),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -342,7 +321,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () {
-                        fetchVisit(userEmail ?? '');
+                        fetchVisit(userId ?? '');
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text("Refresh"),

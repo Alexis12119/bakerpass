@@ -493,7 +493,7 @@ async function visitors(fastify) {
 
   // Get Visitor Schedule
   fastify.get("/visitor-schedule", async (req, reply) => {
-    const { email } = req.query;
+    const { id } = req.query;
 
     const [rows] = await pool.execute(
       `
@@ -511,11 +511,11 @@ async function visitors(fastify) {
     JOIN purposes p ON p.id = vs.purpose_id
     JOIN time_slots ts ON ts.id = vs.time_slot_id
     JOIN approval_status a ON a.id = vs.approval_status_id
-    WHERE vi.email = ?
+    WHERE vs.id = ?
       AND a.name IN ('Approved', 'Waiting For Approval', 'Nurse Approved', 'Partial Approved')
     LIMIT 1
     `,
-      [email],
+      [id],
     );
 
     if (rows.length === 0) {
@@ -523,13 +523,13 @@ async function visitors(fastify) {
     }
 
     return {
-      host_name: rows[0].host_name,
+      hostName: rows[0].host_name,
       department: rows[0].department,
       purpose: rows[0].purpose,
-      time_in: rows[0].start_time,
-      time_out: rows[0].end_time,
-      approval_status: rows[0].approval_status,
-      qr_code_data: rows[0].visit_id, // Use visit id here instead of email
+      timeIn: rows[0].start_time,
+      timeOut: rows[0].end_time,
+      approvalStatus: rows[0].approval_status,
+      qrCodeData: rows[0].visit_id,
     };
   });
 

@@ -71,11 +71,6 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     return DateFormat('EEE, MMM d').format(parsed); // e.g., Tue, Jul 2
   }
 
-  String _weekdayShort(int weekday) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
-  }
-
   String _getSelectedTimeString() {
     final slot = timeSlots.firstWhere((s) => s['id'] == selectedTimeSlotId,
         orElse: () => null);
