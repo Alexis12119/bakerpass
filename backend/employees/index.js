@@ -143,6 +143,27 @@ async function employees(fastify) {
     }
   });
 
+  // Add a new available date (no time slots yet)
+  fastify.post("/timeslots/date", async (request, reply) => {
+    const { employeeId, date } = request.body;
+
+    if (!employeeId || !date) {
+      return reply.code(400).send({ error: "Missing employeeId or date" });
+    }
+
+    try {
+      // Optionally, insert a dummy timeslot with null times, or insert into a new `available_dates` table
+      await pool.execute(
+        "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, '', '')",
+        [employeeId, date],
+      );
+      reply.code(201).send({ message: "Date added" });
+    } catch (err) {
+      console.error("Error adding date:", err);
+      reply.code(500).send({ error: "Failed to add date" });
+    }
+  });
+
   // GET all time slots for an employee (with date)
   fastify.get("/employees/:id/timeslots", async (request, reply) => {
     const { id } = request.params;

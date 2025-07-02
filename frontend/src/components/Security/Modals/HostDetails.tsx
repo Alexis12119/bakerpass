@@ -18,7 +18,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   isOpen,
   onClose,
   host,
-  fetchVisitors,
+  fetchVisitorsByDate,
 }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -137,7 +137,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
         payload,
       );
       showSuccessToast("Visit created successfully.");
-      await fetchVisitors();
+      await fetchVisitorsByDate();
       onClose();
     } catch (error: any) {
       showErrorToast(`Error creating visit: ${error.message}`);

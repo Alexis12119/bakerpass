@@ -2,10 +2,7 @@ import React from "react";
 import VisitorCard from "@/components/Employee/Visitors/Cards";
 import { VisitorsListProps } from "@/types/Employee";
 
-const VisitorsList: React.FC<VisitorsListProps> = ({
-  groupedVisitors,
-  fetchVisitors,
-}) => {
+const VisitorsList: React.FC<VisitorsListProps> = ({ groupedVisitors }) => {
   return (
     <div className="bg-white p-4 max-h-[400px] overflow-y-auto w-full">
       {Object.keys(groupedVisitors).length > 0 ? (
@@ -20,10 +17,7 @@ const VisitorsList: React.FC<VisitorsListProps> = ({
                     key={visitor.id}
                     className="w-full min-w-[280px] max-w-xs flex-shrink-0"
                   >
-                    <VisitorCard
-                      visitor={visitor}
-                      fetchVisitors={fetchVisitors}
-                    />
+                    <VisitorCard visitor={visitor} />
                   </div>
                 ))}
               </div>

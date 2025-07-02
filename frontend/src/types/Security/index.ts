@@ -91,7 +91,7 @@ export interface HostDetailsModalProps {
     department: string;
     profileImage: string;
   };
-  fetchVisitors: () => Promise<void>;
+  fetchVisitorsByDate: () => Promise<void>;
 }
 
 export interface IDType {

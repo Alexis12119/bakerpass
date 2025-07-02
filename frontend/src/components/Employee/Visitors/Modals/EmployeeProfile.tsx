@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import { TimeSlot, EmployeeProfileModalProps } from "@/types/Employee/Profile";
 import { showErrorToast } from "@/utils/customToasts";
+import DatePicker from "react-datepicker";
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   Visitor: visitor,
@@ -148,6 +149,53 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
             Your Time Availability
           </h3>
 
+          <div className="mb-4">
+            <h4 className="text-black font-semibold mb-1">Add New Date</h4>
+            <div className="flex items-center gap-2">
+              <DatePicker
+                selected={newSlot.date ? new Date(newSlot.date) : null}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  setNewSlot((prev) => ({
+                    ...prev,
+                    date: date.toISOString().split("T")[0],
+                  }));
+                }}
+                minDate={new Date()}
+                placeholderText="Select a date"
+                className="text-black border rounded-md px-2 py-1"
+                dateFormat="MM/dd/yyyy"
+              />
+              <button
+                className="bg-green-600 text-white px-3 py-1 rounded-md"
+                onClick={async () => {
+                  if (!newSlot.date || groupedTimeSlots[newSlot.date]) return;
+
+                  try {
+                    await axios.post(
+                      `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots/date`,
+                      {
+                        employeeId,
+                        date: newSlot.date,
+                      },
+                    );
+
+                    await fetchTimeSlots();
+
+                    setOpenDates((prev) => ({ ...prev, [newSlot.date]: true }));
+                    setDateScopedSlot((prev) => ({
+                      ...prev,
+                      [newSlot.date]: { startTime: "", endTime: "" },
+                    }));
+                  } catch (err: any) {
+                    showErrorToast(`Error adding date: ${err.message}`);
+                  }
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
           <div className="max-h-48 overflow-y-auto pr-2 space-y-4">
             {Object.keys(groupedTimeSlots).length === 0 ? (
               <p className="text-black">No time slots available</p>

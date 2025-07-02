@@ -94,7 +94,7 @@ const VisitorsSection: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchVisitors();
+    fetchVisitorsByDate();
   }, [currentDate]);
 
   const handlePreviousDate = () => {
@@ -113,7 +113,7 @@ const VisitorsSection: React.FC = () => {
     });
   };
 
-  const fetchVisitors = async (forNurse = false) => {
+  const fetchVisitorsByDate = async (forNurse = false) => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
@@ -164,7 +164,7 @@ const VisitorsSection: React.FC = () => {
           console.log("📡 WebSocket data received:", data);
 
           if (data.type === "update") {
-            fetchVisitors();
+            fetchVisitorsByDate();
 
             if (data.notify) {
               const { status, message } = data.notify;
@@ -206,7 +206,7 @@ const VisitorsSection: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    fetchVisitors();
+    fetchVisitorsByDate();
   }, []);
 
   const filteredVisitors = useMemo(() => {

@@ -121,7 +121,7 @@ const SecurityGuardPage: React.FC = () => {
         },
       );
 
-      await fetchVisitors();
+      await fetchVisitorsByDate();
     } catch (error) {
       console.error("Error toggling visitor status:", error);
     }
@@ -142,7 +142,7 @@ const SecurityGuardPage: React.FC = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visits/${selectedVisitor.id}/approval`,
         { statusName: action },
       );
-      await fetchVisitors();
+      await fetchVisitorsByDate();
       showSuccessToast(`Visitor successfully ${action}.`);
     } catch (error: any) {
       showErrorToast(
@@ -166,7 +166,7 @@ const SecurityGuardPage: React.FC = () => {
     }
   };
 
-  const fetchVisitors = async (forNurse = false) => {
+  const fetchVisitorsByDate = async (forNurse = false) => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
@@ -235,7 +235,7 @@ const SecurityGuardPage: React.FC = () => {
           console.log("📡 WebSocket data received:", data);
 
           if (data.type === "update") {
-            fetchVisitors();
+            fetchVisitorsByDate();
 
             if (data.notify) {
               const { status, message } = data.notify;
@@ -276,14 +276,14 @@ const SecurityGuardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchVisitors();
+    fetchVisitorsByDate();
     fetchPurposes();
     fetchDepartments();
     fetchApprovalStatuses();
   }, []);
 
   useEffect(() => {
-    fetchVisitors();
+    fetchVisitorsByDate();
   }, [currentDate]);
 
   const filteredVisitors = useMemo(() => {
@@ -332,7 +332,7 @@ const SecurityGuardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <TopBar fetchVisitors={fetchVisitors} />
+      <TopBar fetchVisitors={fetchVisitorsByDate} />
       <div className="p-4 md:p-6 flex-1">
         <div className="bg-white shadow-md rounded-lg p-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">

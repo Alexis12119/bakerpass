@@ -72,5 +72,4 @@ export interface VisitorProfileModalProps {
 
 export interface VisitorsListProps {
   groupedVisitors: Record<string, VisitorWithDropdown[]>;
-  fetchVisitors: () => void;
 }

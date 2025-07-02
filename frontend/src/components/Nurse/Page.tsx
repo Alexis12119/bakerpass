@@ -98,7 +98,7 @@ const NursePage: React.FC = () => {
         { nurseId },
       );
 
-      await fetchVisitors();
+      await fetchVisitorsByDate();
       showSuccessToast(`Successfully Submitted.`);
     } catch (error: any) {
       showErrorToast(`Failed to update approval: ${error.message}`);
@@ -140,7 +140,7 @@ const NursePage: React.FC = () => {
     }));
   };
 
-  const fetchVisitors = async (forNurse = true) => {
+  const fetchVisitorsByDate = async (forNurse = true) => {
     const date = sessionStorage.getItem("visitor_filter_date");
     try {
       const endpoint = forNurse
@@ -212,7 +212,7 @@ const NursePage: React.FC = () => {
           console.log("WebSocket data received:", data);
 
           if (data.type === "update") {
-            fetchVisitors();
+            fetchVisitorsByDate();
 
             if (data.notify) {
               const { status, message } = data.notify;
@@ -253,14 +253,14 @@ const NursePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchVisitors();
+    fetchVisitorsByDate();
     fetchPurposes();
     fetchDepartments();
     fetchApprovalStatuses();
   }, []);
 
   useEffect(() => {
-    fetchVisitors();
+    fetchVisitorsByDate();
   }, [currentDate]);
 
   const handlePreviousDate = () => {
