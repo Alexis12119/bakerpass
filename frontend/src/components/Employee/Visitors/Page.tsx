@@ -34,7 +34,7 @@ const EmployeeVisitorsPage: React.FC = () => {
       contactNumber: visitor.contact_number,
       address: visitor.address,
       purpose: visitor.purpose,
-      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
       department: visitor.employeeDepartment,
       expected_time: visitor.expected_time,
       timeIn: visitor.time_in || null,
@@ -230,7 +230,7 @@ const EmployeeVisitorsPage: React.FC = () => {
         [
           visitor.name,
           visitor.purpose,
-          visitor.host,
+          visitor.employee,
           visitor.department,
           visitor.status,
           visitor.approvalStatus,

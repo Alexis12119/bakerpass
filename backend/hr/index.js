@@ -1,35 +1,57 @@
 const { pool } = require("../lib/database");
 
 async function hr(fastify) {
-  // Get the visitors information
-  fastify.get("/hr/visit-stats", async (_req, _reply) => {
-    const [totalOccupants] = await pool.execute(`
-    SELECT COUNT(*) AS count FROM employees
-  `);
+  // Get the visitors statistics (with optional ?date=YYYY-MM-DD)
+  fastify.get("/hr/visit-stats", async (req, reply) => {
+    try {
+      const { date } = req.query;
 
-    const [thisMonthVisitors] = await pool.execute(`
-    SELECT COUNT(*) AS count FROM visits
-    WHERE MONTH(visit_date) = MONTH(CURRENT_DATE()) AND YEAR(visit_date) = YEAR(CURRENT_DATE())
-  `);
+      let dateParam = new Date(); // default to today
+      if (date) {
+        dateParam = new Date(date);
+      }
 
-    const [dailyAvgVisitors] = await pool.execute(`
-    SELECT ROUND(COUNT(*) / DAY(LAST_DAY(CURRENT_DATE())), 0) AS avg
-    FROM visits
-    WHERE MONTH(visit_date) = MONTH(CURRENT_DATE()) AND YEAR(visit_date) = YEAR(CURRENT_DATE())
-  `);
+      const year = dateParam.getFullYear();
+      const month = dateParam.getMonth() + 1;
 
-    const [lastMonthVisitors] = await pool.execute(`
-    SELECT COUNT(*) AS count FROM visits
-    WHERE MONTH(visit_date) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH)
-      AND YEAR(visit_date) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)
-  `);
+      const previousMonth = new Date(dateParam);
+      previousMonth.setMonth(previousMonth.getMonth() - 1);
+      const lastMonth = previousMonth.getMonth() + 1;
+      const lastMonthYear = previousMonth.getFullYear();
 
-    return {
-      totalOccupants: totalOccupants[0].count,
-      thisMonthVisitors: thisMonthVisitors[0].count,
-      dailyAvgVisitors: dailyAvgVisitors[0].avg,
-      lastMonthVisitors: lastMonthVisitors[0].count,
-    };
+      const [totalOccupants] = await pool.execute(`
+      SELECT COUNT(*) AS count FROM employees
+    `);
+
+      const [thisMonthVisitors] = await pool.execute(
+        `SELECT COUNT(*) AS count FROM visits
+       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+        [month, year],
+      );
+
+      const [dailyAvgVisitors] = await pool.execute(
+        `SELECT ROUND(COUNT(*) / DAY(LAST_DAY(?)), 0) AS avg
+       FROM visits
+       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+        [dateParam, month, year],
+      );
+
+      const [lastMonthVisitors] = await pool.execute(
+        `SELECT COUNT(*) AS count FROM visits
+       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+        [lastMonth, lastMonthYear],
+      );
+
+      return {
+        totalOccupants: totalOccupants[0].count,
+        thisMonthVisitors: thisMonthVisitors[0].count,
+        dailyAvgVisitors: dailyAvgVisitors[0].avg,
+        lastMonthVisitors: lastMonthVisitors[0].count,
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ message: "Internal Server Error" });
+    }
   });
 }
 

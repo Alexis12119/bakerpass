@@ -59,13 +59,14 @@ async function employees(fastify) {
     }
   });
 
-  // Fetch Hosts
-  fastify.get("/employees/hosts", async (request, reply) => {
+  // Fetch only employees who were already assigned to visits
+  fastify.get("/employees/all", async (request, reply) => {
     try {
       const { search, departmentId } = request.query;
+
       let query = `
       SELECT 
-        e.id, 
+        DISTINCT e.id, 
         e.first_name,
         e.last_name,
         e.department_id,
@@ -73,32 +74,99 @@ async function employees(fastify) {
         e.profile_image_url
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
+      INNER JOIN visits v ON v.visited_employee_id = e.id
     `;
-      let queryParams = [];
 
-      // Apply departmentId filter if provided
+      const conditions = [];
+      const queryParams = [];
+
       if (departmentId && departmentId !== "All") {
-        query += " WHERE e.department_id = ?";
+        conditions.push("e.department_id = ?");
         queryParams.push(departmentId);
       }
 
-      // Apply search filter if provided
       if (search) {
-        query += queryParams.length ? " AND" : " WHERE";
-        query +=
-          " (e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)";
+        conditions.push(
+          "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)",
+        );
         queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
 
-      // Execute the query
+      if (conditions.length) {
+        query += " WHERE " + conditions.join(" AND ");
+      }
+
+      query += " ORDER BY e.first_name ASC, e.last_name ASC";
+
       const [rows] = await pool.execute(query, queryParams);
 
-      // Return the list of hosts with department name
       return reply.send(
         rows.map((row) => ({
           id: row.id,
-          name: `${row.first_name} ${row.last_name}`, // Full name of the host
-          department: row.departmentName, // Use the department name
+          name: `${row.first_name} ${row.last_name}`,
+          department: row.departmentName,
+          profileImage: row.profile_image_url,
+        })),
+      );
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ message: "Internal Server Error" });
+    }
+  });
+
+  // Fetch Hosts with at least one available time slot
+  fastify.get("/employees/available", async (request, reply) => {
+    try {
+      const { search, departmentId } = request.query;
+
+      let query = `
+      SELECT 
+        DISTINCT e.id, 
+        e.first_name,
+        e.last_name,
+        e.department_id,
+        d.name AS departmentName,
+        e.profile_image_url
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
+      INNER JOIN time_slots ts ON ts.employee_id = e.id
+      LEFT JOIN (
+        SELECT time_slot_id FROM visits WHERE time_slot_id IS NOT NULL
+      ) AS booked ON booked.time_slot_id = ts.id
+    `;
+
+      const conditions = [
+        "booked.time_slot_id IS NULL", // Ensure time slot is unbooked
+        "ts.start_time IS NOT NULL AND ts.start_time != ''", // Valid start time
+        "ts.end_time IS NOT NULL AND ts.end_time != ''", // Valid end time
+      ];
+      const queryParams = [];
+
+      if (departmentId && departmentId !== "All") {
+        conditions.push("e.department_id = ?");
+        queryParams.push(departmentId);
+      }
+
+      if (search) {
+        conditions.push(
+          "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.email LIKE ?)",
+        );
+        queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      }
+
+      if (conditions.length) {
+        query += " WHERE " + conditions.join(" AND ");
+      }
+
+      query += " ORDER BY e.first_name ASC, e.last_name ASC";
+
+      const [rows] = await pool.execute(query, queryParams);
+
+      return reply.send(
+        rows.map((row) => ({
+          id: row.id,
+          name: `${row.first_name} ${row.last_name}`,
+          department: row.departmentName,
           profileImage: row.profile_image_url,
         })),
       );

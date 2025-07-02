@@ -10,8 +10,8 @@ import { showErrorToast } from "@/utils/customToasts";
 const Filters: React.FC<FiltersProps> = ({
   searchQuery,
   setSearchQuery,
-  selectedHost,
-  setSelectedHost,
+  selectedEmployee,
+  setSelectedEmployee,
   selectedPurpose,
   setSelectedPurpose,
   selectedDepartment,
@@ -19,7 +19,9 @@ const Filters: React.FC<FiltersProps> = ({
   selectedApprovalStatus,
   setSelectedApprovalStatus,
 }) => {
-  const [hosts, setHosts] = useState<{ id: string; name: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
+    [],
+  );
   const [purposes, setPurposes] = useState<{ id: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<
     { id: string; name: string }[]
@@ -32,18 +34,18 @@ const Filters: React.FC<FiltersProps> = ({
     const fetchData = async () => {
       try {
         const [
-          hostsResponse,
+          employeeResponse,
           purposesResponse,
           departmentsResponse,
           approvalStatuses,
         ] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`),
           axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
           axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
           axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
         ]);
 
-        setHosts(hostsResponse.data);
+        setEmployees(employeeResponse.data);
         setPurposes(purposesResponse.data);
         setDepartments(departmentsResponse.data);
         setApprovalStatuses(approvalStatuses.data);
@@ -64,7 +66,7 @@ const Filters: React.FC<FiltersProps> = ({
     filterType: string,
   ) => {
     const value = event.target.value;
-    if (filterType === "host") setSelectedHost(value);
+    if (filterType === "employee") setSelectedEmployee(value);
     if (filterType === "purpose") setSelectedPurpose(value);
     if (filterType === "department") setSelectedDepartment(value);
     if (filterType === "approvalStatus") setSelectedApprovalStatus(value);
@@ -86,10 +88,10 @@ const Filters: React.FC<FiltersProps> = ({
       {/* Dropdown Filters */}
       {[
         {
-          label: "Host",
-          options: hosts,
-          state: selectedHost,
-          type: "host",
+          label: "Employee",
+          options: employees,
+          state: selectedEmployee,
+          type: "employee",
         },
         {
           label: "Purpose",

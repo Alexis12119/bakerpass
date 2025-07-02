@@ -29,7 +29,7 @@ const SecurityGuardPage: React.FC = () => {
   const [_departments, setDepartments] = useState<
     { id: number; name: string }[]
   >([]);
-  const [selectedHost, setSelectedHost] = useState("All");
+  const [selectedEmployee, setSelectedEmployee] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
@@ -54,7 +54,7 @@ const SecurityGuardPage: React.FC = () => {
       id: visitor.visit_id,
       name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
       purpose: visitor.purpose,
-      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
       department: visitor.employeeDepartment,
       expectedTime:
         visitor.expected_time ||
@@ -298,7 +298,7 @@ const SecurityGuardPage: React.FC = () => {
           selectedApprovalStatus.toLowerCase();
 
       return (
-        (selectedHost === "All" || visitor.host === selectedHost) &&
+        (selectedEmployee === "All" || visitor.employee === selectedEmployee) &&
         purposeMatches &&
         (selectedDepartment === "All" ||
           visitor.department === selectedDepartment) &&
@@ -312,7 +312,7 @@ const SecurityGuardPage: React.FC = () => {
         [
           visitor.name,
           visitor.purpose,
-          visitor.host,
+          visitor.employee,
           visitor.department,
           visitor.status,
           visitor.approvalStatus,
@@ -324,7 +324,7 @@ const SecurityGuardPage: React.FC = () => {
   }, [
     visitors,
     searchQuery,
-    selectedHost,
+    selectedEmployee,
     selectedPurpose,
     selectedDepartment,
     selectedApprovalStatus,
@@ -332,7 +332,7 @@ const SecurityGuardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <TopBar fetchVisitors={fetchVisitorsByDate} />
+      <TopBar fetchVisitorsByDate={fetchVisitorsByDate} />
       <div className="p-4 md:p-6 flex-1">
         <div className="bg-white shadow-md rounded-lg p-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
@@ -366,8 +366,8 @@ const SecurityGuardPage: React.FC = () => {
             <Filters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
-              selectedHost={selectedHost}
-              setSelectedHost={setSelectedHost}
+              selectedEmployee={selectedEmployee}
+              setSelectedEmployee={setSelectedEmployee}
               selectedPurpose={selectedPurpose}
               setSelectedPurpose={setSelectedPurpose}
               selectedDepartment={selectedDepartment}

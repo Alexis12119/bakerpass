@@ -12,7 +12,7 @@ import { TopBarProps, SecurityWithDropdown } from "@/types/Security";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
-const TopBar = ({ fetchVisitors }: TopBarProps) => {
+const TopBar = ({ fetchVisitorsByDate: fetchVisitorsByDate }: TopBarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -303,7 +303,7 @@ const TopBar = ({ fetchVisitors }: TopBarProps) => {
       <NewVisitModal
         isOpen={isNewVisitModalOpen}
         onClose={() => setIsNewVisitModalOpen(false)}
-        fetchVisitors={fetchVisitors}
+        fetchVisitorsByDate={fetchVisitorsByDate}
       />
       <SecurityProfileModal
         visitor={security}

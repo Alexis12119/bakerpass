@@ -1,13 +1,13 @@
 export interface SearchFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedHost: string;
-  setSelectedHost: (host: string) => void;
+  selectedEmployee: string;
+  setSelectedEmployee: (host: string) => void;
   selectedPurpose: string;
   setSelectedPurpose: (purpose: string) => void;
   selectedDepartment: string;
   setSelectedDepartment: (department: string) => void;
-  hosts: any[];
+  employees: any[];
   purposes: any[];
   departments: any[];
   approvalStatuses: any[];
@@ -24,7 +24,7 @@ export interface Visitor {
   id: string;
   name: string;
   purpose: string;
-  host: string;
+  employee: string;
   department: string;
   expectedTime: string;
   timeIn: string | null;

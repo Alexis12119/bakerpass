@@ -8,13 +8,13 @@ import { SearchFiltersProps } from "@/types/HumanResources/Dashboard";
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   searchQuery,
   setSearchQuery,
-  selectedHost,
-  setSelectedHost,
+  selectedEmployee,
+  setSelectedEmployee,
   selectedPurpose,
   setSelectedPurpose,
   selectedDepartment,
   setSelectedDepartment,
-  hosts,
+  employees,
   purposes,
   departments,
   approvalStatuses,
@@ -39,10 +39,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
       {[
         {
-          label: "Host",
-          options: hosts.map((h) => h.name),
-          state: selectedHost,
-          setState: setSelectedHost,
+          label: "Employee",
+          options: employees.map((h) => h.name),
+          state: selectedEmployee,
+          setState: setSelectedEmployee,
         },
         {
           label: "Purpose",

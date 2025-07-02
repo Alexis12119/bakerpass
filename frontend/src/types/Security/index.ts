@@ -2,7 +2,7 @@ export interface Visitor {
   id: string;
   name: string;
   purpose: string;
-  host: string;
+  employee: string;
   department: string;
   expectedTime: string;
   timeIn: string | null;
@@ -26,8 +26,8 @@ export interface VisitorWithDropdown extends Visitor {
 export interface FiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedHost: string;
-  setSelectedHost: (host: string) => void;
+  selectedEmployee: string;
+  setSelectedEmployee: (employee: string) => void;
   selectedPurpose: string;
   setSelectedPurpose: (purpose: string) => void;
   selectedDepartment: string;
@@ -74,18 +74,18 @@ export interface SecurityWithDropdown extends Security {
 }
 
 export interface TopBarProps {
-  fetchVisitors: () => Promise<void>;
+  fetchVisitorsByDate: () => Promise<void>;
 }
-export interface Host {
+export interface Employee {
   id: string;
   name: string;
   department: string;
   profileImage: string;
 }
-export interface HostDetailsModalProps {
+export interface EmployeeDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  host: {
+  employee: {
     id: string;
     name: string;
     department: string;

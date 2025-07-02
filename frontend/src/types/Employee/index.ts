@@ -2,7 +2,7 @@ export interface Visitor {
   id: string;
   name: string;
   purpose: string;
-  host: string;
+  employee: string;
   department: string;
   expected_time: string;
   timeIn: string | null;

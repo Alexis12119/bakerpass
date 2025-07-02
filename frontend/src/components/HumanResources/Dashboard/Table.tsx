@@ -42,7 +42,7 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
         <div>Status</div>
         <div>Visitor's Name</div>
         <div>Purpose</div>
-        <div>Host Name</div>
+        <div>Employee Name</div>
         <div>Department</div>
         <div>Expected Time</div>
         <div>Time In</div>
@@ -106,9 +106,9 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                 {visitor.purpose || "Not specified"}
               </div>
 
-              {/* Host Name */}
+              {/* Employee Name */}
               <div className="flex items-center justify-center text-sm">
-                {visitor.host}
+                {visitor.employee}
               </div>
 
               {/* Department */}

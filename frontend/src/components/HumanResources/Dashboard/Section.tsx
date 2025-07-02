@@ -12,7 +12,7 @@ interface Visitor {
   id: string;
   name: string;
   purpose: string;
-  host: string;
+  employee: string;
   department: string;
   expectedTime: string;
   timeIn: string | null;
@@ -39,13 +39,15 @@ const VisitorsSection: React.FC = () => {
   const [approvalStatuses, setApprovalStatuses] = useState<
     { id: string; name: string }[]
   >([]);
-  const [hosts, setHosts] = useState<{ id: string; name: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
+    [],
+  );
   const [purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
   const [departments, setDepartments] = useState<
     { id: number; name: string }[]
   >([]);
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
-  const [selectedHost, setSelectedHost] = useState("All");
+  const [selectedEmployee, setSelectedEmployee] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
@@ -53,18 +55,18 @@ const VisitorsSection: React.FC = () => {
   const fetchData = async () => {
     try {
       const [
-        hostsResponse,
+        employeesResponse,
         purposesResponse,
         departmentsResponse,
         approvalStatusesResponse,
       ] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`),
         axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
         axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
         axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
       ]);
 
-      setHosts(hostsResponse.data);
+      setEmployees(employeesResponse.data);
       setPurposes(purposesResponse.data);
       setDepartments(departmentsResponse.data);
       setApprovalStatuses(approvalStatusesResponse.data);
@@ -78,7 +80,7 @@ const VisitorsSection: React.FC = () => {
       id: visitor.visit_id,
       name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
       purpose: visitor.purpose,
-      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
       department: visitor.employeeDepartment,
       expectedTime:
         visitor.expected_time ||
@@ -97,10 +99,18 @@ const VisitorsSection: React.FC = () => {
     fetchVisitorsByDate();
   }, [currentDate]);
 
+  const updateCurrentDate = (newDate: string) => {
+    setCurrentDate(newDate);
+    sessionStorage.setItem("visitor_filter_date", newDate);
+
+    // Dispatch event to notify DashboardCards
+    window.dispatchEvent(new CustomEvent("dateChanged"));
+  };
+
   const handlePreviousDate = () => {
     setCurrentDate((prev: string) => {
       const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
-      sessionStorage.setItem("visitor_filter_date", newDate);
+      updateCurrentDate(newDate);
       return newDate;
     });
   };
@@ -108,7 +118,7 @@ const VisitorsSection: React.FC = () => {
   const handleNextDate = () => {
     setCurrentDate((prev: string) => {
       const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
-      sessionStorage.setItem("visitor_filter_date", newDate);
+      updateCurrentDate(newDate);
       return newDate;
     });
   };
@@ -221,7 +231,7 @@ const VisitorsSection: React.FC = () => {
           selectedApprovalStatus.toLowerCase();
 
       return (
-        (selectedHost === "All" || visitor.host === selectedHost) &&
+        (selectedEmployee === "All" || visitor.employee === selectedEmployee) &&
         purposeMatches &&
         (selectedDepartment === "All" ||
           visitor.department === selectedDepartment) &&
@@ -235,7 +245,7 @@ const VisitorsSection: React.FC = () => {
         [
           visitor.name,
           visitor.purpose,
-          visitor.host,
+          visitor.employee,
           visitor.department,
           visitor.status,
           visitor.approvalStatus,
@@ -247,7 +257,7 @@ const VisitorsSection: React.FC = () => {
   }, [
     visitors,
     searchQuery,
-    selectedHost,
+    selectedEmployee,
     selectedPurpose,
     selectedDepartment,
     selectedApprovalStatus,
@@ -272,7 +282,7 @@ const VisitorsSection: React.FC = () => {
                 if (date) {
                   const formatted = format(date, "yyyy-MM-dd");
                   setCurrentDate(formatted);
-                  sessionStorage.setItem("visitor_filter_date", formatted);
+                  updateCurrentDate(formatted);
                 }
               }}
               dateFormat="MMMM dd, yyyy"
@@ -287,13 +297,13 @@ const VisitorsSection: React.FC = () => {
           <SearchFilters
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            selectedHost={selectedHost}
-            setSelectedHost={setSelectedHost}
+            selectedEmployee={selectedEmployee}
+            setSelectedEmployee={setSelectedEmployee}
             selectedPurpose={selectedPurpose}
             setSelectedPurpose={setSelectedPurpose}
             selectedDepartment={selectedDepartment}
             setSelectedDepartment={setSelectedDepartment}
-            hosts={hosts}
+            employees={employees}
             purposes={purposes}
             departments={departments}
             approvalStatuses={approvalStatuses}

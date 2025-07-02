@@ -30,7 +30,7 @@ const NursePage: React.FC = () => {
   const [_departments, setDepartments] = useState<
     { id: number; name: string }[]
   >([]);
-  const [selectedHost, setSelectedHost] = useState("All");
+  const [selectedEmployee, setSelectedEmployee] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
@@ -125,7 +125,7 @@ const NursePage: React.FC = () => {
       id: visitor.visit_id,
       name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
       purpose: visitor.purpose,
-      host: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
+      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
       department: visitor.employeeDepartment,
       expectedTime:
         visitor.expected_time ||
@@ -291,7 +291,7 @@ const NursePage: React.FC = () => {
           selectedApprovalStatus.toLowerCase();
 
       return (
-        (selectedHost === "All" || visitor.host === selectedHost) &&
+        (selectedEmployee === "All" || visitor.employee === selectedEmployee) &&
         purposeMatches &&
         (selectedDepartment === "All" ||
           visitor.department === selectedDepartment) &&
@@ -305,7 +305,7 @@ const NursePage: React.FC = () => {
         [
           visitor.name,
           visitor.purpose,
-          visitor.host,
+          visitor.employee,
           visitor.department,
           visitor.status,
           visitor.approvalStatus,
@@ -318,7 +318,7 @@ const NursePage: React.FC = () => {
   }, [
     visitors,
     searchQuery,
-    selectedHost,
+    selectedEmployee,
     selectedPurpose,
     selectedDepartment,
     selectedApprovalStatus,
@@ -360,8 +360,8 @@ const NursePage: React.FC = () => {
             <Filters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
-              selectedHost={selectedHost}
-              setSelectedHost={setSelectedHost}
+              selectedEmployee={selectedEmployee}
+              setSelectedEmployee={setSelectedEmployee}
               selectedPurpose={selectedPurpose}
               setSelectedPurpose={setSelectedPurpose}
               selectedDepartment={selectedDepartment}

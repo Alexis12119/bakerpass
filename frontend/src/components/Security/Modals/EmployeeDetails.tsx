@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Laptop, Smartphone, Tablet, Package, User } from "lucide-react";
-import { HostDetailsModalProps } from "@/types/Security";
+import { EmployeeDetailsModalProps } from "@/types/Security";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 import TimeSlotModal from "@/components/Security/Modals/TimeSlot";
 
@@ -14,10 +14,10 @@ const iconMap: { [key: string]: React.ReactNode } = {
   Others: <Package className="w-8 h-8 text-gray-700 mb-2" />,
 };
 
-const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
+const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   isOpen,
   onClose,
-  host,
+  employee,
   fetchVisitorsByDate,
 }) => {
   const [firstName, setFirstName] = useState("");
@@ -61,7 +61,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
     const fetchAvailableTimeSlots = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hosts/${host.id}/available-timeslots`,
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hosts/${employee.id}/available-timeslots`,
         );
         setTimeSlots(response.data);
       } catch (error: any) {
@@ -82,7 +82,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       setOtherDevice("");
       setDeviceBrand("");
     }
-  }, [isOpen, host.id]);
+  }, [isOpen, employee.id]);
 
   const handleSubmit = async () => {
     const selectedTime = timeSlots.find((slot) => slot.id === selectedTimeSlot);
@@ -119,7 +119,7 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
       email,
       contactNumber: "",
       address: "",
-      visitedEmployeeId: host.id,
+      visitedEmployeeId: employee.id,
       visitPurposeId,
       selectedTimeSlot, // still useful if your backend uses it
       selectedDate: date, // explicit date
@@ -167,13 +167,13 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
           <X size={20} />
         </button>
 
-        {/* Host profile */}
+        {/* Employee profile */}
         <div className="bg-[#0D1F72] p-6 flex flex-col items-center">
           <div className="w-22 h-22 relative rounded-full bg-white overflow-hidden mb-2">
-            {host.profileImage?.trim() ? (
+            {employee.profileImage?.trim() ? (
               <Image
-                src={host.profileImage}
-                alt="Host image"
+                src={employee.profileImage}
+                alt="Employee image"
                 layout="fill"
                 objectFit="cover"
                 className="h-full w-full"
@@ -185,10 +185,10 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
             )}
           </div>
           <h3 className="text-white font-semibold text-lg text-center">
-            {host.name}
+            {employee.name}
           </h3>
           <p className="text-[#1C274C] text-sm text-center">
-            {host.department}
+            {employee.department}
           </p>
         </div>
 
@@ -364,4 +364,4 @@ const HostDetailsModal: React.FC<HostDetailsModalProps> = ({
   );
 };
 
-export default HostDetailsModal;
+export default EmployeeDetailsModal;

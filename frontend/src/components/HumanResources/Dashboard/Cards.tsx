@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { Users, Calendar, BarChart, Pencil } from "lucide-react";
 import axios from "axios";
@@ -15,10 +13,25 @@ const DashboardCards: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const handleDateChange = () => {
+      fetchStats();
+    };
+
+    window.addEventListener("dateChanged", handleDateChange);
+
+    return () => {
+      window.removeEventListener("dateChanged", handleDateChange);
+    };
+  }, []);
+
   const fetchStats = async () => {
     try {
+      // Read from sessionStorage
+      const date = sessionStorage.getItem("visitor_filter_date");
+
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/visit-stats`,
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/visit-stats?date=${date}`,
       );
       setStats(response.data);
     } catch (error: any) {
@@ -53,7 +66,7 @@ const DashboardCards: React.FC = () => {
 
       socket.onerror = (e) => {
         console.error("❗WebSocket error", e);
-        socket.close(); // triggers onclose
+        socket.close();
       };
 
       socket.onclose = () => {

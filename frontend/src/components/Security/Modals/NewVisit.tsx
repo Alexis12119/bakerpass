@@ -1,33 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import axios from "axios";
-import HostDetailsModal from "@/components/Security/Modals/HostDetails";
+import EmployeeDetailsModal from "@/components/Security/Modals/EmployeeDetails";
 import Image from "next/image";
 import { User } from "lucide-react";
-import { Host } from "@/types/Security";
+import { Employee } from "@/types/Security";
 import { showErrorToast } from "@/utils/customToasts";
 import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 
 const NewVisitModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  fetchVisitors: () => Promise<void>;
-}> = ({ isOpen, onClose, fetchVisitors }) => {
-  const [availableHosts, setAvailableHosts] = useState<Host[]>([]);
+  fetchVisitorsByDate: () => Promise<void>;
+}> = ({ isOpen, onClose, fetchVisitorsByDate: fetchVisitorsByDate }) => {
+  const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedHost, setSelectedHost] = useState<Host | null>(null);
-  const [showHostDetails, setShowHostDetails] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchHosts = async () => {
+  const fetchAvailableEmployees = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/hosts`,
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/available`,
       );
-      setAvailableHosts(response.data);
+      setAvailableEmployees(response.data);
     } catch (err) {
-      showErrorToast("Failed to fetch hosts.");
+      showErrorToast("Failed to fetch employees.");
     } finally {
       setLoading(false);
     }
@@ -35,20 +37,20 @@ const NewVisitModal: React.FC<{
 
   useEffect(() => {
     if (!isOpen) return;
-    fetchHosts();
+    fetchAvailableEmployees();
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const filteredHosts = availableHosts.filter(
-    (host) =>
-      host.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      host.department.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredEmployees = availableEmployees.filter(
+    (employee) =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.department.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleHostClick = (host: Host) => {
-    setSelectedHost(host);
-    setShowHostDetails(true);
+  const handleEmployeeClick = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowEmployeeDetails(true);
   };
 
   return (
@@ -56,7 +58,7 @@ const NewVisitModal: React.FC<{
       <div className="relative bg-white rounded-lg shadow-xl w-[90%] max-w-sm sm:max-w-md p-4 border border-black overflow-y-auto max-h-[90vh]">
         <div className="p-4 flex justify-between items-center">
           <h2 className="text-lg text-black font-semibold">
-            List of Available Hosts
+            List of Available Employees
           </h2>
           <button
             onClick={onClose}
@@ -84,20 +86,20 @@ const NewVisitModal: React.FC<{
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2">
             {loading ? (
               <div className="col-span-2 flex justify-center py-20">
-                <DualRingSpinner message="Loading hosts..." />
+                <DualRingSpinner message="Loading employees..." />
               </div>
-            ) : filteredHosts.length > 0 ? (
-              filteredHosts.map((host, index) => (
+            ) : filteredEmployees.length > 0 ? (
+              filteredEmployees.map((employee, index) => (
                 <div
                   key={index}
                   className="flex items-center p-3 border rounded-md hover:bg-gray-50 cursor-pointer text-[#1C274C]"
-                  onClick={() => handleHostClick(host)}
+                  onClick={() => handleEmployeeClick(employee)}
                 >
                   <div className="h-10 w-10 relative rounded-full bg-gray-200 mr-3 overflow-hidden">
-                    {host.profileImage?.trim() ? (
+                    {employee.profileImage?.trim() ? (
                       <Image
-                        src={host.profileImage}
-                        alt="Host image"
+                        src={employee.profileImage}
+                        alt="Employee image"
                         layout="fill"
                         objectFit="cover"
                         className="h-full w-full"
@@ -109,27 +111,27 @@ const NewVisitModal: React.FC<{
                     )}
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-medium text-sm">{host.name}</span>
+                    <span className="font-medium text-sm">{employee.name}</span>
                     <span className="text-xs text-gray-500">
-                      {host.department} {/* Display the department name */}
+                      {employee.department} {/* Display the department name */}
                     </span>
                   </div>
                 </div>
               ))
             ) : (
               <div className="col-span-2 flex items-center justify-center h-full py-16 text-gray-500">
-                No hosts found matching your search.
+                No employees found matching your search.
               </div>
             )}
           </div>
         </div>
       </div>
-      {showHostDetails && selectedHost && (
-        <HostDetailsModal
-          isOpen={showHostDetails}
-          onClose={() => setShowHostDetails(false)}
-          host={selectedHost}
-          fetchVisitors={fetchVisitors}
+      {showEmployeeDetails && selectedEmployee && (
+        <EmployeeDetailsModal
+          isOpen={showEmployeeDetails}
+          onClose={() => setShowEmployeeDetails(false)}
+          employee={selectedEmployee}
+          fetchVisitorsByDate={fetchVisitorsByDate}
         />
       )}
     </div>

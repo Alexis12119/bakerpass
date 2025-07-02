@@ -52,7 +52,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
         <div>Status</div>
         <div>Visitor's Name</div>
         <div>Purpose</div>
-        <div>Host Name</div>
+        <div>Employee Name</div>
         <div>Department</div>
         <div>Expected Time</div>
         <div>Time In</div>
@@ -136,7 +136,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                 {visitor.purpose || "Not specified"}
               </div>
               <div className="flex items-center justify-center text-sm">
-                {visitor.host}
+                {visitor.employee}
               </div>
               <div className="flex items-center justify-center text-sm">
                 {visitor.department}
