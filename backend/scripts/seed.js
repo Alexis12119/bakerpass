@@ -44,11 +44,11 @@ const defaultUsers = {
   ],
   visitors: [
     {
-      first_name: "Visitor",
-      last_name: "One",
-      email: "visitor1@example.com",
-      contact_number: "09171234567",
-      address: "Makati City",
+      first_name: "Alex",
+      last_name: "Corporal",
+      email: "alex@gmail.com",
+      contact_number: "09171231234", // ← You can change this if needed
+      address: "Quezon City", // ← You can change this if needed
     },
   ],
 };
@@ -107,10 +107,17 @@ async function seed() {
 
     const insertUsers = async (table, usersList) => {
       for (const user of usersList) {
-        const data = {
-          ...user,
-          password: passwordHash,
-        };
+        const data = { ...user };
+
+        if (
+          table === "employees" ||
+          table === "nurses" ||
+          table === "visitors" ||
+          table === "security_guards" ||
+          table === "human_resources"
+        ) {
+          data.password = passwordHash;
+        }
 
         if (table !== "employees") {
           delete data.department_id;

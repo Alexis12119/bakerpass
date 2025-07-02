@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class HostDetailsModal extends StatefulWidget {
   final bool isOpen;
@@ -38,6 +39,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   List<dynamic> timeSlots = [];
   String? profileImage;
 
+  Map<String, List<dynamic>> groupedTimeSlots = {};
   // Step 2 - Device selection
   List<String> selectedDevices = [];
   String otherDevice = '';
@@ -62,6 +64,23 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     if (widget.isOpen) {
       _initializeModal();
     }
+  }
+
+  String formatDate(String date) {
+    final parsed = DateTime.parse(date);
+    return DateFormat('EEE, MMM d').format(parsed); // e.g., Tue, Jul 2
+  }
+
+  String _weekdayShort(int weekday) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days[weekday - 1];
+  }
+
+  String _getSelectedTimeString() {
+    final slot = timeSlots.firstWhere((s) => s['id'] == selectedTimeSlotId,
+        orElse: () => null);
+    if (slot == null) return '';
+    return "${formatTime(slot['start_time'])} - ${formatTime(slot['end_time'])}";
   }
 
   Future<void> _loadProfileImage() async {
@@ -102,9 +121,19 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       final response = await http.get(
         Uri.parse('$baseUrl/hosts/${widget.host['id']}/available-timeslots'),
       );
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body) as List;
+
       setState(() {
         timeSlots = data;
+        groupedTimeSlots = {};
+
+        for (final slot in data) {
+          final date = slot['date'];
+          if (!groupedTimeSlots.containsKey(date)) {
+            groupedTimeSlots[date] = [];
+          }
+          groupedTimeSlots[date]!.add(slot);
+        }
       });
     } catch (e) {
       print('Error fetching time slots: $e');
@@ -123,11 +152,27 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     final prefs = await SharedPreferences.getInstance();
     final firstName = prefs.getString('firstName') ?? '';
     final lastName = prefs.getString('lastName') ?? '';
-    final email = prefs.getString('email') ?? '';
+    final email =
+        '${firstName.toLowerCase()}.${lastName.toLowerCase()}@walkin.local';
     final contactNumber = prefs.getString('contactNumber') ?? '';
     final address = prefs.getString('address') ?? '';
 
-    // Validation logic
+    final selectedTime = timeSlots.firstWhere(
+      (slot) => slot['id'] == selectedTimeSlotId,
+      orElse: () => null,
+    );
+
+    if (selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selected time slot is invalid.')),
+      );
+      return;
+    }
+
+    final String date = selectedTime['date'];
+    final String startTime = selectedTime['start_time'];
+    final String endTime = selectedTime['end_time'];
+
     if (firstName.isEmpty ||
         lastName.isEmpty ||
         visitPurposeId == null ||
@@ -141,14 +186,12 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       return;
     }
 
-    // Build device type string
     String deviceType = selectedDevices.contains('Others')
         ? [...selectedDevices.where((d) => d != 'Others'), otherDevice]
             .join(', ')
         : selectedDevices.join(', ');
 
-    // Simplified payload without high care fields
-    final Map<String, dynamic> visitorData = {
+    final Map<String, dynamic> payload = {
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
@@ -157,6 +200,9 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       'visitedEmployeeId': widget.host['id'],
       'visitPurposeId': visitPurposeId,
       'selectedTimeSlot': selectedTimeSlotId,
+      'selectedDate': date,
+      'startTime': startTime,
+      'endTime': endTime,
       'deviceType': deviceType,
       'deviceBrand': deviceBrand,
     };
@@ -165,7 +211,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
       final response = await http.post(
         Uri.parse('$baseUrl/visits'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(visitorData),
+        body: jsonEncode(payload),
       );
 
       if (response.statusCode == 201) {
@@ -303,6 +349,65 @@ class HostDetailsModalState extends State<HostDetailsModal> {
     }
   }
 
+  void _openTimeSlotModal(BuildContext context, String date) {
+    final slots = groupedTimeSlots[date] ?? [];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          height: 300,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  'Select Time Slot (${formatDate(date)})',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: slots.map((slot) {
+                    final isSelected = selectedTimeSlotId == slot['id'];
+                    return ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() => selectedTimeSlotId = slot['id']);
+                        Navigator.pop(context);
+                      },
+                      icon: isSelected
+                          ? const Icon(Icons.check, size: 16)
+                          : const SizedBox.shrink(),
+                      label: Text(
+                        "${formatTime(slot['start_time'])} - ${formatTime(slot['end_time'])}",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isSelected ? primaryColor : Colors.grey[200],
+                        foregroundColor:
+                            isSelected ? Colors.white : Colors.black,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildStep1() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +473,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
 
         const SizedBox(height: 20),
         const Text(
-          "Host's Time Availability",
+          "Choose Date of Visit",
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -376,66 +481,31 @@ class HostDetailsModalState extends State<HostDetailsModal> {
           ),
         ),
         const SizedBox(height: 20),
-
-        // Time slots grid or fallback message
-        timeSlots.isEmpty
-            ? const Text(
-                'No available time slots.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.redAccent,
-                ),
-              )
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: timeSlots.length,
-                itemBuilder: (context, index) {
-                  final slot = timeSlots[index];
-                  final isSelected = selectedTimeSlotId == slot['id'];
-                  final timeString =
-                      "${formatTime(slot['start_time'])} - ${formatTime(slot['end_time'])}";
-
-                  return GestureDetector(
-                    onTap: () =>
-                        setState(() => selectedTimeSlotId = slot['id']),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? primaryColor : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected ? primaryColor : Colors.grey[300]!,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          if (isSelected)
-                            const Icon(Icons.check,
-                                color: Colors.white, size: 16),
-                          if (isSelected) const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              timeString,
-                              style: TextStyle(
-                                color:
-                                    isSelected ? Colors.white : Colors.black87,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+        // Folder-style date buttons
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: groupedTimeSlots.keys.map((date) {
+            return ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[200],
+                foregroundColor: Colors.black,
               ),
+              onPressed: () => _openTimeSlotModal(context, date),
+              child: Text(
+                formatDate(date),
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 16),
+        if (selectedTimeSlotId != null)
+          Text(
+            "Selected Time: ${_getSelectedTimeString()}",
+            style: const TextStyle(fontSize: 14, color: Colors.green),
+          ),
       ],
     );
   }
