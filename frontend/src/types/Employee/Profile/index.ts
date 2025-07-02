@@ -18,5 +18,4 @@ export interface EmployeeProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileImageUrl?: string;
-  employeeId?: string;
 }

@@ -5,10 +5,11 @@ import EmployeeProfileModal from "@/components/Employee/Visitors/Modals/Employee
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, PlusIcon } from "lucide-react";
 import { useRouter } from "next/router";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 import { DualRingSpinner } from "@/components/common/DualRingSpinner";
+import EmployeeScheduleModal from "@/components/Employee/Visitors/Modals/EmployeeScheduleModal";
 
 interface Employee {
   id: string;
@@ -35,6 +36,7 @@ const TopBar = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -254,7 +256,15 @@ const TopBar = () => {
                       <span>Profile</span>
                     </div>
                   </li>
-
+                  <li
+                    onClick={() => setIsScheduleModalOpen(true)}
+                    className="px-4 py-2 hover:bg-gray-100 text-[#1C274C] text-sm text-center font-semibold cursor-pointer"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <PlusIcon className="w-5 h-5 text-[#221371]" />
+                      <span>Manage Schedule</span>
+                    </div>
+                  </li>
                   <li
                     onClick={() => setIsConfirmLogoutOpen(true)}
                     className="px-4 py-2 hover:bg-gray-100 text-[#1C274C] text-sm text-center font-semibold cursor-pointer"
@@ -284,9 +294,15 @@ const TopBar = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         profileImageUrl={user?.profileImage}
-        employeeId={user?.id || ""}
       />
 
+      <EmployeeScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        profileImageUrl={user?.profileImage}
+        employeeId={user?.id || ""}
+        Visitor={visitor}
+      />
       {isLoggingOut && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity">
           <DualRingSpinner message="Logging out..." />

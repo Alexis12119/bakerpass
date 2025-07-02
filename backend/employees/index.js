@@ -256,10 +256,13 @@ async function employees(fastify) {
     }
 
     try {
+      const formattedDate = new Date(date).toISOString().split("T")[0];
+
       await pool.execute(
         "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
-        [employeeId, date, startTime, endTime],
+        [employeeId, formattedDate, startTime, endTime],
       );
+
       reply.code(201).send({ message: "Time slot added" });
     } catch (err) {
       console.error("Error adding time slot:", err);
@@ -277,9 +280,11 @@ async function employees(fastify) {
     }
 
     try {
+      const formattedDate = new Date(date).toISOString().split("T")[0];
+
       const [result] = await pool.execute(
         "UPDATE time_slots SET employee_id = ?, date = ?, start_time = ?, end_time = ? WHERE id = ?",
-        [employeeId, date, startTime, endTime, id],
+        [employeeId, formattedDate, startTime, endTime, id],
       );
 
       if (result.affectedRows === 0) {
