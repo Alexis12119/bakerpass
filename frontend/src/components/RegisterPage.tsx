@@ -95,6 +95,11 @@ const RegisterPage = () => {
         error.message?.includes("Network Error")
       ) {
         showErrorToast("Server is unreachable. Please check your connection.");
+      } else if (error?.response?.status === 429) {
+        // Custom message for rate limiting
+        showErrorToast(
+          "Too many registration attempts. Please wait 5 minutes before trying again.",
+        );
       } else if (error?.response?.data?.message) {
         showErrorToast(error.response.data.message);
       } else if (error?.message) {

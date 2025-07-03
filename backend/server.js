@@ -12,7 +12,7 @@ const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
 
 const fastify = require("fastify")({
-  trustProxy: true,
+  trustProxy: ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"], // Trust Docker networks
   logger: {
     transport: {
       target: "pino-pretty",
@@ -22,6 +22,22 @@ const fastify = require("fastify")({
         ignore: "pid,hostname",
       },
     },
+  },
+});
+
+fastify.register(require("@fastify/rate-limit"), {
+  max: 3, // 3 requests
+  timeWindow: "5 minutes", // per 5 minutes
+  skipOnError: true,
+  addHeadersOnExceeding: {
+    "x-ratelimit-limit": true,
+    "x-ratelimit-remaining": true,
+    "x-ratelimit-reset": true,
+  },
+  addHeaders: {
+    "x-ratelimit-limit": true,
+    "x-ratelimit-remaining": true,
+    "x-ratelimit-reset": true,
   },
 });
 

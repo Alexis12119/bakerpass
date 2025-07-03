@@ -31,7 +31,22 @@ const ForgotPasswordPage = () => {
 
       router.push(`/verify-otp?email=${email}&role=${role}`);
     } catch (error: any) {
-      showErrorToast(error.response?.data?.message || "Something went wrong.");
+      if (
+        error.code === "ECONNREFUSED" ||
+        error.message?.includes("Network Error")
+      ) {
+        showErrorToast("Server is unreachable. Please check your connection.");
+      } else if (error?.response?.status === 429) {
+        showErrorToast(
+          "Too many password reset attempts. Please wait 5 minutes.",
+        );
+      } else if (error?.response?.data?.message) {
+        showErrorToast(error.response.data.message);
+      } else if (error?.message) {
+        showErrorToast(`Password reset failed: ${error.message}`);
+      } else {
+        showErrorToast("Something went wrong. Please try again.");
+      }
     }
   };
 
