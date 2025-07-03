@@ -72,7 +72,14 @@ const LoginPage = () => {
         () => {
           setIsSigningIn(false);
 
-          if (error?.response?.status === 502) {
+          if (
+            error.code === "ECONNREFUSED" ||
+            error.message?.includes("Network Error")
+          ) {
+            showErrorToast(
+              "Cannot connect to the server. Please check your connection.",
+            );
+          } else if (error?.response?.status === 502) {
             showErrorToast(
               "Server temporarily unavailable. Please try again later.",
             );
@@ -87,8 +94,6 @@ const LoginPage = () => {
             );
           } else if (error?.response?.data?.message) {
             showErrorToast(error.response.data.message);
-          } else if (error?.message) {
-            showErrorToast(`Connection error: ${error.message}`);
           } else {
             showErrorToast("Login failed. Please try again.");
           }

@@ -22,6 +22,7 @@ const RegisterPage = () => {
   const [allDepartments, setAllDepartments] = useState<
     { id: number; name: string }[]
   >([]);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -30,7 +31,17 @@ const RegisterPage = () => {
           `${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`,
         );
         setAllDepartments(res.data);
-      } catch (err) {
+      } catch (err: any) {
+        if (
+          err.code === "ECONNREFUSED" ||
+          err.message?.includes("Network Error")
+        ) {
+          showErrorToast(
+            "Cannot connect to the server. Please try again later.",
+          );
+        } else {
+          showErrorToast("Failed to load departments.");
+        }
         console.error("Failed to load departments", err);
       }
     };
@@ -69,7 +80,7 @@ const RegisterPage = () => {
       role,
       departmentId: role === "Employee" ? parseInt(department) : undefined, // Send departmentId only if the role is Employee
     };
-
+    setIsRegistering(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/register`,
@@ -78,8 +89,21 @@ const RegisterPage = () => {
 
       showSuccessToast(response.data.message);
       router.push("/login");
-    } catch (error) {
-      showErrorToast("Registration failed");
+    } catch (error: any) {
+      if (
+        error.code === "ECONNREFUSED" ||
+        error.message?.includes("Network Error")
+      ) {
+        showErrorToast("Server is unreachable. Please check your connection.");
+      } else if (error?.response?.data?.message) {
+        showErrorToast(error.response.data.message);
+      } else if (error?.message) {
+        showErrorToast(`Registration failed: ${error.message}`);
+      } else {
+        showErrorToast("Registration failed. Please try again.");
+      }
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -283,9 +307,17 @@ const RegisterPage = () => {
         {/* Register Button */}
         <button
           onClick={handleRegister}
-          className="w-full bg-[#1C274C] text-white py-3 rounded-md mt-4 font-semibold transition-shadow"
+          className="w-full bg-[#1C274C] text-white py-3 rounded-md mt-4 font-semibold transition-shadow flex items-center justify-center"
+          disabled={isRegistering}
         >
-          Register
+          {isRegistering ? (
+            <div className="relative w-5 h-5">
+              <div className="absolute w-full h-full border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="absolute w-full h-full border-2 border-dashed border-[#F3F6FB] border-t-transparent rounded-full animate-[spin_2s_linear_infinite]" />
+            </div>
+          ) : (
+            "Register"
+          )}
         </button>
 
         <div className="text-center mt-4">

@@ -30,6 +30,11 @@ fastify.register(require("@fastify/multipart"), {
   },
 });
 
+// Health check
+fastify.get("/health", async (_request, reply) => {
+  return reply.send({ status: "ok" });
+});
+
 // Register CORS
 fastify.register(cors, {
   origin: process.env.FRONTEND_URL || "http://localhost:3000",

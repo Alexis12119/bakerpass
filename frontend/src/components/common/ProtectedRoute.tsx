@@ -79,11 +79,20 @@ export default function ProtectedRoute({
           }, 500);
         }
       } catch (error: any) {
-        sessionStorage.clear();
-        showErrorToast("Session expired. Please login again.");
-        setTimeout(() => {
-          router.replace("/login");
-        }, 1500);
+        if (
+          error.code === "ECONNREFUSED" ||
+          error.message?.includes("Network Error")
+        ) {
+          showErrorToast(
+            "Cannot reach the server. Please check your connection.",
+          );
+        } else {
+          showErrorToast("Session expired. Please login again.");
+          sessionStorage.clear();
+          setTimeout(() => {
+            router.replace("/login");
+          }, 1500);
+        }
       }
     };
 
@@ -99,13 +108,21 @@ export default function ProtectedRoute({
         await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/verify`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-      } catch {
-        sessionStorage.clear();
-        showErrorToast("Session expired. Please login again.");
+      } catch (error: any) {
         clearInterval(checkInterval);
-        setTimeout(() => {
-          router.replace("/login");
-        }, 1500);
+
+        if (
+          error.code === "ECONNREFUSED" ||
+          error.message?.includes("Network Error")
+        ) {
+          showErrorToast("Backend server is unreachable.");
+        } else {
+          sessionStorage.clear();
+          showErrorToast("Session expired. Please login again.");
+          setTimeout(() => {
+            router.replace("/login");
+          }, 1500);
+        }
       }
     }, 10000); // every 10 seconds
 

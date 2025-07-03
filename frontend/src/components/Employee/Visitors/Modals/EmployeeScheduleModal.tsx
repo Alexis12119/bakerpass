@@ -125,7 +125,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
           <h3 className="text-black font-semibold mb-2">Manage Schedule</h3>
 
           {Object.keys(groupedTimeSlots).length === 0 ? (
-            <p className="text-black">No time slots available</p>
+            <p className="text-black">No dates available.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {Object.keys(groupedTimeSlots).map((date) => (
