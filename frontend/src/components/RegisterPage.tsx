@@ -7,6 +7,7 @@ import Image from "next/image";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { handleAxiosError } from "@/utils/handleAxiosError";
 
 const RegisterPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -90,23 +91,9 @@ const RegisterPage = () => {
       showSuccessToast(response.data.message);
       router.push("/login");
     } catch (error: any) {
-      if (
-        error.code === "ECONNREFUSED" ||
-        error.message?.includes("Network Error")
-      ) {
-        showErrorToast("Server is unreachable. Please check your connection.");
-      } else if (error?.response?.status === 429) {
-        // Custom message for rate limiting
-        showErrorToast(
-          "Too many registration attempts. Please wait 5 minutes before trying again.",
-        );
-      } else if (error?.response?.data?.message) {
-        showErrorToast(error.response.data.message);
-      } else if (error?.message) {
-        showErrorToast(`Registration failed: ${error.message}`);
-      } else {
-        showErrorToast("Registration failed. Please try again.");
-      }
+      handleAxiosError(error, {
+        fallbackMessage: "Registration failed. Please try again.",
+      });
     } finally {
       setIsRegistering(false);
     }

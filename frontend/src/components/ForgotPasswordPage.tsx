@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
-import { showErrorToast } from "@/utils/customToasts";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { handleAxiosError } from "@/utils/handleAxiosError";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -29,24 +30,17 @@ const ForgotPasswordPage = () => {
         throw new Error("No role returned from server.");
       }
 
+      showSuccessToast("OTP Sent to your Email");
       router.push(`/verify-otp?email=${email}&role=${role}`);
     } catch (error: any) {
-      if (
-        error.code === "ECONNREFUSED" ||
-        error.message?.includes("Network Error")
-      ) {
-        showErrorToast("Server is unreachable. Please check your connection.");
-      } else if (error?.response?.status === 429) {
-        showErrorToast(
-          "Too many password reset attempts. Please wait 5 minutes.",
-        );
-      } else if (error?.response?.data?.message) {
-        showErrorToast(error.response.data.message);
-      } else if (error?.message) {
-        showErrorToast(`Password reset failed: ${error.message}`);
-      } else {
-        showErrorToast("Something went wrong. Please try again.");
-      }
+      // This if for forgot password page
+      handleAxiosError(error, {
+        fallbackMessage: "Forgot Password Failed. Please try again.",
+        statusMessages: {
+          400: "Email Not Found",
+          502: "Server temporarily unavailable. Please try again later.",
+        },
+      });
     }
   };
 

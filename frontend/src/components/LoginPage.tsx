@@ -79,7 +79,6 @@ const LoginPage = () => {
               "Cannot connect to the server. Please check your connection.",
             statusMessages: {
               401: "Invalid credentials.",
-              429: "Too many attempts. You can only try 3 times every 5 minutes. Please wait and try again.",
               502: "Server temporarily unavailable. Please try again later.",
             },
           });

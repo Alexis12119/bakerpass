@@ -26,8 +26,7 @@ const fastify = require("fastify")({
 });
 
 fastify.register(require("@fastify/rate-limit"), {
-  max: 3, // 3 requests
-  timeWindow: "5 minutes", // per 5 minutes
+  global: false,
   skipOnError: true,
   addHeadersOnExceeding: {
     "x-ratelimit-limit": true,

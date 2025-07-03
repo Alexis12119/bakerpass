@@ -17,7 +17,27 @@ export function handleAxiosError(error: any, options: AxiosErrorOptions = {}) {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
 
-    // Custom status message map (like 401, 429, 502)
+    // Handle 429 Rate Limit with dynamic retry time
+    if (status === 429) {
+      const errorMessage = error.response?.data?.message || error.message;
+
+      // Extract retry time from Fastify's error message
+      const retryMatch = errorMessage.match(/retry in (\d+) minutes?/);
+      if (retryMatch) {
+        const minutes = parseInt(retryMatch[1]);
+        const message = `Too many attempts. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`;
+        showErrorToast(message);
+        return;
+      }
+
+      // Fallback for 429 if no retry time found
+      showErrorToast(
+        statusMessages[429] || "Too many attempts. Please wait and try again.",
+      );
+      return;
+    }
+
+    // Custom status message map (like 401, 502)
     if (status && statusMessages[status]) {
       showErrorToast(statusMessages[status]);
       return;
