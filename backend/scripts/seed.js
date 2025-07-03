@@ -188,6 +188,8 @@ async function seed() {
         const availableHours = Array.from({ length: 10 }, (_, i) => i + 7); // 07–16
         faker.helpers.shuffle(availableHours);
 
+        const usedTimes = new Set();
+
         const numSlots = faker.number.int({ min: 3, max: 6 });
 
         for (let s = 0; s < numSlots && availableHours.length > 0; s++) {
@@ -197,6 +199,10 @@ async function seed() {
 
           const pad = (n) => String(n).padStart(2, "0");
           const start = `${pad(startHour)}:00:00`;
+
+          if (usedTimes.has(start)) continue;
+          usedTimes.add(start);
+
           const end = `${pad(endHour)}:00:00`;
 
           const slotId = await insert("time_slots", {
@@ -321,37 +327,21 @@ async function seed() {
     await insertUsers("nurses", defaultUsers.nurses);
     await insertUsers("security_guards", defaultUsers.security_guards);
     await insertUsers("visitors", defaultUsers.visitors);
+
     // Extend Default Users With Data Like Faker Accounts
     const defaultEmployeeId = employeeIds[0]; // First employee is Alexis Corporal
     const defaultNurseId = nurseIds[0]; // First nurse is Sarah Cruz
     const defaultVisitorId = visitorIds[0]; // First visitor is Alex Corporal
 
-    // Generate time slots for default employee
-    const defaultTimeSlots = [];
-    const defaultDates = [new Date(), new Date(Date.now() + 86400000)]; // today + tomorrow
+    // Reuse already generated time slots
+    const defaultTimeSlots = employeeTimeSlotsMap.get(defaultEmployeeId);
 
-    for (const dateObj of defaultDates) {
-      const date = dateObj.toISOString().split("T")[0];
-      const hours = [9, 10, 11, 13, 14]; // 9AM–3PM, skipping lunch
+    // Pick the first available slot
+    const selectedSlot = defaultTimeSlots?.[0];
 
-      for (const hour of hours) {
-        const pad = (n) => String(n).padStart(2, "0");
-        const start = `${pad(hour)}:00:00`;
-        const end = `${pad(hour + 1)}:00:00`;
-
-        const slotId = await insert("time_slots", {
-          employee_id: defaultEmployeeId,
-          date,
-          start_time: start,
-          end_time: end,
-        });
-
-        defaultTimeSlots.push({ id: slotId, start, end, date });
-      }
+    if (!selectedSlot) {
+      throw new Error("No available time slot found for default employee.");
     }
-
-    // Pick a time slot for a default visit
-    const selectedSlot = defaultTimeSlots[0]; // First available
 
     // Format to 12-hour format
     function to12HourFormat(timeStr) {
