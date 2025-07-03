@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Dialog } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import axios from "axios";
 import { IDType, VisitorIDModalProps } from "@/types/Security";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 const VisitorIDModal: React.FC<VisitorIDModalProps> = ({
   isOpen,
@@ -24,10 +25,19 @@ const VisitorIDModal: React.FC<VisitorIDModalProps> = ({
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-          <Dialog.Title className="text-black text-lg font-semibold text-center mb-4">
+        <DialogPanel className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+            aria-label="Close"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+
+          <DialogTitle className="text-black text-lg font-semibold text-center mb-4">
             Please provide the visitor's valid ID type
-          </Dialog.Title>
+          </DialogTitle>
 
           <select
             value={selectedId ?? ""}
@@ -61,7 +71,7 @@ const VisitorIDModal: React.FC<VisitorIDModalProps> = ({
               Submit
             </button>
           </div>
-        </Dialog.Panel>
+        </DialogPanel>
       </div>
     </Dialog>
   );
