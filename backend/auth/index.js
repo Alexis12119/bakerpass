@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
-const { pool } = require("../lib/database"); // Correct relative path
+const { pool } = require("../lib/database");
 
 const roleToTable = {
   Employee: "employees",
@@ -11,10 +11,8 @@ const roleToTable = {
   Visitor: "visitors",
 };
 
-// OTP Handling
 const otpStore = {};
 
-// Configure Nodemailer
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -36,29 +34,30 @@ async function auth(fastify) {
     const tableName = roleToTable[role];
 
     if (!tableName) {
+      fastify.log.warn({ email, role }, "Invalid role during registration");
       return reply.status(400).send({ message: "Invalid role" });
     }
 
     try {
-      // Check if email is already taken
       const [rows] = await pool.query(
         `SELECT * FROM ${tableName} WHERE email = ?`,
         [email],
       );
       if (rows.length > 0) {
+        fastify.log.warn({ email }, "Attempt to register existing email");
         return reply.status(400).send({ message: "Email already registered" });
       }
 
-      // Validate password length
       if (password.length < 8) {
-        return reply.status(400).send({
-          message: "Password must be at least 8 characters long.",
-        });
+        fastify.log.warn({ email }, "Weak password");
+        return reply
+          .status(400)
+          .send({ message: "Password must be at least 8 characters long." });
       }
 
-      // If role is Employee, validate departmentId
       if (role === "Employee") {
         if (!departmentId) {
+          fastify.log.warn({ email }, "Missing department for employee");
           return reply
             .status(400)
             .send({ message: "Department ID is required for employees" });
@@ -68,16 +67,14 @@ async function auth(fastify) {
           "SELECT name FROM departments WHERE id = ?",
           [departmentId],
         );
-
         if (deptRows.length === 0) {
+          fastify.log.warn({ departmentId }, "Invalid department ID");
           return reply.status(400).send({ message: "Invalid department ID" });
         }
       }
 
-      // Hash the password
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-      // Insert user
       if (role === "Employee") {
         await pool.query(
           `INSERT INTO ${tableName} (email, password, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?)`,
@@ -90,9 +87,10 @@ async function auth(fastify) {
         );
       }
 
+      fastify.log.info({ email, role }, "Registration successful");
       return reply.status(201).send({ message: "Registration successful!" });
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error({ err: error, email }, "Error during registration");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });
@@ -118,22 +116,25 @@ async function auth(fastify) {
 
         if (rows.length > 0) {
           const user = rows[0];
-
           const isPasswordValid = await bcrypt.compare(password, user.password);
+
           if (!isPasswordValid) {
+            fastify.log.warn({ email, role }, "Invalid password");
             return reply.status(401).send({ message: "Invalid password" });
           }
 
           const token = fastify.jwt.sign(
             {
               id: user.id,
-              role: role,
+              role,
               firstName: user.first_name,
               lastName: user.last_name,
               profileImage: user.profile_image_url,
             },
             { expiresIn: "1h" },
           );
+
+          fastify.log.info({ email, role }, "Login successful");
 
           if (role === "Visitor") {
             return reply.status(200).send({
@@ -146,21 +147,18 @@ async function auth(fastify) {
               contactNumber: user.contact_number,
               address: user.address,
               profileImage: user.profile_image_url,
-              role: role,
-            });
-          } else {
-            // For other roles, just send message and token
-            return reply.status(200).send({
-              message: "Login successful",
-              token,
+              role,
             });
           }
+
+          return reply.status(200).send({ message: "Login successful", token });
         }
       }
 
+      fastify.log.warn({ email }, "Login failed: email not found");
       return reply.status(401).send({ message: "Invalid email or password" });
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error({ err: error, email }, "Error during login");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });
@@ -186,7 +184,6 @@ async function auth(fastify) {
           `SELECT * FROM ${table} WHERE email = ?`,
           [email],
         );
-
         if (rows.length > 0) {
           foundUser = rows[0];
           foundRole = role;
@@ -195,52 +192,33 @@ async function auth(fastify) {
       }
 
       if (!foundUser) {
+        fastify.log.warn({ email }, "Forgot password: email not found");
         return reply.status(400).send({ message: "Email not found." });
       }
 
       const otp = crypto.randomInt(100000, 999999).toString();
-
       otpStore[email] = {
         code: otp,
-        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+        expiresAt: Date.now() + 10 * 60 * 1000,
       };
 
       const mailOptions = {
         from: `"Franklin Baker Appointment System" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Your One-Time Password (OTP) for Password Reset",
-        text: `Hello,
-
-We received a request to reset the password for your ${foundRole} account.
-
-Your One-Time Password (OTP) is: ${otp}
-
-Please enter this code in the password reset form to proceed. This OTP will expire in 10 minutes.
-
-If you did not request a password reset, please ignore this email.
-
-Best regards,  
-Franklin Baker Appointment System Team`,
-        html: `
-      <p>Hello,</p>
-      <p>We received a request to reset the password for your <strong>${foundRole}</strong> account.</p>
-      <p><strong>Your One-Time Password (OTP) is:</strong></p>
-      <h2>${otp}</h2>
-      <p>Please enter this code in the password reset form to proceed. This OTP will expire in 10 minutes.</p>
-      <p>If you did not request a password reset, please ignore this email.</p>
-      <br />
-      <p>Best regards,<br/>Franklin Baker Appointment System Team</p>
-    `,
+        text: `Your OTP is: ${otp}`,
+        html: `<h2>${otp}</h2><p>This OTP will expire in 10 minutes.</p>`,
       };
 
       await transporter.sendMail(mailOptions);
 
+      fastify.log.info({ email }, "OTP sent for password reset");
       return reply.send({
         message: "OTP sent to your email.",
         role: foundRole,
       });
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error({ err: error, email }, "Error sending OTP");
       return reply.status(500).send({ message: "Error sending OTP." });
     }
   });
@@ -248,7 +226,6 @@ Franklin Baker Appointment System Team`,
   // Verify OTP
   fastify.post("/verify-otp", async (request, reply) => {
     const { email, otp } = request.body;
-
     const record = otpStore[email];
 
     if (!record) {
@@ -258,7 +235,7 @@ Franklin Baker Appointment System Team`,
     }
 
     if (Date.now() > record.expiresAt) {
-      delete otpStore[email]; // Clean up expired entry
+      delete otpStore[email];
       return reply
         .status(400)
         .send({ message: "OTP has expired. Please request a new one." });
@@ -268,8 +245,8 @@ Franklin Baker Appointment System Team`,
       return reply.status(400).send({ message: "Invalid OTP." });
     }
 
-    delete otpStore[email]; // Clean up after successful verification
-
+    delete otpStore[email];
+    fastify.log.info({ email }, "OTP verified successfully");
     return reply.send({ message: "OTP verified. Proceed to reset password." });
   });
 
@@ -289,8 +266,6 @@ Franklin Baker Appointment System Team`,
 
     try {
       const tableName = roleToTable[role];
-
-      // Fetch the existing user
       const [rows] = await pool.query(
         `SELECT * FROM ${tableName} WHERE email = ?`,
         [email],
@@ -301,29 +276,27 @@ Franklin Baker Appointment System Team`,
       }
 
       const user = rows[0];
-
-      // Check if the new password is the same as the old one
       const isSame = await bcrypt.compare(newPassword, user.password);
       if (isSame) {
-        return reply.status(400).send({
-          message: "New password must be different from the old one.",
-        });
+        return reply
+          .status(400)
+          .send({
+            message: "New password must be different from the old one.",
+          });
       }
 
-      // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
-
-      // Update the password
       await pool.query(`UPDATE ${tableName} SET password = ? WHERE email = ?`, [
         hashedPassword,
         email,
       ]);
 
+      fastify.log.info({ email }, "Password reset successful");
       return reply.send({
         message: "Password reset successful. You can now log in.",
       });
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error({ err: error, email }, "Error during password reset");
       return reply.status(500).send({ message: "Error resetting password." });
     }
   });

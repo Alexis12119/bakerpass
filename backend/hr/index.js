@@ -19,37 +19,45 @@ async function hr(fastify) {
       const lastMonth = previousMonth.getMonth() + 1;
       const lastMonthYear = previousMonth.getFullYear();
 
+      fastify.log.info(
+        `Generating visit stats for: currentMonth=${month}/${year}, previousMonth=${lastMonth}/${lastMonthYear}`,
+      );
+
       const [totalOccupants] = await pool.execute(`
-      SELECT COUNT(*) AS count FROM employees
-    `);
+        SELECT COUNT(*) AS count FROM employees
+      `);
 
       const [thisMonthVisitors] = await pool.execute(
         `SELECT COUNT(*) AS count FROM visits
-       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+         WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
         [month, year],
       );
 
       const [dailyAvgVisitors] = await pool.execute(
         `SELECT ROUND(COUNT(*) / DAY(LAST_DAY(?)), 0) AS avg
-       FROM visits
-       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+         FROM visits
+         WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
         [dateParam, month, year],
       );
 
       const [lastMonthVisitors] = await pool.execute(
         `SELECT COUNT(*) AS count FROM visits
-       WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
+         WHERE MONTH(visit_date) = ? AND YEAR(visit_date) = ?`,
         [lastMonth, lastMonthYear],
       );
 
-      return {
+      const result = {
         totalOccupants: totalOccupants[0].count,
         thisMonthVisitors: thisMonthVisitors[0].count,
         dailyAvgVisitors: dailyAvgVisitors[0].avg,
         lastMonthVisitors: lastMonthVisitors[0].count,
       };
+
+      fastify.log.info({ result }, "Visit stats generated successfully");
+
+      return result;
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error(error, "Error generating HR visit statistics");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });

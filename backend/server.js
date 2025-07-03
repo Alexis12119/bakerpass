@@ -1,6 +1,5 @@
 require("dotenv").config();
 const Fastify = require("fastify");
-const fastify = Fastify({ logger: true });
 const cors = require("@fastify/cors");
 const cloudinary = require("cloudinary").v2;
 const { pool } = require("./lib/database");
@@ -10,7 +9,23 @@ const visitors = require("./visitors/index");
 const nurse = require("./nurse/index");
 const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
+const { setLogger } = require("./utils/logger");
 
+const fastify = require("fastify")({
+  trustProxy: true,
+  logger: {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:standard",
+        ignore: "pid,hostname",
+      },
+    },
+  },
+});
+
+setLogger(fastify.log);
 fastify.register(auth);
 fastify.register(employees);
 fastify.register(visitors);

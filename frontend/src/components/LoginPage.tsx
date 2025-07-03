@@ -8,6 +8,7 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { showErrorToast } from "@/utils/customToasts";
+import { handleAxiosError } from "@/utils/handleAxiosError";
 
 const LoginPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -72,31 +73,16 @@ const LoginPage = () => {
         () => {
           setIsSigningIn(false);
 
-          if (
-            error.code === "ECONNREFUSED" ||
-            error.message?.includes("Network Error")
-          ) {
-            showErrorToast(
+          handleAxiosError(error, {
+            fallbackMessage: "Login failed. Please try again.",
+            connectionMessage:
               "Cannot connect to the server. Please check your connection.",
-            );
-          } else if (error?.response?.status === 502) {
-            showErrorToast(
-              "Server temporarily unavailable. Please try again later.",
-            );
-          } else if (error?.response?.status === 429) {
-            showErrorToast(
-              error.response.data.message ||
-                "Too many login attempts. Please try again later.",
-            );
-          } else if (error?.response?.status === 401) {
-            showErrorToast(
-              error.response.data.message || "Invalid credentials",
-            );
-          } else if (error?.response?.data?.message) {
-            showErrorToast(error.response.data.message);
-          } else {
-            showErrorToast("Login failed. Please try again.");
-          }
+            statusMessages: {
+              401: "Invalid credentials.",
+              429: "Too many login attempts. Please try again later.",
+              502: "Server temporarily unavailable. Please try again later.",
+            },
+          });
         },
         remaining > 0 ? remaining : 0,
       );

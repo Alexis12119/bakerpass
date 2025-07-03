@@ -124,7 +124,7 @@ export default function ProtectedRoute({
           }, 1500);
         }
       }
-    }, 10000); // every 10 seconds
+    }, 3600000); // every hour
 
     return () => clearInterval(checkInterval);
   }, []);

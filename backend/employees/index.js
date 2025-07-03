@@ -54,7 +54,7 @@ async function employees(fastify) {
         })),
       );
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error(error, "Error fetching employee list");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });
@@ -109,12 +109,12 @@ async function employees(fastify) {
         })),
       );
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error(error, "Error fetching employees assigned to visits");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });
 
-  // Fetch Hosts with at least one available time slot
+  // Fetch Employees with at least one available time slot
   fastify.get("/employees/available", async (request, reply) => {
     try {
       const { search, departmentId } = request.query;
@@ -136,9 +136,9 @@ async function employees(fastify) {
     `;
 
       const conditions = [
-        "booked.time_slot_id IS NULL", // Ensure time slot is unbooked
-        "ts.start_time IS NOT NULL AND ts.start_time != ''", // Valid start time
-        "ts.end_time IS NOT NULL AND ts.end_time != ''", // Valid end time
+        "booked.time_slot_id IS NULL",
+        "ts.start_time IS NOT NULL AND ts.start_time != ''",
+        "ts.end_time IS NOT NULL AND ts.end_time != ''",
       ];
       const queryParams = [];
 
@@ -171,12 +171,12 @@ async function employees(fastify) {
         })),
       );
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error(error, "Error fetching available hosts");
       return reply.status(500).send({ message: "Internal Server Error" });
     }
   });
 
-  // GET available time slots for a specific host
+  // GET available time slots for a specific employee
   fastify.get("/employees/:id/available-timeslots", async (request, reply) => {
     const { id } = request.params;
     const hostId = Number(id);
@@ -186,7 +186,6 @@ async function employees(fastify) {
     }
 
     try {
-      // Get all time slot IDs already used by this host
       const [takenSlots] = await pool.execute(
         `SELECT time_slot_id FROM visits WHERE visited_employee_id = ? AND time_slot_id IS NOT NULL`,
         [hostId],
@@ -194,7 +193,6 @@ async function employees(fastify) {
 
       const takenSlotIds = takenSlots.map((row) => row.time_slot_id);
 
-      // Get all available time slots not already booked
       const query = takenSlotIds.length
         ? `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
         : `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ?`;
@@ -206,12 +204,12 @@ async function employees(fastify) {
 
       reply.send(availableSlots);
     } catch (err) {
-      console.error("Error fetching available time slots:", err);
+      fastify.log.error(err, "Error fetching available time slots");
       reply.code(500).send({ error: "Failed to fetch available time slots" });
     }
   });
 
-  // Add a new available date (no time slots yet)
+  // Add a new available date
   fastify.post("/timeslots/date", async (request, reply) => {
     const { employeeId, date } = request.body;
 
@@ -220,17 +218,15 @@ async function employees(fastify) {
     }
 
     try {
-      // Check if time slot(s) already exist for this employee and date
       const [existing] = await pool.execute(
         "SELECT id FROM time_slots WHERE employee_id = ? AND date = ? LIMIT 1",
         [employeeId, date],
       );
 
       if (existing.length > 0) {
-        return reply.code(409).send({ error: "Date already exists" }); // Conflict
+        return reply.code(409).send({ error: "Date already exists" });
       }
 
-      // Insert dummy row with empty times
       await pool.execute(
         "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, '', '')",
         [employeeId, date],
@@ -238,12 +234,12 @@ async function employees(fastify) {
 
       reply.code(201).send({ message: "Date added" });
     } catch (err) {
-      console.error("Error adding date:", err);
+      fastify.log.error(err, "Error adding date");
       reply.code(500).send({ error: "Failed to add date" });
     }
   });
 
-  // GET all time slots for an employee (with date)
+  // GET all time slots for an employee
   fastify.get("/employees/:id/timeslots", async (request, reply) => {
     const { id } = request.params;
     try {
@@ -253,12 +249,12 @@ async function employees(fastify) {
       );
       reply.send(rows || []);
     } catch (err) {
-      console.error("Error fetching time slots:", err);
+      fastify.log.error(err, "Error fetching time slots");
       reply.code(500).send({ error: "Failed to fetch time slots" });
     }
   });
 
-  // Add a new time slot (with date)
+  // Add a new time slot
   fastify.post("/timeslots", async (request, reply) => {
     const { employeeId, date, startTime, endTime } = request.body;
 
@@ -269,7 +265,6 @@ async function employees(fastify) {
     const formattedDate = new Date(date).toISOString().split("T")[0];
 
     try {
-      // Check for exact match only
       const [conflicts] = await pool.execute(
         `
         SELECT id FROM time_slots
@@ -285,7 +280,6 @@ async function employees(fastify) {
         return reply.code(409).send({ error: "The Date was already Taken" });
       }
 
-      // Insert slot
       await pool.execute(
         "INSERT INTO time_slots (employee_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
         [employeeId, formattedDate, startTime, endTime],
@@ -293,12 +287,12 @@ async function employees(fastify) {
 
       reply.code(201).send({ message: "Time slot added" });
     } catch (err) {
-      console.error("Error adding time slot:", err);
+      fastify.log.error(err, "Error adding time slot");
       reply.code(500).send({ error: "Failed to add time slot" });
     }
   });
 
-  // Update a time slot (with date)
+  // Update a time slot
   fastify.put("/timeslots/:id", async (request, reply) => {
     const { id } = request.params;
     const { employeeId, date, startTime, endTime } = request.body;
@@ -309,7 +303,6 @@ async function employees(fastify) {
 
     const formattedDate = new Date(date).toISOString().split("T")[0];
     try {
-      // Prevent overlaps excluding self
       const [conflicts] = await pool.execute(
         `
         SELECT id FROM time_slots
@@ -322,7 +315,6 @@ async function employees(fastify) {
         [employeeId, formattedDate, id, startTime, endTime],
       );
 
-      console.log("Found conflicts:", conflicts);
       if (conflicts.length > 0) {
         return reply.code(409).send({
           error:
@@ -341,7 +333,7 @@ async function employees(fastify) {
 
       reply.send({ message: "Time slot updated successfully" });
     } catch (err) {
-      console.error("Error updating time slot:", err);
+      fastify.log.error(err, "Error updating time slot");
       reply.code(500).send({ error: "Failed to update time slot" });
     }
   });
@@ -361,7 +353,7 @@ async function employees(fastify) {
 
       reply.send({ message: "Time slot deleted" });
     } catch (err) {
-      console.error("Error deleting time slot:", err);
+      fastify.log.error(err, "Error deleting time slot");
       reply.code(500).send({ error: "Failed to delete time slot" });
     }
   });
