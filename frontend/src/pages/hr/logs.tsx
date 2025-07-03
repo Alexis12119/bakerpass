@@ -236,7 +236,7 @@ const LogsPage: React.FC = () => {
                                     : log.level === 40
                                       ? "text-orange-500"
                                       : log.level === 30
-                                        ? "text-yellow-600"
+                                        ? "text-blue-600"
                                         : log.level === 20
                                           ? "text-green-600"
                                           : "text-black"
