@@ -5,7 +5,6 @@ let logger = null;
 function setLogger(fastifyLogger) {
   logger = fastifyLogger;
 
-  // Attach listener to broadcast logs when written
   const originalInfo = logger.info;
   const originalWarn = logger.warn;
   const originalError = logger.error;
@@ -32,11 +31,43 @@ function setLogger(fastifyLogger) {
   };
 }
 
+function getColorForLevel(level) {
+  switch (level) {
+    case "error":
+      return "red";
+    case "warn":
+      return "orange";
+    case "info":
+      return "blue";
+    case "debug":
+      return "green";
+    default:
+      return "gray";
+  }
+}
+
+function getLevelNumber(level) {
+  switch (level) {
+    case "error":
+      return 50;
+    case "warn":
+      return 40;
+    case "info":
+      return 30;
+    case "debug":
+      return 20;
+    default:
+      return 10;
+  }
+}
+
 function broadcastLog(level, ...args) {
   const [metaOrMsg, maybeMsg] = args;
 
   let log = {
-    level,
+    level: getLevelNumber(level),
+    levelName: level.toUpperCase(),
+    color: getColorForLevel(level),
     timestamp: new Date().toISOString(),
   };
 
@@ -60,7 +91,7 @@ function broadcastLog(level, ...args) {
   });
 }
 
-// Optional: still expose helpers
+// Optional helpers
 function logInfo(message, meta = {}) {
   logger && logger.info(meta, message);
 }
