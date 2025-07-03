@@ -9,7 +9,6 @@ const nurse = require("./nurse/index");
 const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
-const { startLogWatcher } = require("./utils/logWatcher");
 
 const fs = require("fs");
 const path = require("path");
@@ -51,7 +50,6 @@ const fastify = Fastify({
 
 fastify.log = logger;
 setLogger(logger);
-startLogWatcher();
 
 fastify.register(require("@fastify/rate-limit"), {
   global: false,
