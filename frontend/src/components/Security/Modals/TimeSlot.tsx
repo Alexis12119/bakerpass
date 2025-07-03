@@ -41,9 +41,11 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
         >
           <X size={20} />
         </button>
+
         <h3 className="text-black text-lg font-bold mb-4 text-center">
           Select a Time Slot
         </h3>
+
         <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
           {timeSlots.map((slot) => (
             <button

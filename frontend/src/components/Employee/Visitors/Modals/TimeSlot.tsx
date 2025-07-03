@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  XMarkIcon,
-  PencilIcon,
-  TrashIcon,
-  PlusIcon,
-} from "@heroicons/react/24/solid";
+import { XMarkIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { TimeSlot } from "@/types/Employee/Profile";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
@@ -39,6 +34,10 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
   const [editValues, setEditValues] = useState({ startTime: "", endTime: "" });
   const [newSlot, setNewSlot] = useState({ startTime: "", endTime: "" });
   const [showAddSlot, setShowAddSlot] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState<number | null>(null);
+
   const fetchSlots = async () => {
     try {
       const res = await axios.get(
@@ -51,9 +50,6 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       showErrorToast(`Failed to load time slots: ${err.message}`);
     }
   };
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [slotToDelete, setSlotToDelete] = useState<number | null>(null);
 
   const handleUpdateSlot = async (id: number) => {
     if (
@@ -76,6 +72,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
         },
       );
       setEditingSlotId(null);
+      setShowEditModal(false);
       fetchSlots();
       onUpdate();
     } catch (err: any) {
@@ -114,6 +111,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
         endTime,
       });
       setNewSlot({ startTime: "", endTime: "" });
+      setShowAddSlot(false);
       fetchSlots();
       onUpdate();
     } catch (err: any) {
@@ -157,79 +155,35 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
                 key={slot.id}
                 className="text-black flex justify-between items-center border p-2 rounded-md"
               >
-                {editingSlotId === slot.id ? (
-                  <div className="flex flex-wrap gap-2">
-                    <input
-                      type="time"
-                      value={editValues.startTime}
-                      onChange={(e) =>
-                        setEditValues((prev) => ({
-                          ...prev,
-                          startTime: e.target.value,
-                        }))
-                      }
-                      className="text-black border rounded-md px-2"
-                    />
-                    <input
-                      type="time"
-                      value={editValues.endTime}
-                      onChange={(e) =>
-                        setEditValues((prev) => ({
-                          ...prev,
-                          endTime: e.target.value,
-                        }))
-                      }
-                      className="text-black border rounded-md px-2"
-                    />
-                    <button
-                      onClick={() => handleUpdateSlot(slot.id)}
-                      className="text-green-600 font-medium"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <span>
-                      {formatTime(slot.start_time)} -{" "}
-                      {formatTime(slot.end_time)}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingSlotId(slot.id);
-                          setEditValues({
-                            startTime: slot.start_time,
-                            endTime: slot.end_time,
-                          });
-                        }}
-                      >
-                        <PencilIcon className="w-4 h-4 text-blue-600" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSlotToDelete(slot.id);
-                          setShowDeleteConfirm(true);
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
-                  </>
-                )}
+                <span>
+                  {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingSlotId(slot.id);
+                      setEditValues({
+                        startTime: slot.start_time.slice(0, 5),
+                        endTime: slot.end_time.slice(0, 5),
+                      });
+                      setShowEditModal(true);
+                    }}
+                  >
+                    <PencilIcon className="w-4 h-4 text-blue-600" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSlotToDelete(slot.id);
+                      setShowDeleteConfirm(true);
+                    }}
+                  >
+                    <TrashIcon className="w-4 h-4 text-red-600" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
-
-        {/* Floating Add Button */}
-        <button
-          onClick={() => setShowAddSlot(true)}
-          className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-md"
-          title="Add Time Slot"
-        >
-          <PlusIcon className="h-6 w-6" />
-        </button>
 
         {/* Add Slot Modal */}
         {showAddSlot && (
@@ -270,10 +224,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
                   </button>
                   <button
                     className="px-4 py-1 bg-green-600 text-white rounded-md"
-                    onClick={async () => {
-                      await handleAddSlot();
-                      setShowAddSlot(false);
-                    }}
+                    onClick={handleAddSlot}
                   >
                     Add
                   </button>
@@ -282,8 +233,62 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Edit Slot Modal */}
+        {showEditModal && editingSlotId !== null && (
+          <div className="fixed inset-0 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 min-h-screen">
+            <div className="bg-white p-6 rounded-md shadow-md w-full max-w-sm text-center">
+              <h4 className="text-lg font-semibold text-black mb-3">
+                Edit Time Slot
+              </h4>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="time"
+                  value={editValues.startTime}
+                  onChange={(e) =>
+                    setEditValues((prev) => ({
+                      ...prev,
+                      startTime: e.target.value,
+                    }))
+                  }
+                  className="text-black border rounded-md px-2 py-1"
+                />
+                <input
+                  type="time"
+                  value={editValues.endTime}
+                  onChange={(e) =>
+                    setEditValues((prev) => ({
+                      ...prev,
+                      endTime: e.target.value,
+                    }))
+                  }
+                  className="text-black border rounded-md px-2 py-1"
+                />
+                <div className="flex justify-center gap-2 mt-3">
+                  <button
+                    className="px-4 py-1 bg-gray-300 text-black rounded-md"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingSlotId(null);
+                      setEditValues({ startTime: "", endTime: "" });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-1 bg-green-600 text-white rounded-md"
+                    onClick={() => handleUpdateSlot(editingSlotId)}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Confirm Deletion Modal */}
       {showDeleteConfirm && slotToDelete !== null && (
         <ConfirmationModal
           title="Confirm Deletion"
