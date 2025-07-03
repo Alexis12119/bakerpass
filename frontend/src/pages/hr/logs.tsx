@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Sidebar from "@/components/HumanResources/Shared/Sidebar";
 import TopBar from "@/components/HumanResources/Dashboard/TopBar";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 import axios from "axios";
 
 type LogEntry = {
@@ -50,6 +51,66 @@ const LogsPage: React.FC = () => {
       return acc;
     }, {});
   };
+
+  useEffect(() => {
+    let socket: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
+    let isUnmounted = false;
+
+    const connect = () => {
+      socket = new WebSocket(
+        `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
+      );
+
+      socket.onopen = () => {
+        console.log("WebSocket connected");
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("LogsPage WebSocket received:", data);
+
+          if (data.type === "log") {
+            const entry = data.entry;
+            setLogs((prev) => [entry, ...prev.slice(0, 99)]); // Keep up to 100 logs
+          }
+
+          if (data.type === "update") {
+            fetchLogs();
+            if (data.notify) {
+              const { status, message } = data.notify;
+              if (status === "success") showSuccessToast(message);
+              else if (status === "error") showErrorToast(message);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to parse WebSocket message:", err);
+        }
+      };
+
+      socket.onerror = (e) => {
+        console.error("WebSocket error", e);
+        socket.close(); // triggers `onclose`
+      };
+
+      socket.onclose = () => {
+        console.log("WebSocket connection closed");
+        if (!isUnmounted) {
+          console.log("Attempting to reconnect in 5s...");
+          reconnectTimer = setTimeout(connect, 5000);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      isUnmounted = true;
+      clearTimeout(reconnectTimer);
+      socket.close();
+    };
+  }, []);
 
   const fetchLogs = async () => {
     try {

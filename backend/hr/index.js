@@ -1,6 +1,7 @@
 const { pool } = require("../lib/database");
 const fs = require("fs");
 const path = require("path");
+const clients = require("../lib/wsClients");
 
 const logPath = path.join(__dirname, "../logs/app.log");
 
@@ -110,6 +111,19 @@ async function hr(fastify) {
       if (fs.existsSync(logPath)) {
         fs.truncateSync(logPath, 0); // Clears the log file contents
       }
+      clients.forEach((socket) => {
+        if (socket.readyState === 1) {
+          socket.send(
+            JSON.stringify({
+              type: "update",
+              notify: {
+                status: "success",
+                message: "Logs have been cleared by HR.",
+              },
+            }),
+          );
+        }
+      });
       fastify.log.info("Logs cleared via HR interface");
       return reply.send({ message: "Logs cleared successfully." });
     } catch (err) {

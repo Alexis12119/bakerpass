@@ -43,3 +43,7 @@ next-env.d.ts
 # Scripts
 scripts/backup.sh
 scripts/restore.sh
+
+logs/
+hr/logs/
+

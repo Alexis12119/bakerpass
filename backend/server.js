@@ -9,6 +9,7 @@ const nurse = require("./nurse/index");
 const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
+const { startLogWatcher } = require("./utils/logWatcher");
 
 const fs = require("fs");
 const path = require("path");
@@ -22,7 +23,6 @@ if (!fs.existsSync(logDir)) {
 }
 const logFilePath = path.join(logDir, "app.log");
 
-// 👇 Pretty console logger
 const prettyTransport = pino.transport({
   target: "pino-pretty",
   options: {
@@ -32,13 +32,11 @@ const prettyTransport = pino.transport({
   },
 });
 
-// 👇 File logger using pino.destination (outside of transport)
 const fileStream = pino.destination({
   dest: logFilePath,
   sync: false,
 });
 
-// 👇 Combine console + file using pino.multistream
 const logger = pino(
   {
     level: "info",
@@ -51,8 +49,9 @@ const fastify = Fastify({
   logger: false, // disable default
 });
 
-fastify.log = logger; // 👈 use our custom logger
+fastify.log = logger;
 setLogger(logger);
+startLogWatcher();
 
 fastify.register(require("@fastify/rate-limit"), {
   global: false,
