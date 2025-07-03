@@ -1,5 +1,13 @@
 const { pool } = require("../lib/database");
 const fs = require("fs");
+const path = require("path");
+
+const logPath = path.join(__dirname, "../logs/app.log");
+
+// Ensure log directory exists
+if (!fs.existsSync(path.dirname(logPath))) {
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+}
 
 async function hr(fastify) {
   // Visit statistics
