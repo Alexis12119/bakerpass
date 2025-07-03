@@ -103,6 +103,20 @@ async function hr(fastify) {
       return reply.status(500).send({ message: "Failed to read logs" });
     }
   });
+
+  // Log clearer
+  fastify.delete("/hr/logs", async (req, reply) => {
+    try {
+      if (fs.existsSync(logPath)) {
+        fs.truncateSync(logPath, 0); // Clears the log file contents
+      }
+      fastify.log.info("Logs cleared via HR interface");
+      return reply.send({ message: "Logs cleared successfully." });
+    } catch (err) {
+      (req.log || fastify.log).error({ err }, "Failed to clear logs");
+      return reply.status(500).send({ message: "Failed to clear logs" });
+    }
+  });
 }
 
 module.exports = hr;

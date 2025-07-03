@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Sidebar from "@/components/HumanResources/Shared/Sidebar";
 import TopBar from "@/components/HumanResources/Dashboard/TopBar";
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import axios from "axios";
 
 type LogEntry = {
@@ -19,6 +20,8 @@ const LogsPage: React.FC = () => {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);
@@ -47,6 +50,7 @@ const LogsPage: React.FC = () => {
       return acc;
     }, {});
   };
+
   const fetchLogs = async () => {
     try {
       const res = await axios.get<LogEntry[]>(
@@ -55,6 +59,20 @@ const LogsPage: React.FC = () => {
       setLogs(res.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load logs");
+    }
+  };
+
+  const handleClearLogs = async () => {
+    setIsClearing(true);
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/hr/logs`);
+      setLogs([]);
+      setFilteredLogs([]);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to clear logs");
+    } finally {
+      setIsClearing(false);
+      setShowModal(false);
     }
   };
 
@@ -110,12 +128,20 @@ const LogsPage: React.FC = () => {
                   <option value="DEBUG">Debug</option>
                 </select>
               </div>
-              <button
-                onClick={fetchLogs}
-                className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-              >
-                Refresh Logs
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={fetchLogs}
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  Refresh Logs
+                </button>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                >
+                  Clear Logs
+                </button>
+              </div>
             </div>
 
             {error ? (
@@ -185,6 +211,15 @@ const LogsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <ConfirmationModal
+          title="Clear All Logs?"
+          message="This action will remove all system logs. Are you sure you want to proceed?"
+          onConfirm={handleClearLogs}
+          onCancel={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 };

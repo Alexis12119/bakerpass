@@ -29,7 +29,7 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
 
         {/* Title */}
         <h2 className="text-lg font-semibold text-blue-600 mb-4">{title}</h2>
-        
+
         {/* Message */}
         <p className="text-gray-800 mb-6">{message}</p>
 
