@@ -1,5 +1,4 @@
 require("dotenv").config();
-const Fastify = require("fastify");
 const cors = require("@fastify/cors");
 const cloudinary = require("cloudinary").v2;
 const { pool } = require("./lib/database");
@@ -11,19 +10,49 @@ const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
 
-const fastify = require("fastify")({
-  trustProxy: ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"], // Trust Docker networks
-  logger: {
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-      },
-    },
+const fs = require("fs");
+const path = require("path");
+const pino = require("pino");
+const Fastify = require("fastify");
+
+// Ensure logs directory exists
+const logDir = path.join(__dirname, "logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+const logFilePath = path.join(logDir, "app.log");
+
+// 👇 Pretty console logger
+const prettyTransport = pino.transport({
+  target: "pino-pretty",
+  options: {
+    colorize: true,
+    translateTime: "SYS:standard",
+    ignore: "pid,hostname",
   },
 });
+
+// 👇 File logger using pino.destination (outside of transport)
+const fileStream = pino.destination({
+  dest: logFilePath,
+  sync: false,
+});
+
+// 👇 Combine console + file using pino.multistream
+const logger = pino(
+  {
+    level: "info",
+  },
+  pino.multistream([{ stream: prettyTransport }, { stream: fileStream }]),
+);
+
+const fastify = Fastify({
+  trustProxy: ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"],
+  logger: false, // disable default
+});
+
+fastify.log = logger; // 👈 use our custom logger
+setLogger(logger);
 
 fastify.register(require("@fastify/rate-limit"), {
   global: false,

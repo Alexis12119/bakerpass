@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { LayoutDashboard, BarChart2, X } from "lucide-react";
+import { LayoutDashboard, BarChart2, X, ClipboardList } from "lucide-react";
 import { SidebarProps } from "@/types/HumanResources/Dashboard";
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
@@ -47,6 +47,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             icon={BarChart2}
             label="Reports"
             onClick={() => router.push("/hr/reports")}
+          />
+
+          <SidebarLink
+            icon={ClipboardList} // or FileText, Activity, or another Lucide icon
+            label="Logs"
+            onClick={() => router.push("/hr/logs")}
           />
         </nav>
 

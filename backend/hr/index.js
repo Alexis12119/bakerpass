@@ -1,7 +1,16 @@
 const { pool } = require("../lib/database");
+const fs = require("fs");
+const path = require("path");
+
+const logPath = path.join(__dirname, "../logs/app.log");
+
+// Ensure log directory exists
+if (!fs.existsSync(path.dirname(logPath))) {
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+}
 
 async function hr(fastify) {
-  // Get the visitors statistics (with optional ?date=YYYY-MM-DD)
+  // Visit statistics
   fastify.get("/hr/visit-stats", async (req, reply) => {
     try {
       const { date } = req.query;
@@ -23,9 +32,9 @@ async function hr(fastify) {
         `Generating visit stats for: currentMonth=${month}/${year}, previousMonth=${lastMonth}/${lastMonthYear}`,
       );
 
-      const [totalOccupants] = await pool.execute(`
-        SELECT COUNT(*) AS count FROM employees
-      `);
+      const [totalOccupants] = await pool.execute(
+        `SELECT COUNT(*) AS count FROM employees`,
+      );
 
       const [thisMonthVisitors] = await pool.execute(
         `SELECT COUNT(*) AS count FROM visits
@@ -55,10 +64,43 @@ async function hr(fastify) {
 
       fastify.log.info({ result }, "Visit stats generated successfully");
 
-      return result;
+      return reply.send(result);
     } catch (error) {
       fastify.log.error(error, "Error generating HR visit statistics");
       return reply.status(500).send({ message: "Internal Server Error" });
+    }
+  });
+
+  // Log viewer
+  fastify.get("/hr/logs", async (req, reply) => {
+    try {
+      if (!fs.existsSync(logPath)) {
+        return reply.send([]); // No logs yet
+      }
+
+      const rawLogs = fs.readFileSync(logPath, "utf-8");
+
+      const parsedLogs = rawLogs
+        .trim()
+        .split("\n")
+        .reverse()
+        .map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return {
+              level: "info",
+              message: line,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        });
+
+      return reply.send(parsedLogs.slice(0, 100));
+    } catch (err) {
+      // fallback if req.log is not available
+      (req.log || fastify.log).error({ err }, "Failed to read logs");
+      return reply.status(500).send({ message: "Failed to read logs" });
     }
   });
 }
