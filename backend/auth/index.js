@@ -39,7 +39,7 @@ async function auth(fastify) {
             return {
               message: `Too many registration attempts. Please retry in ${Math.ceil(
                 context.ttl / 1000 / 60,
-              )} minutes.`,
+              )} minute/s.`,
             };
           },
         },
@@ -127,7 +127,7 @@ async function auth(fastify) {
             return {
               message: `Too many login attempts. Please retry in ${Math.ceil(
                 context.ttl / 1000 / 60,
-              )} minutes.`,
+              )} minute/s.`,
             };
           },
         },
@@ -218,7 +218,7 @@ async function auth(fastify) {
             return {
               message: `Too many forgot password attempts. Please retry in ${Math.ceil(
                 context.ttl / 1000 / 60,
-              )} minutes.`,
+              )} minute/s.`,
             };
           },
         },
