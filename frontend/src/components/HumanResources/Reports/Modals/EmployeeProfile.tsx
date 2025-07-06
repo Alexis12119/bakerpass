@@ -1,6 +1,8 @@
 import React from "react";
 import Image from "next/image";
 import { EmployeeProfileModalProps } from "@/types/HumanResources/Reports";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { User } from "lucide-react";
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   employee,
@@ -16,35 +18,27 @@ const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         <div className="relative">
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 text-[#1C274C] bg-white p-2 rounded-lg"
+            className="absolute top-2 right-2 text-white bg-gray-100 p-1 rounded-lg"
             aria-label="Close modal"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XMarkIcon className="h-5 w-5 text-gray-700" />
           </button>
         </div>
-
         {/* Employee image with blue background */}
         <div className="bg-[#0D1F72] h-36 flex justify-center items-center">
           <div className="w-24 h-24 relative overflow-hidden">
-            <Image
-              src={employee.profileImageUrl}
-              fill={true}
-              alt=""
-              className="w-full rounded-full"
-            />{" "}
+            {employee.profileImageUrl?.trim() ? (
+              <Image
+                src={employee.profileImageUrl}
+                alt="Profile Image"
+                fill
+                className="object-cover rounded-full"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center rounded-full bg-gray-100 border-gray-300">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
 
