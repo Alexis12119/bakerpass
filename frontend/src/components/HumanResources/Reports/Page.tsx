@@ -7,7 +7,6 @@ import HumanResourcesReportSection from "@/components/HumanResources/Reports/Sec
 
 const HumanResourcesReportsPage: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const closeSidebar = () => setIsSidebarOpen(false);
 

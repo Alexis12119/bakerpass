@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { XMarkIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  XMarkIcon,
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+} from "@heroicons/react/24/solid";
 import axios from "axios";
 import { TimeSlot } from "@/types/Employee/Profile";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
@@ -184,6 +189,13 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
             ))}
           </ul>
         )}
+
+        <button
+          onClick={() => setShowAddSlot(true)}
+          className="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white w-12 h-12 rounded-full shadow-lg text-2xl flex items-center justify-center"
+        >
+          <PlusIcon className="w-6 h-6" />
+        </button>
 
         {/* Add Slot Modal */}
         {showAddSlot && (

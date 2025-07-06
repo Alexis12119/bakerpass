@@ -61,7 +61,6 @@ const DashboardCards: React.FC = () => {
 
       socket.onmessage = () => {
         console.log("📡 Update received: refreshing dashboard stats...");
-        fetchStats();
       };
 
       socket.onerror = (e) => {

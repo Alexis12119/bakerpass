@@ -25,7 +25,7 @@ export function handleAxiosError(error: any, options: AxiosErrorOptions = {}) {
       const retryMatch = errorMessage.match(/retry in (\d+) minutes?/);
       if (retryMatch) {
         const minutes = parseInt(retryMatch[1]);
-        const message = `Too many attempts. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`;
+        const message = `Too many attempts. Please try again in ${minutes} minute/s.`;
         showErrorToast(message);
         return;
       }

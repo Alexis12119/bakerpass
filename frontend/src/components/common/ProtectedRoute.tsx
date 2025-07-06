@@ -50,7 +50,10 @@ export default function ProtectedRoute({
       setSpinnerColor(roleSpinnerColors[storedRole]);
     }
 
-    if (!token || !storedRole || storedRole !== currentBasePath) {
+    const normalizedStoredRole = storedRole?.toLowerCase().replace(/\s+/g, "-");
+    const normalizedPath = currentBasePath.toLowerCase();
+
+    if (!token || !storedRole || normalizedStoredRole !== normalizedPath) {
       redirectToFallback();
       return;
     }
@@ -124,7 +127,7 @@ export default function ProtectedRoute({
           }, 1500);
         }
       }
-    }, 3600000); // every hour
+    }, 360000); // every 1 hour
 
     return () => clearInterval(checkInterval);
   }, []);
