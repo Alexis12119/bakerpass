@@ -85,6 +85,17 @@ const SecurityGuardPage: React.FC = () => {
     });
   };
 
+  function parseTimeString(timeStr: string): Date {
+    const [time, meridian] = timeStr.trim().split(/[\s]+/); // e.g., ['9:00', 'A.M.']
+    let [hours, minutes] = time.split(":").map(Number);
+    if (meridian.toUpperCase().startsWith("P") && hours !== 12) hours += 12;
+    if (meridian.toUpperCase().startsWith("A") && hours === 12) hours = 0;
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  }
+
   const toggleVisitorStatus = async (
     visitorId: string,
     validIdTypeId: number,
@@ -92,6 +103,35 @@ const SecurityGuardPage: React.FC = () => {
     try {
       const currentVisitor = visitors.find((v) => v.id === visitorId);
       if (!currentVisitor) return;
+
+      // ⏰ Validate against expected time range using the *current time*
+      if (currentVisitor.expectedTime) {
+        const [startStr, endStr] = currentVisitor.expectedTime
+          .split("-")
+          .map((s) => s.trim());
+        const expectedStart = parseTimeString(startStr);
+        const expectedEnd = parseTimeString(endStr);
+        const now = new Date();
+
+        const isInRange =
+          now.getTime() >= expectedStart.getTime() &&
+          now.getTime() <= expectedEnd.getTime();
+
+        if (!isInRange) {
+          showErrorToast("Time In must be within the expected time range.");
+          return;
+        }
+      }
+
+      if (
+        currentVisitor.status === "Checked In" &&
+        currentVisitor.timeIn &&
+        currentVisitor.timeOut &&
+        currentVisitor.timeIn === currentVisitor.timeOut
+      ) {
+        showErrorToast("Time In and Time Out cannot be the same.");
+        return;
+      }
 
       if (currentVisitor.status === "Checked Out") {
         showErrorToast("Visitor has already checked out.");
@@ -101,13 +141,13 @@ const SecurityGuardPage: React.FC = () => {
       let newStatus: "Checked In" | "Ongoing" | "Checked Out" = "Checked In";
 
       if (
-        currentVisitor.status.toLowerCase() === "Checked In".toLowerCase() &&
+        currentVisitor.status.toLowerCase() === "checked in" &&
         !currentVisitor.timeOut
       ) {
         newStatus = "Ongoing";
       } else if (
-        currentVisitor.status.toLowerCase() === "Ongoing".toLowerCase() ||
-        (currentVisitor.status.toLowerCase() === "Checked In".toLowerCase() &&
+        currentVisitor.status.toLowerCase() === "ongoing" ||
+        (currentVisitor.status.toLowerCase() === "checked in" &&
           currentVisitor.timeOut)
       ) {
         newStatus = "Checked Out";

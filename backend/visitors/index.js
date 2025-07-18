@@ -215,6 +215,7 @@ async function visitors(fastify) {
       const { status, validIdTypeId } = request.body;
       const now = dayjs().tz("Asia/Manila").format("HH:mm:ss");
 
+      // Get the new status ID
       const [statusRows] = await pool.execute(
         `SELECT id FROM visit_statuses WHERE LOWER(name) = LOWER(?) LIMIT 1`,
         [status],
@@ -226,14 +227,36 @@ async function visitors(fastify) {
 
       const statusId = statusRows[0].id;
 
+      // Get current visit info
+      const [visitRows] = await pool.execute(
+        `SELECT time_in FROM visits WHERE id = ? LIMIT 1`,
+        [id],
+      );
+
+      if (visitRows.length === 0) {
+        return reply.status(404).send({ message: "Visit not found" });
+      }
+
+      const visit = visitRows[0];
+
       let query = "";
       let values = [];
 
       if (["checked in", "ongoing"].includes(status.toLowerCase())) {
-        query = `UPDATE visits SET status_id = ?, time_in = ?, valid_id_type_id = ? WHERE id = ?`;
-        values = [statusId, now, validIdTypeId || null, id];
+        const timeIn = visit.time_in ? visit.time_in : now;
+
+        query = `
+        UPDATE visits 
+        SET status_id = ?, time_in = ?, valid_id_type_id = ? 
+        WHERE id = ?
+      `;
+        values = [statusId, timeIn, validIdTypeId || null, id];
       } else if (status.toLowerCase() === "checked out") {
-        query = `UPDATE visits SET status_id = ?, time_out = ?, time_slot_id = NULL WHERE id = ?`;
+        query = `
+        UPDATE visits 
+        SET status_id = ?, time_out = ?, time_slot_id = NULL 
+        WHERE id = ?
+      `;
         values = [statusId, now, id];
       } else {
         return reply.status(400).send({ message: "Invalid status update" });

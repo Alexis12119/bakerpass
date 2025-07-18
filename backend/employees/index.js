@@ -139,6 +139,7 @@ async function employees(fastify) {
         "booked.time_slot_id IS NULL",
         "ts.start_time IS NOT NULL AND ts.start_time != ''",
         "ts.end_time IS NOT NULL AND ts.end_time != ''",
+        "ts.date >= CURDATE()",
       ];
       const queryParams = [];
 
@@ -193,9 +194,20 @@ async function employees(fastify) {
 
       const takenSlotIds = takenSlots.map((row) => row.time_slot_id);
 
+      // const query = takenSlotIds.length
+      //   ? `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
+      //   : `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ?`;
+      //
+      const baseQuery = `
+  SELECT id, date, start_time, end_time
+  FROM time_slots
+  WHERE employee_id = ?
+    AND date >= CURDATE()
+`;
+
       const query = takenSlotIds.length
-        ? `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
-        : `SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ?`;
+        ? `${baseQuery} AND id NOT IN (${takenSlotIds.map(() => "?").join(",")})`
+        : baseQuery;
 
       const [availableSlots] = await pool.execute(
         query,
@@ -244,7 +256,7 @@ async function employees(fastify) {
     const { id } = request.params;
     try {
       const [rows] = await pool.execute(
-        "SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? ORDER BY date ASC, start_time ASC",
+        "SELECT id, date, start_time, end_time FROM time_slots WHERE employee_id = ? AND date >= CURDATE() ORDER BY date ASC, start_time ASC",
         [id],
       );
       reply.send(rows || []);
