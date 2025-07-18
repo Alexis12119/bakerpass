@@ -91,7 +91,7 @@ const EmployeeReportCards: React.FC<{
   const closeModal = () => setSelectedEmployee(null);
 
   return (
-    <div className="relative bg-white p-6 overflow-y-auto">
+    <div className="relative bg-white p-6 overflow-y-auto max-h-[calc(100vh-160px)]">
       {selectedEmployee && (
         <>
           <div
