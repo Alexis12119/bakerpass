@@ -17,6 +17,7 @@ const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [sex, setSex] = useState("");
   const [role, setRole] = useState("");
   const router = useRouter();
   const [department, setDepartment] = useState("");
@@ -243,6 +244,38 @@ const RegisterPage = () => {
                 {role}
               </option>
             ))}
+          </select>
+          <div className="absolute inset-y-0 right-2 flex items-center pr-2 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* 
+          Dropdown for the sex of the user
+          */}
+        <div className="relative mt-4 mb-4">
+          <select
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 appearance-none text-center"
+            value={sex}
+            onChange={(e) => setSex(e.target.value)}
+          >
+            <option value="" disabled selected>
+              Select Your Sex
+            </option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
           </select>
           <div className="absolute inset-y-0 right-2 flex items-center pr-2 pointer-events-none">
             <svg

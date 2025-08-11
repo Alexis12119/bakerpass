@@ -12,7 +12,7 @@ void showProfilePopup(
 
   try {
     final res = await http.get(
-      Uri.parse("$baseUrl/hosts/$hostId/available-timeslots"),
+      Uri.parse("$baseUrl/employees/$hostId/available-timeslots"),
     );
 
     if (res.statusCode == 200) {

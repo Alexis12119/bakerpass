@@ -20,7 +20,7 @@ class ApiService {
 
   Future<List<dynamic>> fetchTimeSlots(int hostId) async {
     final res =
-        await http.get(Uri.parse("$baseUrl/hosts/$hostId/available-timeslots"));
+        await http.get(Uri.parse("$baseUrl/employees/$hostId/available-timeslots"));
     if (res.statusCode == 200) {
       return json.decode(res.body);
     } else {

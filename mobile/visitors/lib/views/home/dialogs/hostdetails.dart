@@ -114,9 +114,17 @@ class HostDetailsModalState extends State<HostDetailsModal> {
   Future<void> fetchTimeSlots() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/hosts/${widget.host['id']}/available-timeslots'),
+        Uri.parse(
+            '$baseUrl/employees/${widget.host['id']}/available-timeslots'),
       );
-      final data = jsonDecode(response.body) as List;
+      final decoded = jsonDecode(response.body);
+      print("Response: ${decoded}");
+
+      // Adjust this key depending on your backend response
+      final data = (decoded is Map<String, dynamic>)
+          ? decoded['data'] as List
+          : decoded as List;
+      print("Data: $data");
 
       setState(() {
         timeSlots = data;
