@@ -68,6 +68,11 @@ const RegisterPage = () => {
       return;
     }
 
+    if(!email.includes("@")) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       showErrorToast("Passwords do not match!");
       return;

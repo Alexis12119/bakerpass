@@ -39,6 +39,11 @@ const LoginPage = () => {
       return;
     }
 
+    if(!email.includes("@")) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+
     setIsSigningIn(true);
     const startTime = Date.now();
 

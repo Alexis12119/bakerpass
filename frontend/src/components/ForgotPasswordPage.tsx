@@ -18,6 +18,11 @@ const ForgotPasswordPage = () => {
       return;
     }
 
+    if(!email.includes("@")) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/forgot`,
