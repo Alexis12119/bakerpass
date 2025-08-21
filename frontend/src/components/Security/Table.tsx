@@ -1,10 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import StatusActionModal from "@/components/Modals/StatusAction";
 import VisitorIDModal from "@/components/Security/Modals/VisitorID";
 import { User, Clock } from "lucide-react";
 import { SecurityTableProps } from "@/types/Security";
+import { format } from "date-fns";
+import { showErrorToast } from "@/utils/customToasts";
+import { useState } from "react";
 
 function toTitleCase(str?: string) {
   if (!str) return "";
@@ -45,7 +49,13 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
   setSelectedVisitor,
   setApprovalAction,
   handleVisitorApproval,
+  currentDate,
 }) => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "Approved" | "Blocked" | "Cancelled" | "Partial Approved" | null
+  >(null);
+
   return (
     <div className="bg-white shadow-md border border-gray-300 mt-3 text-center">
       <div className="hidden md:grid grid-cols-8 bg-gray-200 py-3 px-6 font-semibold text-sm text-black border-b border-gray-300">
@@ -86,7 +96,18 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                                 : "bg-white text-black"
                   }`}
                   onClick={() => {
+                    const isDatePassed =
+                      currentDate < format(new Date(), "yyyy-MM-dd");
+
+                    if (isDatePassed) {
+                      showErrorToast(
+                        "That date has already passed. Please select another date.",
+                      );
+                      return;
+                    }
+
                     const approvedStatuses = ["Approved", "Nurse Approved"];
+
                     const isApproved = approvedStatuses.includes(
                       visitor.approvalStatus,
                     );
@@ -224,11 +245,27 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
           title={`Approve entry for ${selectedVisitor.name}?`}
           message="Choose how to proceed with this visitor's request."
           onConfirm={(action) => {
-            setApprovalAction(action);
-            handleVisitorApproval(action);
-            setStatusActionModalOpen(false);
+            setPendingAction(action);
+            setShowConfirmModal(true);
           }}
           onClose={() => setStatusActionModalOpen(false)}
+        />
+      )}
+
+      {showConfirmModal && pendingAction && selectedVisitor && (
+        <ConfirmationModal
+          title="Please Confirm"
+          message={`Are you sure you want to ${pendingAction.toLowerCase()} ${selectedVisitor.name}'s visit?`}
+          onConfirm={() => {
+            handleVisitorApproval(pendingAction);
+            setShowConfirmModal(false);
+            setStatusActionModalOpen(false);
+            setPendingAction(null);
+          }}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setPendingAction(null);
+          }}
         />
       )}
     </div>

@@ -46,6 +46,7 @@ export interface NurseTableProps {
     formData?: any,
     healthData?: any,
   ) => void;
+  currentDate: string;
 }
 
 export interface Nurse {

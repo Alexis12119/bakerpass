@@ -378,6 +378,7 @@ const NursePage: React.FC = () => {
           selectedVisitor={selectedVisitor}
           setSelectedVisitor={setSelectedVisitor}
           handleVisitorApproval={handleVisitorApproval}
+          currentDate={currentDate}
         />
       </div>
     </div>

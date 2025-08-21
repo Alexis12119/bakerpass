@@ -19,6 +19,7 @@ const defaultUsers = {
       last_name: "Corporal",
       email: "corporal461@gmail.com",
       department_id: 2,
+      sex: "Male",
     },
   ],
   human_resources: [
@@ -26,6 +27,7 @@ const defaultUsers = {
       first_name: "Sarha",
       last_name: "Goco",
       email: "sarha@gmail.com",
+      sex: "Female",
     },
   ],
   nurses: [
@@ -33,6 +35,7 @@ const defaultUsers = {
       first_name: "Sarah",
       last_name: "Cruz",
       email: "sarah.cruz@hospital.com",
+      sex: "Female",
     },
   ],
   security_guards: [
@@ -40,6 +43,7 @@ const defaultUsers = {
       first_name: "Jiro",
       last_name: "Manalo",
       email: "jiro@gmail.com",
+      sex: "Male",
     },
   ],
   visitors: [
@@ -47,8 +51,9 @@ const defaultUsers = {
       first_name: "Alex",
       last_name: "Corporal",
       email: "alex@gmail.com",
-      contact_number: "09171231234", // ← You can change this if needed
-      address: "Quezon City", // ← You can change this if needed
+      contact_number: "09171231234",
+      address: "Quezon City",
+      sex: "Male",
     },
   ],
 };
@@ -172,7 +177,9 @@ async function seed() {
         email: `${faker.internet.username().toLowerCase()}_${i}@gmail.com`,
         department_id: departmentId,
         password: passwordHash,
+        sex: faker.helpers.arrayElement(["Male", "Female"]),
       });
+
       employeeIds.push(emp);
 
       const employeeSlots = [];
@@ -223,6 +230,7 @@ async function seed() {
         last_name: faker.person.lastName(),
         email: `${faker.internet.username().toLowerCase()}${i}@gmail.com`,
         password: passwordHash,
+        sex: faker.helpers.arrayElement(["Male", "Female"]),
       });
       nurseIds.push(nurse);
 
@@ -233,6 +241,7 @@ async function seed() {
         contact_number: faker.helpers.replaceSymbols("09#########"),
         address: faker.location.streetAddress(),
         password: passwordHash,
+        sex: faker.helpers.arrayElement(["Male", "Female"]),
       });
       visitorIds.push(visitor);
 

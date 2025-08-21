@@ -61,6 +61,7 @@ export interface SecurityTableProps {
       | "Nurse Approved"
       | "Partial Approved",
   ) => void;
+  currentDate: string,
 }
 
 export interface Security {

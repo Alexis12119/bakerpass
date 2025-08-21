@@ -6,6 +6,8 @@ import HighCareApprovalForm from "@/components/Nurse/Modals/HighCareApprovalForm
 import HealthDeclarationModal from "@/components/Nurse/Modals/HealthDeclaration";
 import { User } from "lucide-react";
 import { NurseTableProps } from "@/types/Nurse";
+import { format } from "date-fns";
+import { showErrorToast } from "@/utils/customToasts";
 
 function toTitleCase(str?: string) {
   if (!str) return "";
@@ -22,6 +24,7 @@ const NurseTable: React.FC<NurseTableProps> = ({
   selectedVisitor,
   setSelectedVisitor,
   handleVisitorApproval,
+  currentDate,
 }) => {
   const [healthModalOpen, setHealthModalOpen] = useState(false);
   const [tempHealthData, setTempHealthData] = useState<any>(null);
@@ -64,6 +67,16 @@ const NurseTable: React.FC<NurseTableProps> = ({
                                 : "bg-white text-black"
                   }`}
                   onClick={() => {
+                    const isDatePassed =
+                      currentDate < format(new Date(), "yyyy-MM-dd");
+
+                    if (isDatePassed) {
+                      showErrorToast(
+                        "That date has already passed. Please select another date.",
+                      );
+                      return;
+                    }
+
                     if (visitor.approvalStatus === "Partial Approved") {
                       setSelectedVisitor(visitor);
                       setHealthModalOpen(true);

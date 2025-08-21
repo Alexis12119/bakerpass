@@ -41,7 +41,16 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Component {...pageProps} />
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />{" "}
+      <Toaster
+        position="top-right"
+        gutter={12}
+        containerStyle={{
+          marginTop: "90px",
+        }}
+        toastOptions={{
+          duration: 3000,
+        }}
+      />{" "}
     </>
   );
 }

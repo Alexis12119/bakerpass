@@ -428,6 +428,7 @@ const SecurityGuardPage: React.FC = () => {
           setSelectedVisitor={setSelectedVisitor}
           setApprovalAction={setApprovalAction}
           handleVisitorApproval={handleVisitorApproval}
+          currentDate={currentDate}
         />
       </div>
     </div>

@@ -21,7 +21,7 @@ export const showSuccessToast = (message: string) => {
       <div
         className={`${
           t.visible ? "animate-enter" : "animate-leave"
-        } mt-4 transition-all`}
+        } transition-all`}
       >
         <div className={`${baseToastStyles} border-l-4 border-green-600`}>
           <h2 className="text-lg font-semibold text-green-600 mb-2">Success</h2>
@@ -30,8 +30,8 @@ export const showSuccessToast = (message: string) => {
       </div>
     ),
     {
-      position: "top-right",
-      duration: 3000,
+      // position: "top-right",
+      // duration: 3000,
       id: `${Date.now()}-success`,
     },
   );
@@ -47,7 +47,7 @@ export const showErrorToast = (message: string) => {
       <div
         className={`${
           t.visible ? "animate-enter" : "animate-leave"
-        } mt-4 transition-all`}
+        } transition-all`}
       >
         <div className={`${baseToastStyles} border-l-4 border-red-600`}>
           <h2 className="text-lg font-semibold text-red-600 mb-2">Error</h2>
@@ -56,8 +56,8 @@ export const showErrorToast = (message: string) => {
       </div>
     ),
     {
-      position: "top-right",
-      duration: 4000,
+      // position: "top-right",
+      // duration: 3000,
       id: `${Date.now()}-error`,
     },
   );
