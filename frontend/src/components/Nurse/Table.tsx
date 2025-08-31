@@ -4,10 +4,19 @@ import React, { useState } from "react";
 import Image from "next/image";
 import HighCareApprovalForm from "@/components/Nurse/Modals/HighCareApprovalForm";
 import HealthDeclarationModal from "@/components/Nurse/Modals/HealthDeclaration";
-import { User } from "lucide-react";
+import { User, Clock } from "lucide-react";
 import { NurseTableProps } from "@/types/Nurse";
 import { format } from "date-fns";
 import { showErrorToast } from "@/utils/customToasts";
+
+const formatTimeForDisplay = (time: string | null) => {
+  if (!time || time === "00:00:00") return "Pending";
+  const [hoursStr, minutes] = time.split(":");
+  let hours = parseInt(hoursStr, 10);
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${ampm}`;
+};
 
 function toTitleCase(str?: string) {
   if (!str) return "";
@@ -31,13 +40,15 @@ const NurseTable: React.FC<NurseTableProps> = ({
 
   return (
     <div className="bg-white shadow-md border border-gray-300 mt-3 text-center">
-      <div className="hidden md:grid grid-cols-6 bg-gray-200 py-3 px-6 font-semibold text-sm text-black border-b border-gray-300">
+      <div className="hidden md:grid grid-cols-8 bg-gray-200 py-3 px-8 font-semibold text-sm text-black border-b border-gray-300">
         <div>Status</div>
         <div>Visitor's Name</div>
         <div>Purpose</div>
         <div>Employee Name</div>
         <div>Department</div>
         <div>Expected Time</div>
+        <div>Time In</div>
+        <div>Time Out</div>
       </div>
 
       {visitors.length > 0 ? (
@@ -45,7 +56,7 @@ const NurseTable: React.FC<NurseTableProps> = ({
           {visitors.map((visitor) => (
             <div
               key={visitor.id}
-              className="grid grid-cols-1 md:grid-cols-6 px-6 py-4 border-b border-gray-300 text-black gap-4 items-center hover:bg-gray-100 transition-colors duration-200"
+              className="grid grid-cols-1 md:grid-cols-8 px-8 py-4 border-b border-gray-300 text-black gap-4 items-center hover:bg-gray-100 transition-colors duration-200"
             >
               {/* STATUS */}
               <div className="flex items-center justify-center">
@@ -120,6 +131,39 @@ const NurseTable: React.FC<NurseTableProps> = ({
               </div>
               <div className="flex items-center justify-center text-sm">
                 {visitor.expectedTime}
+              </div>
+              {/* TIME IN */}
+              <div className="flex items-center justify-center">
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold w-full md:w-auto justify-center
+                    ${
+                      visitor.timeIn
+                        ? "bg-[#1EA83C] text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <span className="whitespace-nowrap">
+                    {formatTimeForDisplay(visitor.timeIn)}
+                  </span>
+                </div>
+              </div>
+
+              {/* TIME OUT */}
+              <div className="flex items-center justify-center">
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold w-full md:w-auto justify-center
+                    ${
+                      visitor.timeOut
+                        ? "bg-[#C82020] text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <span className="whitespace-nowrap">
+                    {formatTimeForDisplay(visitor.timeOut)}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
