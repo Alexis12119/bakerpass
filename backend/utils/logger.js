@@ -78,17 +78,6 @@ function broadcastLog(level, ...args) {
   } else {
     log = { ...log, message: JSON.stringify(metaOrMsg) };
   }
-
-  clients.forEach((socket) => {
-    if (socket.readyState === 1) {
-      socket.send(
-        JSON.stringify({
-          type: "log",
-          entry: log,
-        }),
-      );
-    }
-  });
 }
 
 // Optional helpers
