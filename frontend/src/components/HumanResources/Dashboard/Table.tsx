@@ -3,10 +3,7 @@ import Image from "next/image";
 import { User, Clock } from "lucide-react";
 import { DashboardTableProps } from "@/types/HumanResources/Dashboard";
 import { showErrorToast } from "@/utils/customToasts";
-import {
-  formatTimeForDisplay,
-  getStatusLabel,
-} from "@/utils/visitorUtils";
+import { formatTimeForDisplay, getStatusLabel } from "@/utils/visitorUtils";
 
 const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
   return (
