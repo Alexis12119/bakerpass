@@ -1,5 +1,5 @@
 export interface Visitor {
-  id: string;
+  id: number;
   name: string;
   department: string;
   profileImageUrl: string;
@@ -19,4 +19,11 @@ export interface EmployeeProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileImageUrl?: string;
+}
+
+export interface EmployeeScheduleModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  profileImageUrl?: string;
+  emplooyee?: Visitor;
 }

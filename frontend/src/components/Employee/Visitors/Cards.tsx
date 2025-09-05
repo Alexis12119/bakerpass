@@ -5,11 +5,11 @@ import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import EmployeeProfile from "@/components/Employee/Visitors/Modals/EmployeeProfile";
 import VisitorProfileModal from "@/components/Employee/Visitors/Modals/VisitorProfile";
 import axios from "axios";
-import { VisitorWithDropdown } from "@/types/Employee";
+import { VisitorWithDropdownEmp } from "@/types/Employee";
 import { showErrorToast } from "@/utils/customToasts";
 
 interface VisitorCardProps {
-  visitor: VisitorWithDropdown;
+  visitor: VisitorWithDropdownEmp;
 }
 
 const VisitorCard: React.FC<VisitorCardProps> = ({ visitor }) => {

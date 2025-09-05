@@ -14,6 +14,8 @@ import {
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import EmployeeScheduleModal from "@/components/Employee/Visitors/Modals/EmployeeScheduleModal";
+import { PlusIcon } from "@heroicons/react/24/solid";
 
 interface TopBarProps {
   role: "Human Resources" | "Employee" | "Security";
@@ -33,6 +35,8 @@ const TopBar: React.FC<TopBarProps> = ({
   const [user, setUser] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isEmployeeScheduleModalOpen, setIsEmployeeScheduleModalOpen] =
+    useState(false);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -186,6 +190,16 @@ const TopBar: React.FC<TopBarProps> = ({
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 shadow-md z-50">
                   <ul className="flex flex-col items-center py-2 text-sm text-gray-700">
+                    {/* Show Manage Schedule only for Employee */}
+                    {role === "Employee" && (
+                      <li
+                        onClick={() => setIsEmployeeScheduleModalOpen(true)}
+                        className="px-4 py-2 hover:bg-gray-100 flex items-center justify-center gap-2 font-semibold text-[#1C274C] cursor-pointer"
+                      >
+                        <PlusIcon className="w-5 h-5 text-[#221371]" />
+                        Manage Schedule
+                      </li>
+                    )}
                     <li
                       onClick={() => setIsConfirmLogoutOpen(true)}
                       className="w-full px-4 py-2 hover:bg-gray-100 text-[#1C274C] font-semibold cursor-pointer flex items-center justify-center gap-2"
@@ -225,6 +239,15 @@ const TopBar: React.FC<TopBarProps> = ({
             handleLogout();
           }}
           onCancel={() => setIsConfirmLogoutOpen(false)}
+        />
+      )}
+
+      {isEmployeeScheduleModalOpen && (
+        <EmployeeScheduleModal
+          isOpen={isEmployeeScheduleModalOpen}
+          onClose={() => setIsEmployeeScheduleModalOpen(false)}
+          profileImageUrl={user?.profileImage}
+          employee={user}
         />
       )}
     </>

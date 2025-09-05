@@ -5,22 +5,17 @@ import Image from "next/image";
 import { User } from "lucide-react";
 import { XMarkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
-import { TimeSlot, EmployeeProfileModalProps } from "@/types/Employee/Profile";
+import { TimeSlot, EmployeeScheduleModalProps } from "@/types/Employee/Profile";
 import { showErrorToast } from "@/utils/customToasts";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import TimeSlotModal from "@/components/Employee/Visitors/Modals/TimeSlot";
 
-interface EmployeeScheduleModalProps extends EmployeeProfileModalProps {
-  employeeId: string;
-}
-
 const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
-  Visitor: visitor,
   isOpen,
   onClose,
   profileImageUrl,
-  employeeId,
+  employee,
 }) => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedDateForModal, setSelectedDateForModal] = useState<
@@ -43,7 +38,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
   const fetchTimeSlots = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/${employeeId}/timeslots`,
+        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/${employee.id}/timeslots`,
       );
       setTimeSlots(response.data);
     } catch (err: any) {
@@ -69,7 +64,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots/date`,
         {
-          employeeId,
+          employeeId: employee.id,
           date: formatted,
         },
       );
@@ -84,8 +79,8 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
   };
 
   useEffect(() => {
-    if (employeeId) fetchTimeSlots().then((r) => r);
-  }, [employeeId]);
+    if (employee.id) fetchTimeSlots().then((r) => r);
+  }, [employee.id]);
 
   if (!isOpen) return null;
 
@@ -117,8 +112,8 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
         </div>
 
         <div className="p-5 text-center">
-          <h2 className="text-xl font-bold text-black">{visitor.name}</h2>
-          <p className="text-sm text-gray-500">{visitor.department}</p>
+          <h2 className="text-xl font-bold text-black">{employee.name}</h2>
+          <p className="text-sm text-gray-500">{employee.department}</p>
         </div>
 
         <div className="flex-grow overflow-y-auto px-5 pb-5">
@@ -190,7 +185,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
       {selectedDateForModal && (
         <TimeSlotModal
           date={selectedDateForModal}
-          employeeId={employeeId}
+          employeeId={employee.id}
           isOpen={true}
           onClose={() => setSelectedDateForModal(null)}
           onUpdate={fetchTimeSlots}
