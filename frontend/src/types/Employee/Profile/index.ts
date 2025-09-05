@@ -25,5 +25,5 @@ export interface EmployeeScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileImageUrl?: string;
-  emplooyee?: Visitor;
+  employee?: Visitor;
 }
