@@ -4,7 +4,6 @@ import { User, Clock } from "lucide-react";
 import { DashboardTableProps } from "@/types/HumanResources/Dashboard";
 import { showErrorToast } from "@/utils/customToasts";
 import {
-  toTitleCase,
   formatTimeForDisplay,
   getStatusLabel,
 } from "@/utils/visitorUtils";
