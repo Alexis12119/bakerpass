@@ -10,6 +10,16 @@ const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
 
+const { Storage } = require("@google-cloud/storage");
+const path = require("path");
+const crypto = require("crypto");
+
+const storage = new Storage({
+  projectId: process.env.GCP_PROJECT_ID,
+});
+
+const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
+
 const Fastify = require("fastify");
 
 const fastify = Fastify({
@@ -118,60 +128,35 @@ fastify.post("/upload-profile-image", async (request, reply) => {
 
   try {
     const buffer = await data.toBuffer();
+    const fileExt = path.extname(data.filename);
+    const gcsFileName = `${table}_profiles/${userId}_${crypto.randomUUID()}${fileExt}`;
 
-    // Retry logic for Cloudinary upload
-    const uploadWithRetry = async (retries = 3, delay = 1000) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          return await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-              {
-                folder: `${table}_profiles`,
-                resource_type: "image",
-                timeout: 60000,
-                eager_async: true,
-              },
-              (error, result) => {
-                if (error) {
-                  reject(error);
-                } else {
-                  resolve(result);
-                }
-              },
-            );
+    const file = bucket.file(gcsFileName);
 
-            const timeoutId = setTimeout(() => {
-              reject(new Error("Cloudinary upload timeout"));
-            }, 60000);
+    // Upload to GCS
+    await file.save(buffer, {
+      resumable: false,
+      contentType: data.mimetype,
+      metadata: {
+        cacheControl: "public, max-age=31536000", // 1 year cache
+      },
+    });
 
-            uploadStream.on("finish", () => {
-              clearTimeout(timeoutId);
-            });
+    // Make file public (optional, or use signed URLs instead)
+    await file.makePublic();
 
-            uploadStream.end(buffer);
-          });
-        } catch (error) {
-          request.log.warn(`Upload attempt ${i + 1} failed:`, error.message);
-          if (i === retries - 1) {
-            throw error;
-          }
-          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
-        }
-      }
-    };
-
-    const uploadResult = await uploadWithRetry();
+    const publicUrl = `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${gcsFileName}`;
 
     // Save URL in DB
     const updateQuery = `UPDATE ${table} SET profile_image_url = ? WHERE id = ?`;
-    await pool.execute(updateQuery, [uploadResult.secure_url, userId]);
+    await pool.execute(updateQuery, [publicUrl, userId]);
 
-    // Get updated user data from database
-    const selectQuery = `SELECT id, first_name , last_name, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
+    // Fetch updated user
+    const selectQuery = `SELECT id, first_name, last_name, profile_image_url as profileImage FROM ${table} WHERE id = ?`;
     const [rows] = await pool.execute(selectQuery, [userId]);
     const updatedUser = rows[0];
 
-    // Generate new JWT token with updated profile image
+    // Generate new JWT
     const tokenPayload = {
       id: updatedUser.id,
       firstName: updatedUser.first_name,
@@ -179,16 +164,14 @@ fastify.post("/upload-profile-image", async (request, reply) => {
       role: role,
       profileImage: updatedUser.profileImage,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
     };
-
     const newToken = fastify.jwt.sign(tokenPayload, process.env.JWT_SECRET);
 
     return reply.send({
       message: "Upload successful",
-      imageUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      token: newToken, // Send new token
+      imageUrl: publicUrl,
+      token: newToken,
       user: {
         id: updatedUser.id,
         firstName: updatedUser.first_name,
@@ -203,8 +186,6 @@ fastify.post("/upload-profile-image", async (request, reply) => {
     let errorMessage = "Internal Server Error";
     if (err.code === "ETIMEDOUT" || err.code === "ENETUNREACH") {
       errorMessage = "Network connectivity issue. Please try again later.";
-    } else if (err.message && err.message.includes("timeout")) {
-      errorMessage = "Upload timeout. Please try again with a smaller file.";
     } else if (err.message) {
       errorMessage = err.message;
     }

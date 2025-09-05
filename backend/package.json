@@ -19,6 +19,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/static": "^8.2.0",
     "@fastify/websocket": "^11.1.0",
+    "@google-cloud/storage": "^7.17.0",
     "@headlessui/react": "^2.2.3",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.6.1",

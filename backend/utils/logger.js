@@ -1,5 +1,3 @@
-const clients = require("../lib/wsClients");
-
 let logger = null;
 
 function setLogger(fastifyLogger) {
