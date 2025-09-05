@@ -1,11 +1,3 @@
-// export export interface Employee {
-//   id: string;
-//   name: string;
-//   department: string;
-//   total_visitors: number;
-//   avg_visitors: number;
-// }
-//
 export interface EmployeeProfileModalProps {
   employee: Employee;
   isOpen: boolean;
@@ -30,15 +22,6 @@ export interface SearchFiltersProps {
     event: React.ChangeEvent<HTMLSelectElement>,
     filterType: string,
   ) => void;
-}
-
-export interface SidebarProps {
-  isSidebarOpen: boolean;
-}
-
-export interface TopBarProps {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
 }
 
 export interface HumanResources {

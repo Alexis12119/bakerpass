@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { DualRingSpinner } from "@/components/common/DualRingSpinner";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { getUserFromToken, clearSession } from "@/hooks/authUtils";
+import { getUserFromToken, clearSession } from "@/utils/handleAuthentication";
 import { User, LogOut } from "lucide-react";
 import {
   XMarkIcon,
@@ -16,14 +16,7 @@ import axios from "axios";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
 import EmployeeScheduleModal from "@/components/Employee/Visitors/Modals/EmployeeScheduleModal";
 import { PlusIcon } from "@heroicons/react/24/solid";
-
-interface TopBarProps {
-  role: "Human Resources" | "Employee" | "Security";
-  showNewVisitButton?: boolean;
-  onNewVisitClick?: () => void;
-  isSidebarOpen?: boolean;
-  toggleSidebar?: () => void;
-}
+import { TopBarProps } from "@/types/common/TopBar";
 
 const TopBar: React.FC<TopBarProps> = ({
   role,

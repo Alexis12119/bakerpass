@@ -3,18 +3,13 @@ import Image from "next/image";
 import { User, Clock } from "lucide-react";
 import { DashboardTableProps } from "@/types/HumanResources/Dashboard";
 import { showErrorToast } from "@/utils/customToasts";
-import { toTitleCase, formatTimeForDisplay, getStatusLabel } from "@/utils/visitorUtils";
+import {
+  toTitleCase,
+  formatTimeForDisplay,
+  getStatusLabel,
+} from "@/utils/visitorUtils";
 
 const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
-  const formatTimeForDisplay = (time: string | null) => {
-    if (!time || time === "00:00:00") return "Pending";
-    const [hoursStr, minutes] = time.split(":");
-    let hours = parseInt(hoursStr, 10);
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
-
   return (
     <div className="bg-white shadow-md border border-gray-300 mt-3 text-center">
       <div className="hidden md:grid grid-cols-8 bg-gray-200 py-3 px-6 font-semibold text-sm text-black border-b border-gray-300">
@@ -55,7 +50,9 @@ const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
                                 : "bg-white text-black"
                   }`}
                   onClick={() => {
-                    showErrorToast("Only Security can approve visitors.");
+                    showErrorToast(
+                      `Status is "${visitor.approvalStatus}". Only Authorized Personnel can modify this.`,
+                    );
                   }}
                 >
                   {getStatusLabel(visitor)}

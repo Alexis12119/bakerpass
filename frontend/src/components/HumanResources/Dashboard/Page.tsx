@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 
-import Sidebar from "@/components/HumanResources/Shared/Sidebar";
+import Sidebar from "@/components/common/Sidebar";
 import TopBar from "@/components/common/Topbar";
 import DashboardCards from "@/components/HumanResources/Dashboard/Cards";
 import VisitorsSection from "@/components/HumanResources/Dashboard/Section";

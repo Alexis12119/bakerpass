@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import Sidebar from "@/components/HumanResources/Shared/Sidebar";
+import Sidebar from "@/components/common/Sidebar";
 import TopBar from "@/components/common/Topbar";
 import HumanResourcesReportSection from "@/components/HumanResources/Reports/Section";
 

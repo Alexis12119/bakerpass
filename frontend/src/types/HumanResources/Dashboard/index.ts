@@ -15,11 +15,6 @@ export interface SearchFiltersProps {
   setSelectedApprovalStatus: (status: string) => void;
 }
 
-export interface SidebarProps {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
-}
-
 import { VisitorBase, VisitorWithDropdown } from "@/types/common/Visitor";
 
 export type Visitor = VisitorBase;
@@ -27,11 +22,6 @@ export type VisitorWithDropdownHR = VisitorWithDropdown<Visitor>;
 
 export interface DashboardTableProps {
   visitors: VisitorWithDropdown[];
-}
-
-export interface TopBarProps {
-  isSidebarOpen: boolean;
-  toggleSidebar: () => void;
 }
 
 export interface HumanResources {
