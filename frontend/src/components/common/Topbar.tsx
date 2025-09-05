@@ -81,7 +81,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
       const newUrl = response.data.imageUrl;
 
-      setUser((prev) => (prev ? { ...prev, profileImage: newUrl } : prev));
+      setUser((prev: any) => (prev ? { ...prev, profileImage: newUrl } : prev));
       updateProfileImageStorage(newUrl, user.id.toString());
       showSuccessToast("Profile image updated!");
       if (fileInputRef.current) fileInputRef.current.value = "";
