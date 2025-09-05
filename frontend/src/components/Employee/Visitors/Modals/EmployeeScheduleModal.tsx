@@ -185,7 +185,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
       {selectedDateForModal && (
         <TimeSlotModal
           date={selectedDateForModal}
-          employeeId={employee.id}
+          employeeId={employee.id.toString()}
           isOpen={true}
           onClose={() => setSelectedDateForModal(null)}
           onUpdate={fetchTimeSlots}
