@@ -10,46 +10,12 @@ const hr = require("./hr/index");
 const websocket = require("./lib/websocket");
 const { setLogger } = require("./utils/logger");
 
-const fs = require("fs");
-const path = require("path");
-const pino = require("pino");
 const Fastify = require("fastify");
-
-// Ensure logs directory exists
-const logDir = path.join(__dirname, "logs");
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-const logFilePath = path.join(logDir, "app.log");
-
-const prettyTransport = pino.transport({
-  target: "pino-pretty",
-  options: {
-    colorize: true,
-    translateTime: "SYS:standard",
-    ignore: "pid,hostname",
-  },
-});
-
-const fileStream = pino.destination({
-  dest: logFilePath,
-  sync: false,
-});
-
-const logger = pino(
-  {
-    level: "info",
-  },
-  pino.multistream([{ stream: prettyTransport }, { stream: fileStream }]),
-);
 
 const fastify = Fastify({
   trustProxy: ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"],
   logger: false, // disable default
 });
-
-fastify.log = logger;
-setLogger(logger);
 
 fastify.register(require("@fastify/rate-limit"), {
   global: false,

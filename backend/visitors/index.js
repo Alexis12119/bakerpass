@@ -271,7 +271,6 @@ async function visitors(fastify) {
               type: "update",
               notify: {
                 status: "success",
-                message: "Status updated successfully",
               },
             }),
           );
@@ -342,7 +341,6 @@ async function visitors(fastify) {
               type: "update",
               notify: {
                 status: "success",
-                message: "Status updated successfully",
               },
             }),
           );
@@ -532,7 +530,6 @@ async function visitors(fastify) {
               type: "update",
               notify: {
                 status: "success",
-                message: "Approval status updated successfully",
               },
             }),
           );

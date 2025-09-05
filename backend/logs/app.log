@@ -1,4 +1,0 @@
-{"level":30,"time":1751516124835,"pid":3070,"hostname":"e44d5946eaac","msg":"Logs cleared via HR interface"}
-{"level":30,"time":1751516133926,"pid":3095,"hostname":"e44d5946eaac","msg":"Server listening at http://127.0.0.1:5001"}
-{"level":30,"time":1751516133927,"pid":3095,"hostname":"e44d5946eaac","msg":"Server listening at http://172.18.0.3:5001"}
-{"level":30,"time":1751516133928,"pid":3095,"hostname":"e44d5946eaac","msg":"Server running on port 5001"}

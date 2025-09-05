@@ -1,14 +1,4 @@
 const { pool } = require("../lib/database");
-const fs = require("fs");
-const path = require("path");
-const clients = require("../lib/wsClients");
-
-const logPath = path.join(__dirname, "../logs/app.log");
-
-// Ensure log directory exists
-if (!fs.existsSync(path.dirname(logPath))) {
-  fs.mkdirSync(path.dirname(logPath), { recursive: true });
-}
 
 async function hr(fastify) {
   // Visit statistics
@@ -69,66 +59,6 @@ async function hr(fastify) {
     } catch (error) {
       fastify.log.error(error, "Error generating HR visit statistics");
       return reply.status(500).send({ message: "Internal Server Error" });
-    }
-  });
-
-  // Log viewer
-  fastify.get("/hr/logs", async (req, reply) => {
-    try {
-      if (!fs.existsSync(logPath)) {
-        return reply.send([]); // No logs yet
-      }
-
-      const rawLogs = fs.readFileSync(logPath, "utf-8");
-
-      const parsedLogs = rawLogs
-        .trim()
-        .split("\n")
-        .reverse()
-        .map((line) => {
-          try {
-            return JSON.parse(line);
-          } catch {
-            return {
-              level: "info",
-              message: line,
-              timestamp: new Date().toISOString(),
-            };
-          }
-        });
-
-      return reply.send(parsedLogs.slice(0, 100));
-    } catch (err) {
-      // fallback if req.log is not available
-      (req.log || fastify.log).error({ err }, "Failed to read logs");
-      return reply.status(500).send({ message: "Failed to read logs" });
-    }
-  });
-
-  // Log clearer
-  fastify.delete("/hr/logs", async (req, reply) => {
-    try {
-      if (fs.existsSync(logPath)) {
-        fs.truncateSync(logPath, 0); // Clears the log file contents
-      }
-      clients.forEach((socket) => {
-        if (socket.readyState === 1) {
-          socket.send(
-            JSON.stringify({
-              type: "update",
-              notify: {
-                status: "success",
-                message: "Logs have been cleared by HR.",
-              },
-            }),
-          );
-        }
-      });
-      fastify.log.info("Logs cleared via HR interface");
-      return reply.send({ message: "Logs cleared successfully." });
-    } catch (err) {
-      (req.log || fastify.log).error({ err }, "Failed to clear logs");
-      return reply.status(500).send({ message: "Failed to clear logs" });
     }
   });
 }
