@@ -97,11 +97,11 @@ class _VisitHistoryPageState extends State<VisitHistoryPage> {
                 );
 
                 if (response.statusCode == 200) {
-                  Navigator.pop(context);
-                  fetchVisitHistory(); // Refresh data
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Comment saved')),
-                  );
+                    Navigator.pop(context);
+                    fetchVisitHistory(); // Refresh data
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Comment saved')),
+                    );
                 } else {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(

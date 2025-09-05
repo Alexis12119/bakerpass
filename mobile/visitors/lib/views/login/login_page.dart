@@ -24,15 +24,17 @@ class _LoginPageState extends State<LoginPage> {
       _passwordController.text,
     );
 
-    if (success) {
+    if (success && mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed')),
+        );
+      }
     }
   }
 

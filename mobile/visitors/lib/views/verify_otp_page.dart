@@ -37,7 +37,7 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
       role: widget.role,
     );
 
-    if (result['success']) {
+    if (result['success'] && mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -71,7 +71,7 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
               borderRadius: BorderRadius.circular(12.0),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   spreadRadius: 1,
                 ),

@@ -43,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
       password: _password.text,
     );
 
-    if (success != null) {
+    if (success != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration successful!')),
       );
@@ -52,9 +52,11 @@ class _RegisterPageState extends State<RegisterPage> {
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration failed.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration failed.')),
+        );
+      }
     }
   }
 

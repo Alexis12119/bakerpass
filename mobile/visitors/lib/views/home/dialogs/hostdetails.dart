@@ -118,7 +118,6 @@ class HostDetailsModalState extends State<HostDetailsModal> {
             '$baseUrl/employees/${widget.host['id']}/available-timeslots'),
       );
       final decoded = jsonDecode(response.body);
-      print("Response: ${decoded}");
 
       // Adjust this key depending on your backend response
       final data = (decoded is Map<String, dynamic>)
@@ -451,7 +450,7 @@ class HostDetailsModalState extends State<HostDetailsModal> {
 
         // Purpose dropdown
         DropdownButtonFormField<int>(
-          value: visitPurposeId,
+          initialValue: visitPurposeId,
           decoration: InputDecoration(
             hintText: 'Purpose',
             border: OutlineInputBorder(
