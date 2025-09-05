@@ -189,20 +189,21 @@ const TopBar: React.FC<TopBarProps> = ({
 
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 shadow-md z-50">
-                  <ul className="flex flex-col items-center py-2 text-sm text-gray-700">
+                  <ul className="flex flex-col py-2 text-sm text-gray-700">
                     {/* Show Manage Schedule only for Employee */}
                     {role === "Employee" && (
                       <li
                         onClick={() => setIsEmployeeScheduleModalOpen(true)}
-                        className="px-4 py-2 hover:bg-gray-100 flex items-center justify-center gap-2 font-semibold text-[#1C274C] cursor-pointer"
+                        className="w-full px-4 py-2 hover:bg-gray-100 flex items-center justify-center gap-2 font-semibold text-[#1C274C] cursor-pointer"
                       >
                         <PlusIcon className="w-5 h-5 text-[#221371]" />
-                        Manage Schedule
+                        <span>Manage Schedule</span>
                       </li>
                     )}
+
                     <li
                       onClick={() => setIsConfirmLogoutOpen(true)}
-                      className="w-full px-4 py-2 hover:bg-gray-100 text-[#1C274C] font-semibold cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2 hover:bg-gray-100 flex items-center justify-center gap-2 font-semibold text-[#1C274C] cursor-pointer"
                     >
                       <LogOut className="w-5 h-5 text-[#221371]" />
                       <span>Logout</span>

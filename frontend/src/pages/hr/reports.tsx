@@ -1,10 +1,20 @@
-import HumanResourcesReportsPage from "@/components/HumanResources/Reports/Page"; // Component for displaying HR reports
-import ProtectedRoute from "@/components/common/ProtectedRoute"; // Wrapper component to enforce role-based access control
+import React from "react";
+import HumanResourcesReportsPage from "@/components/HumanResources/Reports/Page";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
+import SEO from "@/components/common/SEO";
 
 export default function Home() {
   return (
-    <ProtectedRoute allowedRole="Human Resources">
-      <HumanResourcesReportsPage />; {/* Render HR reports within a protected route */}
-    </ProtectedRoute>
+    <>
+      <SEO
+        title="Human Resources Reports | Appointment System"
+        description="Monitor visitors as a human resources."
+        url="https://yourdomain.com/hr/reports"
+      />
+
+      <ProtectedRoute allowedRole="Human Resources">
+        <HumanResourcesReportsPage />;
+      </ProtectedRoute>
+    </>
   );
 }
