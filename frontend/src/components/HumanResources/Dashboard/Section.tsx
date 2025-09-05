@@ -1,30 +1,18 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import SearchFilters from "@/components/HumanResources/Dashboard/SearchFilters";
 import DashboardTable from "@/components/HumanResources/Dashboard/Table";
-import axios from "axios";
-import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { format, addDays, subDays } from "date-fns";
 import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { fetchVisitorsByDate } from "@/utils/handleVisitors";
+import { initVisitorSocket } from "@/utils/visitorSocket";
+import axios from "axios";
 
-interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  employee: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus: "Waiting For Approval" | "Approved" | "Blocked" | "Cancelled";
-  profileImageUrl: string;
-}
-
-interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+import { VisitorWithDropdownHR } from "@/types/HumanResources/Dashboard";
 
 const VisitorsSection: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -44,203 +32,98 @@ const VisitorsSection: React.FC = () => {
   );
   const [purposes, setPurposes] = useState<{ id: number; name: string }[]>([]);
   const [departments, setDepartments] = useState<
-    { id: number; name: string }[]
+    { id: string; name: string }[]
   >([]);
+
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
   const [selectedEmployee, setSelectedEmployee] = useState("All");
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const fetchData = async () => {
-    try {
-      const [
-        employeesResponse,
-        purposesResponse,
-        departmentsResponse,
-        approvalStatusesResponse,
-      ] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`),
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
-      ]);
-
-      setEmployees(employeesResponse.data);
-      setPurposes(purposesResponse.data);
-      setDepartments(departmentsResponse.data);
-      setApprovalStatuses(approvalStatusesResponse.data);
-    } catch (error: any) {
-      showErrorToast(`Failed to fetch data: ${error.message}`);
-    }
-  };
-
-  const mapVisitorsData = (visitors: any[]) => {
-    return visitors.map((visitor) => ({
-      id: visitor.visit_id,
-      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-      purpose: visitor.purpose,
-      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-      department: visitor.employeeDepartment,
-      expectedTime:
-        visitor.expected_time ||
-        formatTimeRange(visitor.time_in, visitor.time_out),
-      timeIn: visitor.time_in || null,
-      timeOut: visitor.time_out || null,
-      status: visitor.status,
-      profileImageUrl: visitor.profile_image_url,
-      approvalStatus: visitor.approval_status,
-      isDropdownOpen: false,
-      isHighCare: visitor.is_high_care ?? undefined,
-    }));
-  };
-
-  useEffect(() => {
-    fetchVisitorsByDate();
-  }, [currentDate]);
 
   const updateCurrentDate = (newDate: string) => {
     setCurrentDate(newDate);
     sessionStorage.setItem("visitor_filter_date", newDate);
-
-    // Dispatch event to notify DashboardCards
     window.dispatchEvent(new CustomEvent("dateChanged"));
   };
 
   const handlePreviousDate = () => {
-    setCurrentDate((prev: string) => {
-      const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
-      updateCurrentDate(newDate);
-      return newDate;
-    });
+    const newDate = format(subDays(new Date(currentDate), 1), "yyyy-MM-dd");
+    updateCurrentDate(newDate);
   };
 
   const handleNextDate = () => {
-    setCurrentDate((prev: string) => {
-      const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
-      updateCurrentDate(newDate);
-      return newDate;
-    });
+    const newDate = format(addDays(new Date(currentDate), 1), "yyyy-MM-dd");
+    updateCurrentDate(newDate);
   };
 
-  const fetchVisitorsByDate = async (forNurse = false) => {
-    const date = sessionStorage.getItem("visitor_filter_date");
+  const loadVisitors = async () => {
     try {
-      const endpoint = forNurse
-        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
-
-      const response = await axios.get(endpoint);
-
-      const visitorsData = mapVisitorsData(response.data);
-
-      setVisitors(visitorsData);
+      const data = await fetchVisitorsByDate(null); // HR sees all employees
+      setVisitors(data);
     } catch (error: any) {
       showErrorToast(`Failed to fetch visitors: ${error.message}`);
     }
   };
 
-  // Helper function to format time range from separate time_in and time_out
-  const formatTimeRange = (timeIn: string | null, timeOut: string | null) => {
-    if (!timeIn || !timeOut) return "Not scheduled";
+  const fetchData = async () => {
+    try {
+      const [employeesRes, purposesRes, departmentsRes, approvalRes] =
+        await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
+        ]);
 
-    // Format times to be more readable (e.g., "08:00" instead of "08:00:00")
-    const formatTime = (time: string) => {
-      if (!time) return "";
-      const [hours, minutes] = time.split(":");
-      return `${hours}:${minutes}`;
-    };
-
-    return `${formatTime(timeIn)} - ${formatTime(timeOut)}`;
+      setEmployees(employeesRes.data);
+      setPurposes(purposesRes.data);
+      setDepartments(departmentsRes.data);
+      setApprovalStatuses(approvalRes.data);
+    } catch (error: any) {
+      showErrorToast(`Failed to fetch data: ${error.message}`);
+    }
   };
 
   useEffect(() => {
-    let socket: WebSocket;
-    let reconnectTimer: NodeJS.Timeout;
-    let isUnmounted = false;
-
-    const connect = () => {
-      socket = new WebSocket(
-        `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
-      );
-
-      socket.onopen = () => {
-        console.log("✅ WebSocket connected");
-      };
-
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("📡 WebSocket data received:", data);
-
-          if (data.type === "update") {
-            fetchVisitorsByDate();
-
-            if (data.notify) {
-              const { status, message } = data.notify;
-              if (status === "success") showSuccessToast(message);
-              else if (status === "error") showErrorToast(message);
-            }
-          } else if (data.type === "notification") {
-            const { status, message } = data;
-            if (status === "success") showSuccessToast(message);
-            else if (status === "error") showErrorToast(message);
-          }
-        } catch (err) {
-          console.error("❗ Failed to parse WebSocket message:", err);
-        }
-      };
-
-      socket.onerror = (e) => {
-        console.error("❗WebSocket error", e);
-        socket.close(); // triggers `onclose`
-      };
-
-      socket.onclose = () => {
-        console.log("❌ WebSocket connection closed");
-        if (!isUnmounted) {
-          console.log("🔄 Attempting to reconnect in 5s...");
-          reconnectTimer = setTimeout(connect, 5000);
-        }
-      };
-    };
-
-    connect();
+    const cleanup = initVisitorSocket({
+      onVisitorsUpdate: setVisitors,
+    });
 
     return () => {
-      isUnmounted = true;
-      clearTimeout(reconnectTimer);
-      socket.close();
+      cleanup();
     };
   }, []);
 
   useEffect(() => {
     fetchData();
-    fetchVisitorsByDate();
   }, []);
+
+  useEffect(() => {
+    loadVisitors();
+  }, [currentDate]);
 
   const filteredVisitors = useMemo(() => {
     let filtered = visitors.filter((visitor) => {
       const purposeMatches =
         selectedPurpose === "All" ||
         visitor.purpose.toLowerCase() === selectedPurpose.toLowerCase();
-
-      const approvalStatusMatches =
+      const approvalMatches =
         selectedApprovalStatus === "All" ||
         visitor.approvalStatus.toLowerCase() ===
           selectedApprovalStatus.toLowerCase();
-
       return (
         (selectedEmployee === "All" || visitor.employee === selectedEmployee) &&
         purposeMatches &&
         (selectedDepartment === "All" ||
           visitor.department === selectedDepartment) &&
-        approvalStatusMatches
+        approvalMatches
       );
     });
 
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter((visitor) =>
         [
           visitor.name,
@@ -249,7 +132,7 @@ const VisitorsSection: React.FC = () => {
           visitor.department,
           visitor.status,
           visitor.approvalStatus,
-        ].some((field) => field && field.toLowerCase().includes(query)),
+        ].some((field) => field?.toLowerCase().includes(q)),
       );
     }
 
@@ -279,11 +162,9 @@ const VisitorsSection: React.FC = () => {
             <DatePicker
               selected={new Date(currentDate)}
               onChange={(date: Date | null) => {
-                if (date) {
-                  const formatted = format(date, "yyyy-MM-dd");
-                  setCurrentDate(formatted);
-                  updateCurrentDate(formatted);
-                }
+                if (!date) return;
+                const formatted = format(date, "yyyy-MM-dd");
+                updateCurrentDate(formatted);
               }}
               dateFormat="MMMM dd, yyyy"
               className="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700"

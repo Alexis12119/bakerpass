@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 import Sidebar from "@/components/HumanResources/Shared/Sidebar";
-import TopBar from "@/components/HumanResources/Dashboard/TopBar";
+import TopBar from "@/components/common/Topbar";
 import DashboardCards from "@/components/HumanResources/Dashboard/Cards";
 import VisitorsSection from "@/components/HumanResources/Dashboard/Section";
 
@@ -43,7 +43,11 @@ const HumanResourcesDashboardPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col transition-all duration-300">
-        <TopBar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <TopBar
+          isSidebarOpen={isSidebarOpen}
+          toggleSidebar={toggleSidebar}
+          role="Human Resources"
+        />
         <div className="px-4 md:px-8 flex flex-col gap-4">
           <div className="p-2">
             <h1 className="text-3xl font-bold text-black mb-4">Dashboard</h1>

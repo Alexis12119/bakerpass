@@ -17,6 +17,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({ visitor }) => {
   const [isVisitorProfileModalOpen, setIsVisitorProfileModalOpen] =
     useState(false);
   const [_status, setStatus] = useState(visitor.approvalStatus);
+  console.log("Visitor: ", visitor);
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -132,7 +133,6 @@ const VisitorCard: React.FC<VisitorCardProps> = ({ visitor }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         profileImageUrl={visitor.profileImageUrl}
-        employeeId={visitor.id}
       />
       {isVisitorProfileModalOpen && (
         <div className="fixed inset-0 backdrop-blur-md z-10"></div>

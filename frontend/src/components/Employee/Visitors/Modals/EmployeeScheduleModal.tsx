@@ -84,7 +84,7 @@ const EmployeeScheduleModal: React.FC<EmployeeScheduleModalProps> = ({
   };
 
   useEffect(() => {
-    if (employeeId) fetchTimeSlots();
+    if (employeeId) fetchTimeSlots().then((r) => r);
   }, [employeeId]);
 
   if (!isOpen) return null;

@@ -3,9 +3,14 @@ import {
   MagnifyingGlassIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-import axios from "axios";
-import { FiltersProps } from "@/types/Nurse";
+import { FiltersProps } from "@/types/Security";
 import { showErrorToast } from "@/utils/customToasts";
+import {
+  fetchPurposes,
+  fetchDepartments,
+  fetchApprovalStatuses,
+} from "@/utils/handleFilters";
+import axios from "axios";
 
 const Filters: React.FC<FiltersProps> = ({
   searchQuery,
@@ -31,30 +36,29 @@ const Filters: React.FC<FiltersProps> = ({
   >([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
-        const [
-          employeesResponse,
-          purposesResponse,
-          departmentsResponse,
-          approvalStatuses,
-        ] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`),
-        ]);
+        // Employees are not covered by handleFilters yet → keep axios
+        const employeeResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_HOST}/employees/all`,
+        );
+        setEmployees(employeeResponse.data);
 
-        setEmployees(employeesResponse.data);
-        setPurposes(purposesResponse.data);
-        setDepartments(departmentsResponse.data);
-        setApprovalStatuses(approvalStatuses.data);
+        // Use utils for the rest
+        const [purposesData, departmentsData, approvalStatusesData] =
+          await Promise.all([
+            fetchPurposes(),
+            fetchDepartments(),
+            fetchApprovalStatuses(),
+          ]);
+
+        setPurposes(purposesData);
+        setDepartments(departmentsData);
+        setApprovalStatuses(approvalStatusesData);
       } catch (error: any) {
-        showErrorToast(`Error fetching data: ${error.message}`);
+        showErrorToast(`Error fetching filters: ${error.message}`);
       }
-    };
-
-    fetchData();
+    })();
   }, []);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,6 +78,7 @@ const Filters: React.FC<FiltersProps> = ({
 
   return (
     <div className="flex flex-wrap gap-2">
+      {/* Search Bar */}
       <div className="relative">
         <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
         <input

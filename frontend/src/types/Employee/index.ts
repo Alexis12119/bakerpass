@@ -1,15 +1,7 @@
-export interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  employee: string;
-  department: string;
-  expected_time: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: string;
-  approvalStatus: string;
-  profileImageUrl: string;
+import { VisitorBase, VisitorWithDropdown } from "@/types/common/Visitor";
+
+export interface Visitor extends VisitorBase {
+  expectedTime: string;
   contactNumber?: string | null;
   address?: string | null;
   otp?: string | null;
@@ -17,9 +9,7 @@ export interface Visitor {
   employeeId?: string;
 }
 
-export interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+export type VisitorWithDropdownEmp = VisitorWithDropdown<Visitor>;
 
 export interface SidebarProps {
   isSidebarOpen: boolean;
@@ -46,6 +36,7 @@ export interface SearchFiltersProps {
   handleNextDate: () => void;
   setCurrentDate: (date: string) => void;
 }
+
 export interface VisitorsSectionProps {
   searchQuery: string;
   selectedPurpose: string;

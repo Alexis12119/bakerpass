@@ -1,16 +1,30 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
-import TopBar from "@/components/Security/TopBar";
+import TopBar from "@/components/common/Topbar";
 import Filters from "@/components/Security/Filters";
 import SecurityTable from "@/components/Security/Table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { format, addDays, subDays } from "date-fns";
 import DatePicker from "react-datepicker";
+import {
+  getPreviousDate,
+  getNextDate,
+} from "@/utils/handleDates";
 import "react-datepicker/dist/react-datepicker.css";
-import { Visitor, VisitorWithDropdown } from "@/types/Security";
-import { showErrorToast, showSuccessToast } from "@/utils/customToasts";
+import { format } from "date-fns";
+import {
+  fetchPurposes,
+  fetchDepartments,
+  fetchApprovalStatuses,
+} from "@/utils/handleFilters";
+import { Visitor, VisitorWithDropdownSec } from "@/types/Security";
+import {
+  fetchVisitorsByDate,
+  toggleVisitorStatus,
+  handleVisitorApproval,
+} from "@/utils/handleVisitors";
+import { initVisitorSocket } from "@/utils/visitorSocket";
+import NewVisitModal from "@/components/Security/Modals/NewVisit";
 
 const SecurityGuardPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(() => {
@@ -33,7 +47,7 @@ const SecurityGuardPage: React.FC = () => {
   const [selectedPurpose, setSelectedPurpose] = useState("All");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("All");
-  const [visitors, setVisitors] = useState<VisitorWithDropdown[]>([]);
+  const [visitors, setVisitors] = useState<VisitorWithDropdownSec[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [validIdModalOpen, setValidIdModalOpen] = useState(false);
 
@@ -48,282 +62,52 @@ const SecurityGuardPage: React.FC = () => {
     | "Partial Approved"
     | null
   >(null);
+  const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
 
-  const mapVisitorsData = (visitors: any[]) => {
-    return visitors.map((visitor) => ({
-      id: visitor.visit_id,
-      name: `${visitor.visitorFirstName} ${visitor.visitorLastName}`,
-      purpose: visitor.purpose,
-      employee: `${visitor.employeeFirstName} ${visitor.employeeLastName}`,
-      department: visitor.employeeDepartment,
-      expectedTime:
-        visitor.expected_time ||
-        formatTimeRange(visitor.time_in, visitor.time_out),
-      timeIn: visitor.time_in || null,
-      timeOut: visitor.time_out || null,
-      status: visitor.status,
-      approvalStatus: visitor.approval_status,
-      profileImageUrl: visitor.profile_image_url,
-      isDropdownOpen: false,
-      isHighCare: visitor.is_high_care ?? undefined,
-    }));
+  const onToggleVisitorStatus = async (visitorId: number) => {
+    await toggleVisitorStatus(visitorId);
+    fetchVisitorsByDate().then(setVisitors);
   };
 
-  const handlePreviousDate = () => {
-    setCurrentDate((prev: string) => {
-      const newDate = format(subDays(new Date(prev), 1), "yyyy-MM-dd");
-      sessionStorage.setItem("visitor_filter_date", newDate);
-      return newDate;
-    });
-  };
-
-  const handleNextDate = () => {
-    setCurrentDate((prev: string) => {
-      const newDate = format(addDays(new Date(prev), 1), "yyyy-MM-dd");
-      sessionStorage.setItem("visitor_filter_date", newDate);
-      return newDate;
-    });
-  };
-
-  function parseTimeString(timeStr: string): Date {
-    const [time, meridian] = timeStr.trim().split(/[\s]+/); // e.g., ['9:00', 'A.M.']
-    let [hours, minutes] = time.split(":").map(Number);
-    if (meridian.toUpperCase().startsWith("P") && hours !== 12) hours += 12;
-    if (meridian.toUpperCase().startsWith("A") && hours === 12) hours = 0;
-
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  }
-
-  const toggleVisitorStatus = async (
-    visitorId: string,
-    validIdTypeId: number,
+  const onVisitorApproval = async (
+    visitorId: number,
+    approvalStatus: string,
   ) => {
-    try {
-      const currentVisitor = visitors.find((v) => v.id === visitorId);
-      if (!currentVisitor) return;
-
-      // ⏰ Validate against expected time range using the *current time*
-      if (currentVisitor.expectedTime) {
-        const [startStr, endStr] = currentVisitor.expectedTime
-          .split("-")
-          .map((s) => s.trim());
-        const expectedStart = parseTimeString(startStr);
-        const expectedEnd = parseTimeString(endStr);
-        const now = new Date();
-
-        const isInRange =
-          now.getTime() >= expectedStart.getTime() &&
-          now.getTime() <= expectedEnd.getTime();
-
-        if (!isInRange) {
-          showErrorToast("Time In must be within the expected time range.");
-          return;
-        }
-      }
-
-      if (
-        currentVisitor.status === "Checked In" &&
-        currentVisitor.timeIn &&
-        currentVisitor.timeOut &&
-        currentVisitor.timeIn === currentVisitor.timeOut
-      ) {
-        showErrorToast("Time In and Time Out cannot be the same.");
-        return;
-      }
-
-      if (currentVisitor.status === "Checked Out") {
-        showErrorToast("Visitor has already checked out.");
-        return;
-      }
-
-      let newStatus: "Checked In" | "Ongoing" | "Checked Out" = "Checked In";
-
-      if (
-        currentVisitor.status.toLowerCase() === "checked in" &&
-        !currentVisitor.timeOut
-      ) {
-        newStatus = "Ongoing";
-      } else if (
-        currentVisitor.status.toLowerCase() === "ongoing" ||
-        (currentVisitor.status.toLowerCase() === "checked in" &&
-          currentVisitor.timeOut)
-      ) {
-        newStatus = "Checked Out";
-      }
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors/${visitorId}/status`,
-        {
-          status: newStatus,
-          validIdTypeId,
-        },
-      );
-
-      await fetchVisitorsByDate();
-    } catch (error) {
-      console.error("Error toggling visitor status:", error);
-    }
-  };
-
-  const handleVisitorApproval = async (
-    action:
-      | "Approved"
-      | "Blocked"
-      | "Cancelled"
-      | "Nurse Approved"
-      | "Partial Approved",
-  ) => {
-    if (!selectedVisitor) return;
-
-    try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visits/${selectedVisitor.id}/approval`,
-        { statusName: action },
-      );
-      await fetchVisitorsByDate();
-      showSuccessToast(`Visitor successfully ${action}.`);
-    } catch (error: any) {
-      showErrorToast(
-        `Failed to update visitor approval status: ${error.message}`,
-      );
-    } finally {
-      setStatusActionModalOpen(false);
-      setSelectedVisitor(null);
-      setApprovalAction(null);
-    }
-  };
-
-  const fetchDepartments = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/departments`,
-      );
-      setDepartments(response.data);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-    }
-  };
-
-  const fetchVisitorsByDate = async (forNurse = false) => {
-    const date = sessionStorage.getItem("visitor_filter_date");
-    try {
-      const endpoint = forNurse
-        ? `${process.env.NEXT_PUBLIC_BACKEND_HOST}/nurse/high-care-visits?date=${date}`
-        : `${process.env.NEXT_PUBLIC_BACKEND_HOST}/visitors-date?date=${date}`;
-
-      const response = await axios.get(endpoint);
-
-      const visitorsData = mapVisitorsData(response.data);
-
-      setVisitors(visitorsData);
-    } catch (error) {
-      console.error("Error fetching visitors:", error);
-    }
-  };
-
-  const fetchPurposes = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/purposes`,
-      );
-      setPurposes(response.data);
-    } catch (error) {
-      console.error("Error fetching purposes:", error);
-    }
-  };
-
-  const fetchApprovalStatuses = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_HOST}/approval_status`,
-      );
-      setApprovalStatuses(response.data);
-    } catch (error) {
-      console.error("Error fetching approval statuses:", error);
-    }
-  };
-
-  const formatTimeRange = (timeIn: string | null, timeOut: string | null) => {
-    if (!timeIn || !timeOut) return "Not scheduled";
-    const formatTime = (time: string) => {
-      if (!time) return "";
-      const [hours, minutes] = time.split(":");
-      return `${hours}:${minutes}`;
-    };
-    return `${formatTime(timeIn)} - ${formatTime(timeOut)}`;
+    await handleVisitorApproval(visitorId, approvalStatus);
+    fetchVisitorsByDate().then(setVisitors);
   };
 
   useEffect(() => {
-    let socket: WebSocket;
-    let reconnectTimer: NodeJS.Timeout;
-    let isUnmounted = false;
-
-    const connect = () => {
-      socket = new WebSocket(
-        `${process.env.NEXT_PUBLIC_BACKEND_WS}/ws/updates`,
-      );
-
-      socket.onopen = () => {
-        console.log("✅ WebSocket connected");
-      };
-
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("📡 WebSocket data received:", data);
-
-          if (data.type === "update") {
-            fetchVisitorsByDate();
-
-            if (data.notify) {
-              const { status, message } = data.notify;
-              if (status === "success") showSuccessToast(message);
-              else if (status === "error") showErrorToast(message);
-            }
-          } else if (data.type === "notification") {
-            const { status, message } = data;
-            if (status === "success") showSuccessToast(message);
-            else if (status === "error") showErrorToast(message);
-          }
-        } catch (err) {
-          console.error("❗ Failed to parse WebSocket message:", err);
-        }
-      };
-
-      socket.onerror = (e) => {
-        console.error("❗WebSocket error", e);
-        socket.close(); // triggers `onclose`
-      };
-
-      socket.onclose = () => {
-        console.log("❌ WebSocket connection closed");
-        if (!isUnmounted) {
-          console.log("🔄 Attempting to reconnect in 5s...");
-          reconnectTimer = setTimeout(connect, 5000);
-        }
-      };
-    };
-
-    connect();
+    const cleanup = initVisitorSocket({
+      onVisitorsUpdate: setVisitors,
+    });
 
     return () => {
-      isUnmounted = true;
-      clearTimeout(reconnectTimer);
-      socket.close();
+      cleanup();
     };
   }, []);
 
   useEffect(() => {
-    fetchVisitorsByDate();
-    fetchPurposes();
-    fetchDepartments();
-    fetchApprovalStatuses();
+    (async () => {
+      const visitorsData = await fetchVisitorsByDate();
+      setVisitors(visitorsData);
+
+      const purposes = await fetchPurposes();
+      setPurposes(purposes);
+
+      const departments = await fetchDepartments();
+      setDepartments(departments);
+
+      const approvalStatuses = await fetchApprovalStatuses();
+      setApprovalStatuses(approvalStatuses);
+    })();
   }, []);
 
   useEffect(() => {
-    fetchVisitorsByDate();
+    (async () => {
+      const visitorsData = await fetchVisitorsByDate();
+      setVisitors(visitorsData);
+    })();
   }, [currentDate]);
 
   const filteredVisitors = useMemo(() => {
@@ -372,7 +156,11 @@ const SecurityGuardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <TopBar fetchVisitorsByDate={fetchVisitorsByDate} />
+      <TopBar
+        role="Security Guard"
+        showNewVisitButton
+        onNewVisitClick={() => setIsNewVisitModalOpen(true)}
+      />
       <div className="p-4 md:p-6 flex-1">
         <div className="bg-white shadow-md rounded-lg p-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
@@ -383,7 +171,7 @@ const SecurityGuardPage: React.FC = () => {
             <div className="flex items-center space-x-2">
               <ChevronLeftIcon
                 className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
-                onClick={handlePreviousDate}
+                onClick={() => setCurrentDate((prev) => getPreviousDate(prev))}
               />
               <DatePicker
                 selected={new Date(currentDate)}
@@ -399,7 +187,7 @@ const SecurityGuardPage: React.FC = () => {
               />
               <ChevronRightIcon
                 className="h-5 w-5 text-gray-400 cursor-pointer hover:text-black"
-                onClick={handleNextDate}
+                onClick={() => setCurrentDate((prev) => getNextDate(prev))}
               />
             </div>
 
@@ -419,7 +207,7 @@ const SecurityGuardPage: React.FC = () => {
         </div>
         <SecurityTable
           visitors={filteredVisitors}
-          onToggleStatus={toggleVisitorStatus}
+          onToggleStatus={onToggleVisitorStatus}
           validIdModalOpen={validIdModalOpen}
           setValidIdModalOpen={setValidIdModalOpen}
           statusActionModalOpen={statusActionModalOpen}
@@ -427,8 +215,17 @@ const SecurityGuardPage: React.FC = () => {
           selectedVisitor={selectedVisitor}
           setSelectedVisitor={setSelectedVisitor}
           setApprovalAction={setApprovalAction}
-          handleVisitorApproval={handleVisitorApproval}
+          handleVisitorApproval={onVisitorApproval}
           currentDate={currentDate}
+        />
+
+        <NewVisitModal
+          isOpen={isNewVisitModalOpen}
+          onClose={() => setIsNewVisitModalOpen(false)}
+          fetchVisitorsByDate={async () => {
+            const visitorsData = await fetchVisitorsByDate();
+            setVisitors(visitorsData);
+          }}
         />
       </div>
     </div>

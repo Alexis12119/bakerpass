@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  XMarkIcon,
-  PencilIcon,
   TrashIcon,
+  PencilIcon,
   PlusIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { TimeSlot } from "@/types/Employee/Profile";
@@ -78,7 +78,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       );
       setEditingSlotId(null);
       setShowEditModal(false);
-      fetchSlots();
+      await fetchSlots();
       onUpdate();
     } catch (err: any) {
       showErrorToast(
@@ -92,7 +92,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       await axios.delete(
         `${process.env.NEXT_PUBLIC_BACKEND_HOST}/timeslots/${id}`,
       );
-      fetchSlots();
+      await fetchSlots();
       showSuccessToast("Time slot deleted successfully.");
       onUpdate();
     } catch (err: any) {
@@ -117,7 +117,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       });
       setNewSlot({ startTime: "", endTime: "" });
       setShowAddSlot(false);
-      fetchSlots();
+      await fetchSlots();
       onUpdate();
     } catch (err: any) {
       showErrorToast(
@@ -127,7 +127,7 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen) fetchSlots();
+    if (isOpen) fetchSlots().then((r) => r);
   }, [isOpen]);
 
   if (!isOpen) return null;

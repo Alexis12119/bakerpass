@@ -8,23 +8,7 @@ import { User, Clock } from "lucide-react";
 import { NurseTableProps } from "@/types/Nurse";
 import { format } from "date-fns";
 import { showErrorToast } from "@/utils/customToasts";
-
-const formatTimeForDisplay = (time: string | null) => {
-  if (!time || time === "00:00:00") return "Pending";
-  const [hoursStr, minutes] = time.split(":");
-  let hours = parseInt(hoursStr, 10);
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  return `${hours}:${minutes} ${ampm}`;
-};
-
-function toTitleCase(str?: string) {
-  if (!str) return "";
-  return str.replace(
-    /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
-  );
-}
+import { toTitleCase, formatTimeForDisplay } from "@/utils/visitorUtils";
 
 const NurseTable: React.FC<NurseTableProps> = ({
   visitors,
@@ -209,8 +193,22 @@ const NurseTable: React.FC<NurseTableProps> = ({
           <div className="max-w-xl w-full p-6">
             <HighCareApprovalForm
               onClose={() => setStatusActionModalOpen(false)}
-              onSubmit={(formData) => {
-                handleVisitorApproval("Yes", formData, tempHealthData);
+              onSubmit={async (formData) => {
+                try {
+                  await handleVisitorApproval(
+                    selectedVisitor.id,
+                    "Yes",
+                    formData,
+                    tempHealthData,
+                  );
+
+                  setStatusActionModalOpen(false);
+                  setSelectedVisitor(null);
+                  setTempHealthData(null);
+                } catch (error) {
+                  // don't close on error, toast is already handled inside
+                  showErrorToast(error.data?.message);
+                }
               }}
             />
           </div>

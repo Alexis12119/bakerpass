@@ -244,6 +244,7 @@ async function nurse(fastify) {
   // Approve visit as nurse
   fastify.put("/nurse/:visitId/approval", async (request, reply) => {
     const visitId = request.params.visitId;
+    const { nurseId } = request.body;
 
     try {
       const [rows] = await pool.execute(

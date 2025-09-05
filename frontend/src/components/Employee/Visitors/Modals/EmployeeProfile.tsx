@@ -4,6 +4,7 @@ import Image from "next/image";
 import { User } from "lucide-react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { EmployeeProfileModalProps } from "@/types/Employee/Profile";
+import React from "react";
 
 const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   Visitor: visitor,

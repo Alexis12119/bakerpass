@@ -1,27 +1,7 @@
-export interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  employee: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus:
-    | "Waiting For Approval"
-    | "Approved"
-    | "Blocked"
-    | "Cancelled"
-    | "Partial Approved"
-    | "Nurse Approved";
+import { VisitorBase, VisitorWithDropdown } from "@/types/common/Visitor";
 
-  profileImageUrl: string;
-}
-
-export interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+export type Visitor = VisitorBase;
+export type VisitorWithDropdownSec = VisitorWithDropdown<Visitor>;
 
 export interface FiltersProps {
   searchQuery: string;
@@ -38,7 +18,7 @@ export interface FiltersProps {
 
 export interface SecurityTableProps {
   visitors: VisitorWithDropdown[];
-  onToggleStatus: (visitorId: string, validIdType: number) => void;
+  onToggleStatus: (visitorId: number, validIdType: number) => void;
   validIdModalOpen: boolean;
   setValidIdModalOpen: (open: boolean) => void;
   statusActionModalOpen: boolean;
@@ -54,6 +34,7 @@ export interface SecurityTableProps {
       | "Partial Approved",
   ) => void;
   handleVisitorApproval: (
+    visitorId: number,
     action:
       | "Approved"
       | "Blocked"
@@ -61,7 +42,7 @@ export interface SecurityTableProps {
       | "Nurse Approved"
       | "Partial Approved",
   ) => void;
-  currentDate: string,
+  currentDate: string;
 }
 
 export interface Security {

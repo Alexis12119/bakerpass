@@ -27,6 +27,7 @@ const HumanResourcesReportSection: React.FC = () => {
       );
     }
   };
+
   const fetchEmployees = async () => {
     setIsLoading(true);
     try {

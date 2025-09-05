@@ -48,12 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             label="Reports"
             onClick={() => router.push("/hr/reports")}
           />
-
-          <SidebarLink
-            icon={ClipboardList} // or FileText, Activity, or another Lucide icon
-            label="Logs"
-            onClick={() => router.push("/hr/logs")}
-          />
         </nav>
 
         {/* Footer */}

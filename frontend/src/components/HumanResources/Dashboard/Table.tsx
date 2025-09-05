@@ -3,28 +3,7 @@ import Image from "next/image";
 import { User, Clock } from "lucide-react";
 import { DashboardTableProps } from "@/types/HumanResources/Dashboard";
 import { showErrorToast } from "@/utils/customToasts";
-
-function toTitleCase(str?: string) {
-  if (!str) return "";
-  return str.replace(
-    /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
-  );
-}
-
-function getStatusLabel(visitor: any) {
-  const { approvalStatus, status } = visitor;
-
-  if (["Approved", "Nurse Approved"].includes(approvalStatus)) {
-    return toTitleCase(status);
-  }
-
-  if (approvalStatus === "Partial Approved") {
-    return "Sent to Clinic";
-  }
-
-  return toTitleCase(approvalStatus);
-}
+import { toTitleCase, formatTimeForDisplay, getStatusLabel } from "@/utils/visitorUtils";
 
 const DashboardTable: React.FC<DashboardTableProps> = ({ visitors }) => {
   const formatTimeForDisplay = (time: string | null) => {

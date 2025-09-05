@@ -31,7 +31,7 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
         <h2 className="text-lg font-semibold text-blue-600 mb-4">{title}</h2>
 
         {/* Message */}
-        <p className="text-gray-800 mb-6">{message}</p>
+        <p className="text-gray-800  mb-6">{message}</p>
 
         {/* Buttons */}
         <div className="flex justify-between items-center">

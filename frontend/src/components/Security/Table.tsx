@@ -9,34 +9,7 @@ import { SecurityTableProps } from "@/types/Security";
 import { format } from "date-fns";
 import { showErrorToast } from "@/utils/customToasts";
 import { useState } from "react";
-
-function toTitleCase(str?: string) {
-  if (!str) return "";
-  return str.replace(
-    /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
-  );
-}
-
-function getStatusLabel(visitor: any) {
-  const { approvalStatus, status } = visitor;
-  if (["Approved", "Nurse Approved"].includes(approvalStatus)) {
-    return toTitleCase(status);
-  }
-  if (approvalStatus === "Partial Approved") {
-    return "Sent to Clinic";
-  }
-  return toTitleCase(approvalStatus);
-}
-
-const formatTimeForDisplay = (time: string | null) => {
-  if (!time || time === "00:00:00") return "Pending";
-  const [hoursStr, minutes] = time.split(":");
-  let hours = parseInt(hoursStr, 10);
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  return `${hours}:${minutes} ${ampm}`;
-};
+import { getStatusLabel, formatTimeForDisplay } from "@/utils/visitorUtils";
 
 const SecurityTable: React.FC<SecurityTableProps> = ({
   visitors,
@@ -121,7 +94,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
                         setSelectedVisitor(visitor);
                         setValidIdModalOpen(true);
                       } else if (isOngoingOrCheckedOut) {
-                        onToggleStatus(visitor.id, 0);
+                        onToggleStatus(Number(visitor.id), 0);
                       }
                     } else if (
                       visitor.approvalStatus === "Waiting For Approval"
@@ -231,7 +204,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
           isOpen={validIdModalOpen}
           onSubmit={(idType) => {
             if (selectedVisitor) {
-              onToggleStatus(selectedVisitor.id, idType);
+              onToggleStatus(Number(selectedVisitor.id), idType);
             }
             setValidIdModalOpen(false);
           }}
@@ -257,7 +230,7 @@ const SecurityTable: React.FC<SecurityTableProps> = ({
           title="Please Confirm"
           message={`Are you sure you want to ${pendingAction.toLowerCase()} ${selectedVisitor.name}'s visit?`}
           onConfirm={() => {
-            handleVisitorApproval(pendingAction);
+            handleVisitorApproval(Number(selectedVisitor.id), pendingAction);
             setShowConfirmModal(false);
             setStatusActionModalOpen(false);
             setPendingAction(null);

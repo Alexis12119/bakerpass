@@ -1,26 +1,7 @@
-export interface Visitor {
-  id: string;
-  name: string;
-  purpose: string;
-  employee: string;
-  department: string;
-  expectedTime: string;
-  timeIn: string | null;
-  timeOut: string | null;
-  status: "Checked In" | "Ongoing" | "Checked Out";
-  approvalStatus:
-    | "Waiting For Approval"
-    | "Approved"
-    | "Blocked"
-    | "Cancelled"
-    | "Partial Approved"
-    | "Nurse Approved";
-  profileImageUrl: string;
-}
+import { VisitorBase, VisitorWithDropdown } from "@/types/common/Visitor";
 
-export interface VisitorWithDropdown extends Visitor {
-  isDropdownOpen: boolean;
-}
+export type Visitor = VisitorBase;
+export type VisitorWithDropdownNurse = VisitorWithDropdown<Visitor>;
 
 export interface FiltersProps {
   searchQuery: string;

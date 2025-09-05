@@ -15,6 +15,7 @@ export interface TimeSlot {
 
 export interface EmployeeProfileModalProps {
   Visitor: Visitor;
+  employeeId?: string;
   isOpen: boolean;
   onClose: () => void;
   profileImageUrl?: string;

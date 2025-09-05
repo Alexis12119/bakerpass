@@ -21,14 +21,14 @@ async function visitors(fastify) {
     const valuesToUpdate = [];
 
     if (firstName != null)
-      fieldsToUpdate.push("first_name = ?"), valuesToUpdate.push(firstName);
+      (fieldsToUpdate.push("first_name = ?"), valuesToUpdate.push(firstName));
     if (lastName != null)
-      fieldsToUpdate.push("last_name = ?"), valuesToUpdate.push(lastName);
+      (fieldsToUpdate.push("last_name = ?"), valuesToUpdate.push(lastName));
     if (contactNumber != null)
-      fieldsToUpdate.push("contact_number = ?"),
-        valuesToUpdate.push(contactNumber);
+      (fieldsToUpdate.push("contact_number = ?"),
+        valuesToUpdate.push(contactNumber));
     if (address != null)
-      fieldsToUpdate.push("address = ?"), valuesToUpdate.push(address);
+      (fieldsToUpdate.push("address = ?"), valuesToUpdate.push(address));
 
     if (fieldsToUpdate.length === 0) {
       return reply.code(400).send({ message: "No data to update" });
